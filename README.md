@@ -33,4 +33,4 @@ system for managing user and application access to those secrets.
 ## Documentation
 - [Overview](documentation/index.md)
 - [AWS IAM Role Setup](documentation/prequisites/configuration.md)
-- [Local Setup](documentation/QuickStart/QuickStart.md)
+- [Local Setup](documentation/QuickStart.md)

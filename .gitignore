@@ -1,25 +1,36 @@
-/target/
-/ignore/
+# Compiled class file
+*.class
 
-# intellij specific
+# Log file
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+
 /.idea/
-*.iml
-.idea
-
-#eclipse specific
-.project
-.metadata
-bin/**
-tmp/**
-tmp/**/*
-*.tmp
-*.bak
-*.swp
-*~.nib
-.classpath
-.settings/
-.loadpath
-target
-
-/dev.dict
-/startup.sh
+/fidelius-service/logs/
+/fidelius-service/fidelius-service.iml/
+/fidelius-sdk/fidelius-sdk.iml/
+/fidelius-sdk/fidelius-sdk.iml/
+/fidelius-service/target/
+/fidelius-ui/dist/
+/demo-services/fake-account-service/target/
+/demo-services/fake-account-service/fidelius-service.iml/
+/demo-services/fake-account-service/.idea/
+/demo-services/fidelius-setup/target/
+/demo-services/fidelius-setup/fidelius-service.iml/
+/demo-services/fidelius-setup/.idea/
