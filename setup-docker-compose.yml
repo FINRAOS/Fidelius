@@ -1,0 +1,18 @@
+version: '2'
+services:
+  fidelius_setup:
+    build:
+      context: ./demo-services/fidelius-setup
+      args:
+        jar_file: fidelius-setup-1.0-jar-with-dependencies.jar
+    mem_limit: 500m
+    env_file:
+        - ./config/fidelius_config.env
+    environment:
+      - AWS_ACCOUNT_NUMBER=${AWS_ACCOUNT_NUMBER}
+      - http_proxy=${http_proxy}
+      - https_proxy=${http_proxy}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ${AWS_DIRECTORY}:/root/.aws

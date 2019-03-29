@@ -1,0 +1,77 @@
+#This is provided as a convienience that will rebuild ALL container resources.
+version: '2'
+
+services:
+  fidelius_ldap:
+    container_name: fidelius_local_ldap
+    image: osixia/openldap:1.2.0
+    command: --copy-service
+    mem_limit: 100m
+    ports:
+      - "389:389"
+    environment:
+      LDAP_TLS: "false"
+    volumes:
+      - ./config/ldap/://container/service/slapd/assets/config/bootstrap/ldif/custom
+  fidelius_accounts:
+    build:
+      context: ./demo-services/fake-account-service
+      args:
+        jar_file: fake-account-service-1.0.jar
+    mem_limit: 500m
+    environment:
+      - AWS_ACCOUNT_NUMBER=${AWS_ACCOUNT_NUMBER}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config/accounts-service/application.yml:/usr/share/fidelius/config/application.yml
+  fidelius-service:
+    build:
+      context: ./fidelius-service
+      args:
+        jar_file: fidelius-service-1.0.jar
+    mem_limit: 550m
+    ports:
+      - "8080"
+    env_file:
+      - ./config/fidelius_config.env
+    image: fidelius/fidelius-service:latest
+    volumes:
+      - ${AWS_DIRECTORY}:/root/.aws
+    links:
+      - "fidelius_accounts"
+  fidelius-ui:
+    build:
+      context: ./fidelius-ui
+    mem_limit: 50m
+    ports:
+      - "443"
+    links:
+      - "fidelius-service"
+  fidelius-dev:
+    image: fidelius/local-proxy
+    mem_limit: 50m
+    environment:
+      - USER=anderj
+    ports:
+      - "443:443"
+    links:
+      - "fidelius-ui"
+  fidelius-ops:
+    image: fidelius/local-proxy
+    mem_limit: 50m
+    environment:
+      - USER=bryand
+    ports:
+      - "444:443"
+    links:
+      - "fidelius-ui"
+  fidelius-master:
+    image: fidelius/local-proxy
+    mem_limit: 50m
+    environment:
+      - USER=wellsh
+    ports:
+      - "445:443"
+    links:
+      - "fidelius-ui"

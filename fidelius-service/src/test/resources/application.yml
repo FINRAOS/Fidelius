@@ -1,0 +1,15 @@
+#Global stuff
+fidelius:
+   sessionTimeout: 900000
+   sessionTimeoutPad: 10000
+
+cloud:
+  aws:
+    region:
+      static: us-east-1
+
+spring:
+  profiles.active: local
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false

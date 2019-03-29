@@ -1,0 +1,7 @@
+{
+  "longKey": "@application.@account.@component.@key",
+  "account": "@account",
+  "application": "@application",
+  "environment": "@environment",
+  "component": "@component"
+}

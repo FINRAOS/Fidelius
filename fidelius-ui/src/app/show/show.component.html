@@ -1,0 +1,145 @@
+<!--
+  ~ Copyright (c) 2019. Fidelius Contributors
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<div layout="column" layout-fill>
+  <form #showForm="ngForm">
+    <div class="show-credential-form pad push" layout-align="center start">
+      <mat-form-field>
+        <input matInput
+               #applicationElement
+               #applicationControl="ngModel"
+               name="application"
+               [(ngModel)]="credential.application"
+               [placeholder]="APPLICATION_LIST_NAME"
+               disabled
+               readonly>
+      </mat-form-field>
+      <mat-form-field>
+        <input matInput
+               placeholder="Account"
+               #accountElement
+               #accountControl="ngModel"
+               [(ngModel)]="credential.account"
+               name="account"
+               disabled
+               readonly>
+      </mat-form-field>
+      <mat-form-field>
+        <input matInput
+               #environmentElement
+               #environmentControl="ngModel"
+               name="environment"
+               [(ngModel)]="credential.environment"
+               placeholder="Environment"
+               type="text"
+               disabled
+               readonly>
+        <mat-hint align="end">
+          <span [hidden]="environmentControl.pristine || !environmentControl.errors?.required" class="tc-red-600">Required</span>
+        </mat-hint>
+      </mat-form-field>
+      <mat-form-field>
+        <input matInput
+               #credentialElement
+               #credentialControl="ngModel"
+               name="credential"
+               [(ngModel)]="credential.component"
+               placeholder="Component"
+               type="text"
+               disabled
+               readonly>
+        <mat-hint align="end">
+          <span [hidden]="credentialControl.pristine || !credentialControl.errors?.required" class="tc-red-600">Required</span>
+        </mat-hint>
+      </mat-form-field>
+      <mat-form-field>
+        <input matInput
+               #keyElement
+               #keyControl="ngModel"
+               name="key"
+               [(ngModel)]="credential.shortKey"
+               placeholder="Key"
+               type="text"
+               disabled
+               readonly>
+        <mat-hint align="end">
+          <span [hidden]="keyControl.pristine || !keyControl.errors?.required" class="tc-red-600">Required</span>
+        </mat-hint>
+      </mat-form-field>
+      <mat-form-field>
+        <textarea matInput
+               #longKeyElement
+               #longKeyControl="ngModel"
+               name="longKey"
+               [(ngModel)]="credential.longKey"
+               placeholder="Full Qualified Name"
+               disabled
+               readonly>
+        </textarea>
+      </mat-form-field>
+      <mat-form-field flex class="cred-secret-textarea" *ngIf="!hideSecret && !loadingSecret">
+          <textarea class="secret-box"
+                    matInput
+                    placeholder="Secret"
+                    name="secret"
+                    [(ngModel)]="credential.secret"
+                    disabled>
+          </textarea>
+        <span class="copy-view-icons">
+          <mat-icon matSuffix class="push-right-sm"
+                    matTooltip="Copy secret"
+                    matTooltipPosition="above"
+                    (click)="copy()"
+                    *ngIf="!hideSecret">
+          content_copy
+        </mat-icon>
+        <mat-icon matSuffix
+                  (click)="showSecret()" >
+          {{hideSecret ? 'visibility' : 'visibility_off'}}
+        </mat-icon>
+        </span>
+      </mat-form-field>
+
+      <mat-form-field flex *ngIf="hideSecret">
+        <input matInput
+               #secretElement
+               #secretControl="ngModel"
+               name="secret"
+               [(ngModel)]="credential.secret"
+               placeholder="Secret"
+               [type]="hideSecret ? 'password' : 'text'"
+               disabled
+               readonly>
+        <mat-icon matSuffix
+                  matTooltip="Show/Hide secret"
+                  matTooltipPosition="above"
+                  *ngIf="canViewSecret; else disabledShowSecret"
+                  (click)="showSecret()">
+          {{hideSecret ? 'visibility' : 'visibility_off'}}
+        </mat-icon>
+        <ng-template #disabledShowSecret>
+          <mat-icon matSuffix
+                    class="tc-grey-800"
+                    matTooltip="Contact Ops">
+            visibility
+          </mat-icon>
+        </ng-template>
+      </mat-form-field>
+    </div>
+  </form>
+  <fidelius-loading [condition]="loadingSecret" message="Decrypting..."></fidelius-loading>
+</div>

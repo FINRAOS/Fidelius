@@ -1,0 +1,49 @@
+[
+  {
+    "accountId": 222222222222,
+    "name": "company-aws-dev",
+    "sdlc": "dev",
+    "alias": "DEV",
+    "regions": [
+      {
+        "name": "us-east-2"
+      }
+    ]
+  },
+  {
+    "accountId": 111111111111,
+    "name": "compnay-aws-qa",
+    "sdlc": "qa",
+    "alias": "QA",
+    "regions": [
+      {
+        "name": "us-east-2"
+      },
+      {
+        "name": "us-west-2"
+      }
+    ]
+  },
+  {
+    "accountId": 333333333333,
+    "name": "company-other-dev",
+    "sdlc": "dev",
+    "alias": "Dev-2",
+    "regions": [
+      {
+        "name": "us-east-2"
+      }
+    ]
+  },
+  {
+    "accountId": 444444444444,
+    "name": "company-production",
+    "sdlc": "prod",
+    "alias": "PROD",
+    "regions": [
+      {
+        "name": "us-east-1"
+      }
+    ]
+  }
+]

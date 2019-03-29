@@ -1,0 +1,27 @@
+version: '2'
+
+services:
+  fidelius-base:
+    build: ./base
+    image: fidelius/base:latest
+  fidelius-java:
+    build:
+      context: ./java
+      args:
+        proxy: "${http_proxy}"
+    depends_on: [fidelius-base]
+    image: fidelius/java:latest
+  nginx:
+    build:
+      context: ./nginx
+      args:
+        proxy: "${http_proxy}"
+    depends_on: [fidelius-base]
+    image: fidelius/nginx
+  local-proxy:
+    build:
+      context: fake-sso-proxy
+      args:
+        proxy: "${http_proxy}"
+    depends_on: [fidelius-base]
+    image: fidelius/local-proxy

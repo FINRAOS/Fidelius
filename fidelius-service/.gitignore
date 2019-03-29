@@ -1,0 +1,24 @@
+/target/
+/ignore/
+
+# intellij specific
+/.idea/
+*.iml
+.idea
+
+#eclipse specific
+.project
+.metadata
+bin/**
+tmp/**
+tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+.classpath
+.settings/
+.loadpath
+
+/dev.dict
+/startup.sh

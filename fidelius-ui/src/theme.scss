@@ -1,0 +1,533 @@
+/*!
+ * Copyright (c) 2019. Fidelius Contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+@import '~@angular/material/theming';
+@import '~@covalent/core/theming/all-theme';
+// Plus imports for other components in your app.
+
+// Custom typography
+$custom-typography: mat-typography-config(
+  $button: mat-typography-level(14px, 14px, 400)
+);
+$custom-toolbar-typography: mat-typography-config(
+  $title: mat-typography-level(20px, 32px, 400)
+);
+
+// Include the base styles for Angular Material core. We include this here so that you only
+// have to load a single css file for Angular Material in your app.
+@include mat-core($custom-typography);
+
+// Setting the toolbar to the proper spec weight
+@include mat-toolbar-typography($custom-toolbar-typography);
+
+// Manually import since we're not using platform.css
+//// Include the core styles for Covalent
+@include covalent-core();
+// Include pre-bundled material-icons
+$mat-font-url: '../node_modules/@covalent/core/common/styles/font/';
+@include covalent-material-icons();
+// Include covalent utility classes
+@include covalent-utilities();
+// Include flex layout classes
+//@include covalent-layout();
+// Include covalent color classes
+@include covalent-colors();
+
+// Define the palettes for your theme using the Material Design palettes available in palette.scss
+// (imported above). For each palette, you can optionally specify a default, lighter, and darker
+// hue.
+$primary: mat-palette($mat-indigo, 900, 100, 900);
+$accent:  mat-palette($mat-teal, 500, 100, 900);
+
+// The warn palette is optional (defaults to red).
+$warn:    mat-palette($mat-red, 600, 100, 900);
+
+// Create the theme object (a Sass map containing all of the palettes).
+$theme: mat-light-theme($primary, $accent, $warn);
+
+// Include theme styles for core and each component used in your app.
+// Alternatively, you can import and @include the theme mixins for each component
+// that you are using.
+@include angular-material-theme($theme);
+@include covalent-theme($theme);
+
+$foreground: map-get($theme, foreground);
+$background: map-get($theme, background);
+
+$input-border-color: rgba(0,0,0,0.42);
+$green: #1BC800;
+$red: #EB0011;
+
+// All buttons
+button.mat-button,
+button.mat-raised-button {
+  height: 100%;
+}
+
+// Flat buttons
+button.mat-button {
+
+  // Secondary buttons
+  &.btn-secondary {
+    @include _mat-button-theme-color($theme, 'border-color');
+
+    border-style: solid;
+    border-width: 1px;
+  }
+}
+
+// Primary buttons
+button.mat-raised-button {
+  @include _mat-button-theme-color($theme, 'border-color');
+  @include _mat-button-theme-color($theme, 'background-color');
+
+  border-style: solid;
+  border-width: 1px;
+
+  &:not([class*=mat-elevation-z]) {
+    @include mat-elevation(0);
+  }
+  &[disabled][disabled],
+  &.mat-accent[disabled] {
+    border-color: transparent;
+  }
+
+  // Add hover effect same as focus style
+  &:not([disabled]):hover {
+    $background: map-get($theme, background);
+
+    .mat-button-focus-overlay {
+      background-color: mat-color($background, focused-button);
+      opacity: 1;
+    }
+  }
+}
+
+// Need to redefine buttons for modal
+.mat-dialog-actions, .td-dialog-actions {
+
+  // "Cancel" button in dialog should look like secondary button
+  .mat-button {
+    @include _mat-button-theme-color($theme, 'border-color');
+
+    border-style: solid;
+    border-width: 1px;
+    color: mat-color($accent);
+
+    .mat-button-focus-overlay {
+      background-color: mat-color($accent, 0.12);
+    }
+    .mat-ripple-element {
+      background-color: mat-color($accent, default, 0.1);
+    }
+  }
+
+  // "OK" button in dialog should look like primary button
+  .mat-accent {
+    @include _mat-button-theme-color($theme, 'color', default-contrast);
+    @include _mat-button-theme-color($theme, 'background-color');
+
+    // Add ripple effect with contrast color to buttons that don't have a focus overlay.
+    @include _mat-button-ripple-color($theme, default-contrast);
+  }
+}
+
+// User "button" on main toolbar
+.mat-button.user[disabled] {
+  color: mat-color($background, raised-button);
+}
+
+// Active icon color in list nav
+mat-nav-list, mat-list {
+  [mat-list-item].active {
+    mat-icon[matListAvatar] {
+      background-color: mat-color($accent);
+      color: mat-color($accent, default-contrast);
+    }
+    mat-icon[matListIcon] {
+      color: mat-color($accent);
+    }
+  }
+}
+
+// Card
+.mat-card {
+  background: #ffffff;
+
+  .mat-card-title {
+    background: #fff;
+  }
+  .loading {
+    background: #fff;
+    margin: 0;
+    padding: 8vh 0 6vh 0;
+
+    .loading-divider {
+      border-bottom: 1px #ccc solid;
+    }
+  }
+}
+
+// Data table
+.mat-row:hover {
+  background-color: mat-color($mat-grey,100);
+}
+
+// Input fields
+.mat-input-wrapper {
+  .mat-form-field-underline {
+    &,
+    & .mat-form-field-ripple {
+      background-color: #fff;
+      border-color: $input-border-color;
+    }
+  }
+}
+.mat-input-container {
+  &.mat-focused:not(.mat-form-field-invalid) {
+    .mat-form-field-label {
+      color: mat-color($accent);
+    }
+    .mat-input-wrapper .mat-form-field-underline .mat-form-field-ripple {
+      border-color: mat-color($accent);
+    }
+  }
+
+  &.mat-focused.mat-form-field-invalid {
+    .mat-form-field-label {
+      color: $red;
+    }
+    .mat-form-field-ripple {
+      border-color: $red;
+    }
+  }
+}
+.mat-input-element:disabled {
+  color: inherit;
+}
+
+.secret-type-radio-label {
+  color: #757575;
+}
+
+// Checkbox
+.mat-checkbox-inner-container .mat-checkbox-frame {
+  border-color: $input-border-color;
+}
+
+// Text
+.mat-hint {
+  .tc-green-600 {
+    color: $green !important;
+  }
+  .tc-red-600 {
+    color: $red !important;
+  }
+}
+
+// Overlay
+.mat-primary .mat-option.mat-selected:not(.mat-option-disabled) {
+  color: mat-color($accent);
+}
+
+// Toolbar
+.mat-toolbar {
+  background-color: #e0e0e0;
+  box-shadow: none;
+}
+// Main Fidelius toolbar override
+.mat-toolbar.mat-primary {
+  background: #2A4469;
+}
+
+textarea.secret-box{
+  &[disabled][disabled]{
+    background-color: #DCDBDC;
+  }
+}
+
+.mat-progress-bar-fill::after{
+  background-color: #2A4469;
+}
+
+// End light theme
+
+
+// ---------------------------
+// ---------------------------
+// Define alternate dark theme
+$primary2: mat-palette($mat-light-blue, 700);
+$accent2:  mat-palette($mat-teal, 200, 100, 900);
+$warn2:    mat-palette($mat-red, 600);
+
+$dark-theme: mat-dark-theme($primary2, $accent2, $warn2);
+
+$dark-background: map-get($dark-theme, background);
+$dark-foreground: map-get($dark-theme, foreground);
+
+$dark-main-background: #0b1421;
+$dark-overlay-background: #060a10;
+$dark-overlay-backdrop: rgba(0, 0, 0, 0.6);
+$dark-table-background-color: #111e31;
+$dark-input-background-color: rgba(0, 0, 0, 0.54);
+$dark-input-border-color: rgba(0, 0, 0, 0.27);
+$dark-secondary-text: rgba(255, 255, 255, 0.5);
+$dark-green: #54BC44;
+$dark-red: #DD505A;
+
+.dark-theme {
+  @include angular-material-theme($dark-theme);
+  @include covalent-theme($dark-theme);
+
+   //Search bar
+  .searchBar {
+    background-color: $dark-table-background-color;
+
+    > :first-child {
+      border-bottom: 10px solid $dark-main-background;
+    }
+  }
+
+  textarea.secret-box{
+    &[disabled][disabled]{
+      background-color: $dark-main-background;
+    }
+  }
+  .secret-type-radio-label {
+    color: #888f98;
+  }
+
+
+  // Buttons
+  // Flat buttons
+  button.mat-button {
+
+    // Secondary buttons
+    &.btn-secondary {
+      @include _mat-button-theme-color($dark-theme, 'border-color');
+    }
+  }
+  button.mat-raised-button {
+    @include _mat-button-theme-color($dark-theme, 'border-color');
+    @include _mat-button-theme-color($dark-theme, 'background-color');
+
+    &[disabled][disabled],
+    &.mat-accent[disabled] {
+      border-color: transparent;
+    }
+
+    $background: map-get($dark-theme, background);
+
+    // Update focus style
+    // Add hover effect same as focus style
+    &.cdk-focused,
+    &:not([disabled]):hover {
+      .mat-button-focus-overlay {
+        background-color: mat-color($background, focused-button);
+      }
+    }
+  }
+
+  // User "button" on main toolbar
+  .mat-button.user[disabled] {
+    color: mat-color($dark-foreground, text);
+  }
+
+  // Card
+  @include mat-card-theme($dark-theme);
+
+  .mat-card {
+    background: #0f1a29;
+
+    .loading {
+      background: $dark-table-background-color;
+      padding: 8vh 0 6vh 0; margin: 0;
+
+      .loading-divider {
+        border-bottom: 1px #304459 solid !important;
+      }
+    }
+  }
+  .mat-card {
+    .mat-card-title {
+      background-color: transparent;
+    }
+  }
+
+  // Data table
+  .mat-cell {
+    font-weight: 100;
+  }
+  mat-header-cell.mat-header-cell {
+    color: $dark-secondary-text;
+  }
+  .mat-row:hover {
+    background-color: mat-color($dark-background, hover);
+  }
+  .mat-paginator,
+  .mat-table {
+    background-color: transparent;
+  }
+
+  // Dialog
+  .mat-dialog-container {
+    background-color: $dark-overlay-background;
+    box-shadow: 0 11px 15px -7px rgba(2, 136, 209, 0.2),
+    0 24px 38px 3px rgba(2, 136, 209, 0.14),
+    0 9px 46px 8px rgba(2, 136, 209, 0.12);
+
+    // Primary button with accent color applied
+    .mat-accent:not(.btn-secondary) {
+      color: mat-color($foreground, text);
+    }
+  }
+  .td-dialog-message {
+    color: mat-color($dark-foreground, text);
+    font-weight: 100;
+  }
+
+  // Input fields
+  .mat-form-field-label {
+    color: $dark-secondary-text;
+  }
+  .mat-input-container:not(.mat-form-field-disabled) {
+    .mat-input-wrapper .mat-form-field-underline {
+      background-color: $dark-input-background-color;
+      border-color: $dark-input-border-color;
+      box-shadow: inset 2px 2px 2px rgba(0,0,0,0.1);
+
+    }
+    .mat-form-field-ripple {
+      background-color: $dark-input-background-color;
+      border-color: $dark-input-border-color;
+    }
+    &.mat-focused.mat-form-field-invalid {
+      .mat-form-field-label {
+        color: $dark-red;
+      }
+      .mat-form-field-ripple {
+        border-color: $dark-red;
+      }
+    }
+  }
+
+  .mat-focused:not(.mat-form-field-invalid) {
+    .mat-form-field-label {
+      color: mat-color($accent2);
+    }
+    .mat-input-wrapper .mat-form-field-underline .mat-form-field-ripple {
+      border-color: mat-color($accent2);
+    }
+  }
+  .mat-form-field,
+  .mat-input-element {
+    font-weight: 100;
+
+    // If field is disabled
+    &:disabled {
+      color: mat-color($dark-foreground, text);
+    }
+  }
+
+  // Checkbox
+  .mat-checkbox-inner-container .mat-checkbox-frame {
+    background-color: $dark-input-background-color;
+    border-color: $dark-input-border-color;
+  }
+  .mat-checkbox-label {
+    font-weight: 100;
+  }
+
+  // Text
+  .mat-hint {
+    .tc-green-600 {
+      color: $dark-green !important;
+    }
+    .tc-red-600 {
+      color: $dark-red !important;
+    }
+  }
+
+  // Overlay
+  .mat-menu-panel,
+  .mat-select-content,
+  .mat-select-panel-done-animating {
+    background: $dark-overlay-background;
+    box-shadow: 0 3px 1px -2px rgba(2, 136, 209, 0.2),
+    0 2px 2px 0 rgba(2, 136, 209, 0.14),
+    0 1px 5px 0 rgba(2, 136, 209, 0.12);
+  }
+  .mat-select-panel:not([class*=mat-elevation-z]) {
+    box-shadow: 0 5px 5px -3px rgba(2, 136, 209, 0.2),
+    0 8px 10px 1px rgba(2, 136, 209, 0.14),
+    0 3px 14px 2px rgba(2, 136, 209, 0.12);
+  }
+  .mat-primary .mat-option.mat-selected:not(.mat-option-disabled) {
+    color: mat-color($accent2);
+  }
+
+
+  // Sidenav
+  .mat-drawer-content {
+    background-color: $dark-main-background;
+  }
+  .mat-drawer {
+    background: $dark-table-background-color;
+  }
+  .mat-drawer-backdrop.mat-drawer-shown {
+    background: $dark-overlay-backdrop;
+  }
+
+  // Toolbar
+  .mat-toolbar {
+    background-color: $dark-main-background;
+    box-shadow: none;
+  }
+
+} // End dark-theme
+
+/* ------------------------------------------------------------------------------- */
+// Apply theme for this app
+
+// NGX Charts
+[ngx-charts-axis-label] text {
+  fill: mat-color($foreground, secondary-text);
+}
+.tick text {
+  fill: mat-color($foreground, disabled);
+}
+.gridline-path {
+  &.gridline-path-horizontal,
+  &.gridline-path-vertical {
+    stroke: rgba(black, 0.06);
+  }
+}
+.legend-title-text {
+  color: mat-color($foreground, secondary-text);
+}
+mat-card-title{
+  &:hover {
+    cursor: grab;
+    cursor: -moz-grab;
+    cursor: -webkit-grab;
+  }
+  &:active {
+    cursor: grabbing;
+    cursor: -moz-grabbing;
+    cursor: -webkit-grabbing;
+  }
+}

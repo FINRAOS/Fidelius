@@ -1,0 +1,45 @@
+<!--
+  ~ Copyright (c) 2019. Fidelius Contributors
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<div layout="column" layout-fill>
+  <div class="push-top-lg">
+    <fidelius-loading [condition]="loading"></fidelius-loading>
+    <div>
+      <mat-table #table [dataSource]="dataSource" matSort >
+        <ng-container matColumnDef="revision">
+          <mat-header-cell *matHeaderCellDef mat-sort-header fxFlex="20"> REVISION </mat-header-cell>
+          <mat-cell *matCellDef="let element" fxFlexOffset="20px" fxFlex="20">{{element.revision}}</mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="updatedBy">
+          <mat-header-cell *matHeaderCellDef mat-sort-header fxFlex="50"> UPDATED BY </mat-header-cell>
+          <mat-cell *matCellDef="let element" fxFlexOffset="-20px" fxFlex="50" >{{element.updatedBy ? element.updatedBy : 'N/A' }}</mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="updatedDate">
+          <mat-header-cell *matHeaderCellDef mat-sort-header class="updateDate"> UPDATED DATE </mat-header-cell>
+          <mat-cell *matCellDef="let element" class="updateDate">{{element.updatedDate ? (element.updatedDate | date:'short') : 'N/A'}}</mat-cell>
+        </ng-container>
+        <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+        <mat-row *matRowDef="let row; columns: displayedColumns;" ></mat-row>
+      </mat-table>
+      <mat-paginator #paginator
+                     [pageSize]="10"
+                     [pageSizeOptions]="[5, 10, 20]"
+                     [showFirstLastButtons]="true">
+      </mat-paginator>
+    </div>
+  </div>
+</div>

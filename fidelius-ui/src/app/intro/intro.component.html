@@ -1,0 +1,34 @@
+<!--
+  ~ Copyright (c) 2019. Fidelius Contributors
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<td-layout class="dark-theme" >
+  <mat-toolbar [@tdCollapse]="!buttonAnimate" class="bgc-light-blue-700">
+    <mat-icon svgIcon="assets:logo" class="mat-icon-logo"></mat-icon>
+  </mat-toolbar>
+  <div fxLayout.gt-sm="row" tdMediaToggle="gt-sm" [mediaClasses]="['push-sm']" class="main-container">
+    <div fxFlex.gt-sm="100">
+      <div style="max-width: 800px; margin: 0 auto; transform: translate(0%, 25vh);" >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 670 236"><path class="mainText" fill="none" d="M192.7 71.32v15.56c0 9.95.11 13.76.85 18.41h-22.79c.74-4.65.95-8.88.95-18.09V32.38a105.57 105.57 0 0 0-.85-15.45c4.35.21 7.32.31 15.48.31h30.64c9.33 0 12.83-.1 17.81-.74v20.11a143.47 143.47 0 0 0-17.7-.74H192.7v17.36h19.94a136.19 136.19 0 0 0 17-.75v19.58a139 139 0 0 0-17-.74zm50.36-54.08h21.53v15.88h-21.53zm-.31 23.46h22.16a104.42 104.42 0 0 0-.85 16v32.61a144 144 0 0 0 .85 16h-22.16a119.18 119.18 0 0 0 .84-16V56.7a114.32 114.32 0 0 0-.84-16zm82.91 64.55v-3.38a20.73 20.73 0 0 1 .1-2.33c-7.1 5.71-12.51 7.62-21.41 7.62-19.3 0-31-12.91-31-34.29 0-11 3.18-19.79 9.12-25.82 5.4-5.4 12.83-8.26 21.52-8.26s14.78 2.27 21.77 7.91c-.1-1.58-.1-2.54-.1-4v-8.84a116.79 116.79 0 0 0-.85-16.62h21.74a117.78 117.78 0 0 0-.85 16.62V88.7a124.39 124.39 0 0 0 .85 16.61zm-16.65-50.23c-9.22 0-15 6.88-15 18 0 6 1.69 10.9 4.87 14a14.73 14.73 0 0 0 10.29 4c9.44 0 16.33-7.83 16.33-18.31-.05-10.28-6.84-17.69-16.49-17.69zm113.13 23.92h-47.71c1.06 8.58 6 13.13 14.42 13.13a15.51 15.51 0 0 0 10.71-3.92 10.38 10.38 0 0 0 3.18-5.4l18.45 5.19c-2.44 5.5-4 7.94-7 10.9-6 5.93-14.53 9-25 9s-18.56-3-24.6-9c-6.26-6.35-9.65-15.35-9.65-25.82 0-21 13.47-34.82 33.72-34.82 16.54 0 28.09 9 31.81 24.76a78 78 0 0 1 1.59 13.87 20.27 20.27 0 0 0 .08 2.11zm-47.39-14.6H402c-1.49-6.78-6.05-10.37-13.36-10.37-7.53 0-12.09 3.38-13.89 10.37zm55.87-47.1h22.16a108.8 108.8 0 0 0-.84 16v56.07a127.66 127.66 0 0 0 .84 16h-22.16a106.18 106.18 0 0 0 .85-16V33.22c0-7.52-.21-11.96-.85-15.98zm33.61 0h21.53v15.88h-21.53zm-.31 23.46h22.16a104.42 104.42 0 0 0-.85 16v32.61a144 144 0 0 0 .85 16h-22.16a119.18 119.18 0 0 0 .84-16V56.7a114.32 114.32 0 0 0-.84-16zm78.14 0H564a118.6 118.6 0 0 0-.84 15.87v32.7a104.42 104.42 0 0 0 .84 15.88h-21.09v-4.55c0-.53 0-2.12.1-2.86-7 6.56-13 9.1-22 9.1-7.11 0-12.83-2-16.86-5.92-4.24-4.24-6-9.42-6-17.78V56.61a135 135 0 0 0-.94-15.91h22a120.51 120.51 0 0 0-.85 15.87v21.7c0 4.34.43 6.24 1.7 7.94a8.31 8.31 0 0 0 6.89 3c5.83 0 11.77-4.13 15.91-10.9v-21.7a129.3 129.3 0 0 0-.8-15.91zm30.64 45.29l21-2.32c1.06 5.5 4.67 7.93 11.77 7.93 6.36 0 10-1.8 10-5.08a4.34 4.34 0 0 0-2.34-3.81c-1.48-.84-2.86-1.27-8.69-2.43a126.31 126.31 0 0 1-15.69-3.81c-5.09-1.91-8.59-4.34-10.6-7.52a20 20 0 0 1-2.65-10.05c0-12.7 10.7-20.42 28.41-20.42 10.07 0 17.6 2.22 22.58 6.77 3.5 3.07 5.2 6.14 6.9 12.06l-20.47 2.23c-.53-4.34-3.18-6.25-8.9-6.25-5.52 0-8.91 1.8-8.91 4.55s2.23 3.92 12.72 6.25 13.68 3.17 17.39 5.08c6.85 3.42 10.14 8.61 10.14 16.23 0 5.61-1.91 10.69-5.41 14.07-5.09 5.08-13.78 7.73-25.13 7.73-13.35 0-22.79-3.6-27.88-10.58-2.12-2.92-3.18-5.51-4.24-10.59z"/><path class="shield" fill="none" d="M72.81 148.23a.43.43 0 0 1-.33 0Q.36 115.29 0 0q25.28 13.7 37.79 13.7T74.6 3.9q21.36 9.8 33.22 9.8T145.61 0q-.33 115.29-72.48 148.2a.4.4 0 0 1-.32.03z"/><path class="f" fill="none" d="M135.83 42.36a232.07 232.07 0 0 0 1.83-29.12q-22.5 11.21-34 11.21-11.36 0-29.42-7.8v-.14l-.16.07-.31-.14v.26q-20 8-32.22 8-12.4 0-33.58-11.45 2 93.32 64.4 124.38a.41.41 0 0 0 .46 0V86.04h50.91a129 129 0 0 0 7.72-21.18H72.8v-22.5z"/><text fill="none" class="subtext" font-weight="100" transform="matrix(1.5 0 0 1.5 276 132)" font-family="'Roboto', Gadget, sans-serif" font-size="28" y="12.24" x="28.198" stroke-width="0">Secrets Manager</text></svg>
+      </div>
+    </div>
+  </div>
+  <div fxLayout="row" fxLayoutAlign="center center" style="margin-top: 25vh;" [@tdFadeInOut]="buttonAnimate">
+    <div fxLayoutAlign="center">
+      <button mat-raised-button color="primary" (click)="go()" routerLink="/" >Get Started</button>
+    </div>
+  </div>
+</td-layout>

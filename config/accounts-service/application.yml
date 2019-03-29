@@ -1,0 +1,56 @@
+accounts:
+  -
+    accountId: ${AWS_ACCOUNT_NUMBER}
+    name: dev-account
+    sdlc: dev
+    alias: Dev
+    regions:
+      -
+        name: us-east-1
+      -
+        name: us-east-2
+  -
+    accountId: ${AWS_ACCOUNT_NUMBER}
+    name: int-account
+    sdlc: dev
+    alias: INT
+    regions:
+      -
+        name: us-east-1
+      -
+        name: us-east-2
+  -
+    accountId: ${AWS_ACCOUNT_NUMBER}
+    name: qa-account
+    sdlc: qa
+    alias: QA
+    regions:
+      -
+        name: us-east-1
+      -
+        name: us-east-2
+  -
+    accountId: ${AWS_ACCOUNT_NUMBER}
+    name: prod-account
+    sdlc: prod
+    alias: PROD
+    regions:
+      -
+        name: us-east-1
+      -
+        name: us-east-2
+      -
+        name: us-west-1
+  -
+    accountId: ${AWS_ACCOUNT_NUMBER}
+    name: tools-account
+    sdlc: prod
+    alias: TOOLS
+    regions:
+      -
+        name: us-east-1
+      -
+        name: us-east-2
+      -
+        name: us-west-1
+applications: testapp, secretapp, topsecretapp

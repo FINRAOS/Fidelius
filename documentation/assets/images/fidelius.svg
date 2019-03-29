@@ -1,0 +1,14 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 148.25 148.25">
+  <defs>
+    <style>
+      .cls-1{fill:#eee;}.cls-1,.cls-3{isolation:isolate;}.cls-2{fill:#3197d6;}.cls-3{fill:#fff;}
+    </style>
+  </defs>
+  <title>Fidelius</title>
+  <path id="Combined-Shape" class="cls-1"
+        d="M90.45,152.53a.43.43,0,0,1-.33,0Q18,119.59,17.64,4.3,42.92,18,55.43,18T92.24,8.2Q113.6,18,125.46,18T163.25,4.3q-.33,115.29-72.48,148.2A.4.4,0,0,1,90.45,152.53Z"
+        transform="translate(-17.64 -4.3)"/>
+  <path class="cls-2"
+        d="M153.47,46.66a232.07,232.07,0,0,0,1.83-29.12q-22.5,11.21-34,11.21-11.36,0-29.42-7.8v-.14l-.16.07-.31-.14V21q-20,8-32.22,8-12.4,0-33.58-11.45,2,93.32,64.4,124.38a.41.41,0,0,0,.46,0V90.34h50.91a129,129,0,0,0,7.72-21.18H90.44V46.66Z"
+        transform="translate(-17.64 -4.3)"/>
+</svg>

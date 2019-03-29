@@ -1,0 +1,126 @@
+<!--
+  ~ Copyright (c) 2019. Fidelius Contributors
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<td-layout [ngClass]="{'dark-theme':darkTheme === true, 'light-theme':darkTheme === false}" [@tdFadeInOut]="true">
+  <td-layout-nav [logo]="!isIEOrEdge?'assets:logo':''" >
+    <div td-toolbar-content fxFlex="95" [@tdFadeInOut]="user != undefined">
+      <div fxFill fxLayoutAlign="start center" >
+        <img src="/assets/icons/logo.png" class="logo" *ngIf="isIEOrEdge">
+        <span fxFlex></span>
+        <button mat-icon-button (click)="toggleTheme()">
+          <mat-icon matTooltip="Change Theme">format_color_fill</mat-icon>
+        </button>
+        <button mat-button disabled class="user">
+          <mat-icon class="push-right-sm">{{user?.role == 'OPS'? 'account_box': 'account_circle'}}</mat-icon>
+          {{user?.name}}
+        </button>
+      </div>
+    </div>
+    <mat-sidenav-container fullscreen [@.disabled]="isIEOrEdge">
+      <div fxFlexFill
+           fxLayoutAlign="center start"
+           layout-gt-sm="row"
+           class="main-container">
+        <div class="fidelius-content" fxLayout="column" fxFlex="0 1 1200px" >
+          <div>
+            <td-message label="Error!"
+                        sublabel="User Not Found"
+                        icon="error"
+                        class="bgc-red-800 tc-white-4"
+                        *ngIf="error"
+                        [@tdFadeInOut]="true">
+            </td-message>
+          </div>
+          <div fxFlexOffset="40px">
+            <mat-card class="search-bar" [ngClass]="!darkTheme ? 'search-bar-light' : ''"  [@tdCollapse]="error">
+              <mat-card-content *ngIf="!error" >
+                <div fxLayout="row"
+                     fxFlexFill
+                     class="search-bar"
+                     [@tdFadeInOut]="user?.memberships != undefined" >
+                    <fidelius-search
+                      fxFill
+                      [selected]="selected"
+                      [accounts]="accounts"
+                      [environments]="environments"
+                      [agsList]="user.memberships"
+                      [disableAnimations]="isIEOrEdge"
+                      *ngIf="user?.memberships">
+                    </fidelius-search>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+          <div fxFlexOffset="-16px">
+          <mat-card class="table-card" *ngIf="selected.account && selected.region && selected.application">
+              <mat-card-content>
+                <div>
+                  <fidelius-loading [condition]="loading"></fidelius-loading>
+                  <div [ngStyle]="!loading ? {'display':'block'} : {'display':'none'}">
+                    <mat-card-title class="pull-bottom pad-bottom-lg">
+                      <span class="text-sm">{{dataSource.filteredData.length}} Secrets found</span>
+                      <button mat-button
+                              class="push-left"
+                              color="accent"
+                              [disableRipple]="isIEOrEdge"
+                              (click)="openSideNav(null,'add', null)"
+                              *ngIf="authorizations.createCredential; else disabledAddCredential">
+                        <mat-icon>add</mat-icon>
+                        Add Secret
+                      </button>
+                      <ng-template #disabledAddCredential >
+                        <span matTooltip="Contact Ops" matTooltipPosition="above">
+                          <button mat-button class="push-left"
+                                  color="primary"
+                                  disabled>
+                            <mat-icon>add</mat-icon>
+                            Add Secret
+                          </button>
+                        </span>
+                      </ng-template>
+                    </mat-card-title>
+                    <fidelius-credentials-table
+                      [dataSource]="dataSource"
+                      [authorizations]="authorizations">
+                    </fidelius-credentials-table >
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+          <div class="tc-grey-500 mat-typography pad-lg"
+               [style.display]="loading || loaded || error? 'none':''">
+            <span fxLayoutAlign="center" >
+              <mat-icon matListAvatar class="fidelius-key push-bottom">vpn_key</mat-icon>
+            </span>
+            <h2 fxLayoutAlign="center">Select Account, Region, and {{APPLICATION_LIST_LABEL_NAME}} to get started</h2>
+          </div>
+        </div>
+      </div>
+      <mat-sidenav #sideNav
+                   class="sideNav"
+                   mode="over"
+                   align="end"
+                   opened="false"
+                   [disableClose]="isSideNavCloseDisabled"
+                   (close)="closeSideNav()">
+        <router-outlet ></router-outlet>
+      </mat-sidenav>
+    </mat-sidenav-container>
+  </td-layout-nav>
+</td-layout>
+

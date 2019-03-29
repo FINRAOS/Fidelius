@@ -1,0 +1,6 @@
+{
+  "validActiveDirectoryRegularExpression": "^[a-zA-Z0-9]{16,}$",
+  "validActiveDirectoryDescription": "Must contain no special characters.\nMust be greater than 16 characters."
+}
+
+

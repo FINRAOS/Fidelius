@@ -1,0 +1,169 @@
+<!--
+  ~ Copyright (c) 2019. Fidelius Contributors
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<div layout="column">
+  <div>
+    <mat-toolbar>
+      <span class="md-subhead">Add Secret</span>
+      <span fxFlex></span>
+    </mat-toolbar>
+    <form #addForm="ngForm">
+      <div class="add-credential-form pad push" layout-align="center start">
+        <mat-form-field flex>
+          <input matInput
+                 [placeholder]="APPLICATION_LIST_LABEL_NAME"
+                 #applicationElement
+                 #applicationControl="ngModel"
+                 name="application"
+                 [(ngModel)]="credential.application"
+                 disabled
+                 required>
+        </mat-form-field>
+        <mat-form-field  flex>
+          <input matInput
+                 placeholder="Account"
+                 #accountElement
+                 #accountControl="ngModel"
+                 name="account"
+                 [(ngModel)]="credential.account"
+                 disabled
+                 required>
+        </mat-form-field>
+        <mat-form-field flex>
+          <input matInput
+                 placeholder="Environment"
+                 #environmentElement
+                 #environmentControl="ngModel"
+                 name="environment"
+                 [(ngModel)]="credential.environment"
+                 pattern="[^\s]+"
+                 type="text"
+                 required>
+          <mat-hint align="end">
+            <span [hidden]="environmentControl.pristine || !environmentControl.errors?.required" class="tc-red-600">Required</span>
+            <span [hidden]="environmentControl.pristine || !environmentControl.errors?.pattern" class="tc-red-600">No Spaces</span><br>
+          </mat-hint>
+        </mat-form-field>
+        <mat-form-field flex>
+          <input matInput
+                 placeholder="Component"
+                 #credentialElement
+                 #credentialControl="ngModel"
+                 name="credential"
+                 [(ngModel)]="credential.component"
+                 pattern="[^\s]+"
+                 type="text">
+          <mat-hint align="end">
+            <span [hidden]="credentialControl.pristine || !credentialControl.errors?.pattern" class="tc-red-600">No Spaces</span><br>
+          </mat-hint>
+        </mat-form-field>
+        <mat-form-field  flex>
+          <input matInput
+                 placeholder="Key"
+                 #keyElement
+                 #keyControl="ngModel"
+                 name="key"
+                 [(ngModel)]="credential.shortKey"
+                 pattern="[^\s]+"
+                 type="text"
+                 required>
+          <mat-hint align="end">
+            <span [hidden]="keyControl.pristine || !keyControl.errors?.pattern" class="tc-red-600">No Spaces</span><br>
+            <span [hidden]="keyControl.pristine || !keyControl.errors?.required" class="tc-red-600">Required</span>
+          </mat-hint>
+        </mat-form-field>
+        <mat-form-field style="margin-bottom: 0px;">
+          <span [hidden]="!credential.shortKey">
+          <textarea matInput
+                    placeholder="Full Qualified Name"
+                    #longKeyElement
+                    name="longKey"
+                    [value]="getLongKey()"
+                    readonly
+                    disabled>
+          </textarea>
+        <mat-hint>
+          <span [hidden]="!isDuplicateCredential" class="tc-red-600">A credential of this name already exists!</span>
+        </mat-hint>
+        </span>
+        </mat-form-field>
+        <div class="push-bottom-sm">
+          <label class="push-xs push-left-none secret-type-radio-label">Secret Type</label>
+        </div>
+        <div class="push-bottom-md">
+          <mat-radio-group class="secret-radio-group"
+                           [(ngModel)]="secretType"
+                           layout="column"
+                           #secretRadioElement
+                           name="secretTypeRadio"
+                           required
+                           (change)="setPasswordPattern()">
+            <mat-radio-button *ngFor="let type of secretTypes"
+                              class="pad-xs"
+                              [value]="type">
+              {{type}}
+            </mat-radio-button>
+          </mat-radio-group>
+        </div>
+        <mat-form-field flex *ngIf="isInputField()">
+          <input matInput
+                 placeholder="Secret"
+                 #secretElement
+                 #secretControl="ngModel"
+                 name="secret"
+                 [(ngModel)]="credential.secret"
+                 [pattern]="passwordPattern"
+                 [type]="hideSecret ? 'password' : 'text'"
+                 (blur)="validateSecret()"
+                 (paste)="validateSecret()"
+                 required>
+          <mat-hint align="start">
+            <span [hidden]="(secretControl.pristine && credential.secret == '') || !secretControl?.errors?.pattern"
+                class="tc-red-600 activeDirectory">{{activeDirectory?.validActiveDirectoryDescription}}</span>
+          </mat-hint>
+          <mat-icon matSuffix (click)="hideSecret = !hideSecret">{{hideSecret ? 'visibility' : 'visibility_off'}}</mat-icon>
+        </mat-form-field>
+        <mat-form-field flex class="cred-secret-textarea" *ngIf="secretType && !isInputField()">
+          <textarea matInput
+                    placeholder="Secret"
+                    #secretElement
+                    #secretControl="ngModel"
+                    name="secret"
+                    [(ngModel)]="credential.secret"
+                    required
+          ></textarea>
+        </mat-form-field>
+      </div>
+    </form>
+    <fidelius-loading [condition]="sendingForm" message="Adding..."></fidelius-loading>
+    <div class="pad-lg">
+      <button mat-button
+              class="btn-secondary"
+              color="accent"
+              (click)="closeSideNav(false)"
+              [disabled]="sendingForm" >
+        Cancel
+      </button>
+      <button mat-raised-button
+              color="accent"
+              [disabled]="!addForm.valid || sendingForm"
+              (click)="addCredential()">
+        Add
+      </button>
+    </div>
+  </div>
+</div>

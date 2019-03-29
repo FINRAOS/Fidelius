@@ -1,0 +1,9 @@
+{
+  "name": "LastName, FirstName",
+  "role": "DEV",
+  "memberships": [
+    "APP",
+    "TEAM-1",
+    "TEAM-2"
+  ]
+}
