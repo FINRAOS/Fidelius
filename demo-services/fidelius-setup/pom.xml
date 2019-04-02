@@ -29,13 +29,15 @@
         <compiler.version>3.3</compiler.version>
         <failsafe.version>2.19.1</failsafe.version>
         <java.version>1.8</java.version>
+
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>org.finra.credstsh</groupId>
+            <groupId>org.finra.fidelius</groupId>
             <artifactId>fidelius-sdk</artifactId>
-            <version>1.0.2</version>
+            <version>1.0.0</version>
+            <!--TODO: Remove this once sdk is published-->
         </dependency>
     </dependencies>
 

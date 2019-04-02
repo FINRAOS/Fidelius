@@ -97,8 +97,6 @@
 			<artifactId>fidelius-sdk</artifactId>
 			<version>1.0.0</version>
 			<!--TODO: Remove this once sdk is published-->
-			<scope>system</scope>
-			<systemPath>${project.basedir}/../fidelius-sdk/target/fidelius-sdk-1.0.0.jar</systemPath>
 		</dependency>
 
 		<dependency>

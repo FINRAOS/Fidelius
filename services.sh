@@ -17,62 +17,6 @@ if [[ -z "${AWS_ACCOUNT_NUMBER}" ]]; then
     exit 1;
 fi
 
-pushd containers
-echo "$(tput setaf 6)"
-echo "-------------------------------------------------------"
-echo "|         Building base Fidelius containers           |"
-echo "-------------------------------------------------------"
-echo "$(tput sgr0)"
-docker-compose build
-popd
-pushd fidelius-sdk
-echo "$(tput setaf 6)"
-echo "-------------------------------------------------------"
-echo "|         Building Fidelius sdk                       |"
-echo "-------------------------------------------------------"
-echo "$(tput sgr0)"
-mvn clean install
-popd
-pushd demo-services/fake-account-service
-echo "$(tput setaf 6)"
-echo "-------------------------------------------------------"
-echo "|         Building Fidelius demo services             |"
-echo "-------------------------------------------------------"
-echo "$(tput sgr0)"
-mvn clean install
-popd
-pushd demo-services/fidelius-setup
-echo "$(tput setaf 6)"
-echo "-------------------------------------------------------"
-echo "|         Building Fidelius setup container           |"
-echo "-------------------------------------------------------"
-echo "$(tput sgr0)"
-mvn clean install
-popd
-pushd fidelius-service
-echo "$(tput setaf 6)"
-echo "-------------------------------------------------------"
-echo "|         Building Fidelius backend service           |"
-echo "-------------------------------------------------------"
-echo "$(tput sgr0)"
-mvn clean install
-popd
-pushd fidelius-ui
-echo "$(tput setaf 6)"
-echo "-------------------------------------------------------"
-echo "|         Building Fidelius UI                        |"
-echo "-------------------------------------------------------"
-echo "$(tput sgr0)"
-npm install
-npm run build
-popd
-echo "$(tput setaf 6)"
-echo "-------------------------------------------------------"
-echo "|         Building Fidelius containers                |"
-echo "-------------------------------------------------------"
-echo "$(tput sgr0)"
-docker-compose -f setup-docker-compose.yml build
-docker-compose -f local-docker-compose.yml build
 echo "$(tput setaf 6)"
 echo "-------------------------------------------------------"
 echo "|              Starting Fidelius Setup                |"
