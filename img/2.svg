@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="122px" height="122px" viewBox="0 0 122 122" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 53 (72520) - https://sketchapp.com -->
+    <title>Figure/Fidelius/2</title>
+    <desc>Created with Sketch.</desc>
+    <g id="Features" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Features---Fidelius" transform="translate(-249.000000, -395.000000)">
+            <g id="Overview" transform="translate(143.000000, 110.000000)">
+                <g id="Feature-2" transform="translate(107.000000, 279.000000)">
+                    <g id="Figure/Fidelius/2" transform="translate(0.000000, 7.000000)">
+                        <rect id="Rectangle" stroke="#CCCCCC" stroke-width="2" x="0" y="0" width="120" height="120"></rect>
+                        <rect id="Rectangle" fill="#333333" x="10" y="58" width="100" height="8"></rect>
+                        <rect id="Rectangle" fill="#333333" x="10" y="38" width="100" height="8"></rect>
+                        <rect id="Rectangle" fill="#333333" x="10" y="78" width="100" height="8"></rect>
+                        <rect id="Rectangle" fill="#333333" x="10" y="98" width="100" height="8"></rect>
+                        <circle id="Oval" stroke="#FFFFFF" stroke-width="2" cx="34" cy="62" r="8"></circle>
+                        <circle id="Oval" stroke="#FFFFFF" stroke-width="2" cx="90" cy="82" r="8"></circle>
+                        <circle id="Oval" stroke="#FFFFFF" stroke-width="2" cx="57" cy="102" r="8"></circle>
+                        <path d="M43.5,62 L97.5,62" id="Line-4" stroke="#FFFFFF" stroke-width="2" stroke-linecap="square"></path>
+                        <path d="M97.5,62 C104.408775,62 107.863162,65.3333333 107.863162,72 C107.863162,78.6666667 104.575441,82 98,82" id="Path-13" stroke="#FFFFFF" stroke-width="2"></path>
+                        <path d="M80.5,82 L48,82" id="Line-2" stroke="#FFFFFF" stroke-width="2" stroke-linecap="square"></path>
+                        <path d="M48,82 C40,82 36,85.3333333 36,92 C36,98.6666667 40,102 48,102" id="Path-14" stroke="#FFFFFF" stroke-width="2"></path>
+                        <g id="Logo/Fidelius-(blue)" transform="translate(90.000000, 10.000000)">
+                            <image id="Asset-58" x="0" y="0" width="20" height="20" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAABGdBTUEAALGOfPtRkwAABJNJREFUWAnFWM9vG0UUfus4iSU7sktM7KKibHHbNAWUpkLACXzhFiVI3OBALojeCJx6q3PjhMKNY/oX4EIviMvmjipHOUCQKLFKG5cWNSa269jeXd43nlntDzveJA550vi9efPmvc9v3szsrrb4+Y87RLR897sFg/mZ0K1v7usceI1bSWNAtkSxwbxwFGBLN+/pmJPNJN89l4xXWF77+qsbReahSAIpsPGncsKqG5ByUmYBaA0GV1JKxRnEdZbz3Ja5zXGjzFSy/FIqPg2ZCfMBqsjgDOYeYhApVnwo25JnkKgLqFarUaWyS7p+kaLRqNumyp2SS/G+S6Z6vUE7DyvUaLywUgmKvPP2PINLu00gb3Lbk0qduQIuVNu/PxB85spr4KsieqfToUeP/qInTyo0OZmmdPplbsJxko08IP7dr9PTZ8+puv+CTGtEOLNtW3u8+5S+v/sTTSTiBOe6/iqlJ89hXGRRGMqfffbxZ/khbW39Rvu1Or114001vCcAxWIxoQAwgEIDJRIJkTHTjpFFI2TbESKNm6AuGNlxGAL8cn9LNChfOT/ljEF49s9zarXaHt3Y+JjqlwCozIA8aVSjWEpQLJ6hCJZSUyPh+ePdvwcaj485gAh/d2fgjFM2mJhIOBFU/v3F7Bj8HwLqDoRdCUAGOqiXs6LRUVHKIjwksSV9292DzTQPuIa6he8ZkJ2R6Lh987NPjlFhHm8b6CFD4pyJx88uQxKWSIwDKJGYkPogs8xWUDl8jUhMhK8HIKseWkO2NfzwQY8GVGqXGTgc1QHptzU7Tb/qNPoiQ6q8DY6wlEymqNnsntL+iDZnSXNOae+oZbbph3s/e5Uhe4sLH8Byk7e8qCE3IHGHqWvD78/mOtL67DQGK+4y/5xB/Us5XZkYShBLJh8zqrhQ+21/bP1h0xvXriiXhhJUDaFfxA9u+150GjttamoSoaruh7oAoGz2fC88NGxA12YvUyQiwotEqKCqhoiXrchPg+VUKjWN3dZseneWbXUITYs4U5QPFLvNjxlHOqnn515X83sDkqPrzG9PT1+k7e1f1QSHY/tHx4InemRklBYXPM9xzpwBQtm9XLB1Lxn6a/jJZrM9zyRr+IUt4iGmIg8geWrfwSCy5KchH5B4Xl/3x/AAkoMrzKvIEteTxx41NMTiLqjD0B0kAEhmSaQyl7vsthVyp10P6I6hQO0Elgt+AoCgZFAFZpu4cHO5S1A5ZLYbjnwCYbnf3J6ApLGYdOECv850X4mEWizbyS7bbzk7howRYH0BcZZKbP0lZszMzHoecU+wbLhEVwIoXIq+gGDDoLDOd3C/zc3NO6A6rZo4JF1+wojYVflBhocCwmQGtcwsAKp9AP+hSYDptav8HgYCwgQ/qEwmS8iSFa6Wyuwiz2BQAgMpFCB4kaBWsXxXr86KujJbe/x6fejj7SZPvR4WDOJo/KEAPDTxBZxn4yK3JL4F/PFghxoHZH780Xv+l33spkMLuFfQIwOCEwaVYlbg9gU3//ehDVatHCUr8KHoWIDUZAams1zgD1Z5/mAFNa6DdQjHpf8AJIyDBSeFNp0AAAAASUVORK5CYII="></image>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

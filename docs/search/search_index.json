@@ -1,0 +1,504 @@
+{
+    "docs": [
+        {
+            "location": "/", 
+            "text": "Fidelius AWS Secrets Manager\n\n\n\n\n\n\nOverview\n\n\nFidelius Secrets Manager is an online application used for securely storing and accessing secrets using AWS DynamoDB\ntables. Fidelius aims to provide organizations with an easy-to-use, secure, and organized way to create, view, modify,\ncollections of encrypted secrets as well as provide a system for managing user and application access to those secrets.\n\n\nFidelius uses configurable LDAP through Open Directory or Active Directory to set permissions for users to access secrets.\nFidelius provides an \nangular application\n, a \nJava SDK package\n, and a backend service to set and retrieve secrets across\nmultiple environments.\n\n\nQuick Start\n\n\nCheck out \nQuickStart\n to get started!", 
+            "title": "Overview"
+        }, 
+        {
+            "location": "/#fidelius-aws-secrets-manager", 
+            "text": "", 
+            "title": "Fidelius AWS Secrets Manager"
+        }, 
+        {
+            "location": "/#overview", 
+            "text": "Fidelius Secrets Manager is an online application used for securely storing and accessing secrets using AWS DynamoDB\ntables. Fidelius aims to provide organizations with an easy-to-use, secure, and organized way to create, view, modify,\ncollections of encrypted secrets as well as provide a system for managing user and application access to those secrets.  Fidelius uses configurable LDAP through Open Directory or Active Directory to set permissions for users to access secrets.\nFidelius provides an  angular application , a  Java SDK package , and a backend service to set and retrieve secrets across\nmultiple environments.", 
+            "title": "Overview"
+        }, 
+        {
+            "location": "/#quick-start", 
+            "text": "Check out  QuickStart  to get started!", 
+            "title": "Quick Start"
+        }, 
+        {
+            "location": "/QuickStart/", 
+            "text": "Quick Start\n\n\nFidelius includes a simple way to get Fidelius running locally to get you started.\n\n\nBefore you start you need to make sure the right permissions are set in order for the script to create the resources\nrequired to get Fidelius running locally.  The script is able to \n\n\n\n\nCreate a DynamoDb table with the proper format to store secrets\n\n\nBuild the required docker containers\n\n\nStart Fidelius locally with some services mocked talking to your DynamoDb table in order for you to be allowed to \nexperience all of Fidelius features.\n\n\n\n\nDemo Features\n\n\n\n\nLogin as a Dev user\n\n\nLogin as an Ops user  \n\n\nLogin as a Master user\n\n\nCreate secrets\n\n\nView secrets\n\n\nUpdate secrets\n\n\nDelete secrets\n\n\n\n\nPrerequisites\n\n\nFidelius requires the following tools to be installed and on your $PATH variable:\n\n\n\n\nJava 8+\n\n\nMaven 3+\n\n\nNPM 3+\n\n\nDocker\n\n\n\n\nStep 1 - Create a KMS key\n\n\nCreate a KMS key with an alias \ncredstash\n in AWS KMS.  Reference can be found \nhere\n\n\nStep 2 - Create Assume Role\n\n\nCreate a AWS role that your role can assume.  This role should be called \nCross_Account_Fidelius\n.  This can be changed\nin the future.  The role needs to have this IAM permissions.  \n\n\n{\n\n    \nVersion\n:\n \n2012-10-17\n,\n\n    \nStatement\n:\n \n[\n\n        \n{\n\n            \nAction\n:\n \n[\n\n                \ndynamodb:CreateTable\n,\n\n                \ndynamodb:DescribeTable\n\n            \n],\n\n            \nEffect\n:\n \nAllow\n,\n\n            \nResource\n:\n \narn:aws:dynamodb:\nREGION\n:\nACCOUNT NUMBER\n:table/credential-store\n\n        \n},\n\n        \n{\n\n            \nAction\n:\n \n[\n\n                \ndynamodb:ListTables\n\n            \n],\n\n            \nEffect\n:\n \nAllow\n,\n\n            \nResource\n:\n \n*\n\n        \n}\n\n    \n]\n\n\n}\n\n\n\n\nStep 3 - Add KMS permissions\n\n\nAdd KMS permissions to \nCross_Account_Fidelius\n\n\n{\n\n  \nVersion\n:\n \n2012-10-17\n,\n\n  \nStatement\n:\n \n[\n\n    \n{\n\n      \nAction\n:\n \n[\n\n        \nkms:Decrypt\n\n      \n],\n\n      \nEffect\n:\n \nAllow\n,\n\n      \nResource\n:\n \narn:aws:kms:us-east-1:AWSACCOUNTID:key/credstash\n\n    \n},\n\n    \n{\n\n      \nAction\n:\n \n[\n\n        \ndynamodb:GetItem\n,\n\n        \ndynamodb:Query\n,\n\n        \ndynamodb:Scan\n\n      \n],\n\n      \nEffect\n:\n \nAllow\n,\n\n      \nResource\n:\n \narn:aws:dynamodb:us-east-1:AWSACCOUNTID:table/credential-store\n\n    \n}\n\n  \n]\n\n\n}\n\n\n\n\nStep 4 - Grant Assume Role\n\n\nGrant permission for your user role to assume into \nCross_Account_Fidelius\n.\n\n{\n\n    \nVersion\n:\n \n2012-10-17\n,\n\n    \nStatement\n:\n \n[\n\n        \n{\n\n            \nSid\n:\n \n0\n,\n\n            \nEffect\n:\n \nAllow\n,\n\n            \nAction\n:\n \nsts:AssumeRole\n,\n\n            \nResource\n:\n \narn:aws:iam::AWSACCOUNTID:role/Cross_Account_Fidelius\n\n        \n}\n\n    \n]\n\n\n}\n\n\n\n\nStep 5 - Update Trust Relationship\n\n\nAdd your user role to Trust Relationship on \nCross_Account_fidelius\n \n\n \narn:aws:iam::AWSACCOUNTID:role/YOUR_USER_ROLE\n\n\n\n\nStep 6 - Set Environment Variables\n\n\nSet environment variables\n\n\nIf you need a proxy, set environment variable \nhttp_proxy\n\n\n    \nexport\n \nhttp_proxy\n=\nproxy.com:80\n\n\n\nSet the location of your \nAWS_DIRECTORY\n that contains your credentials\n\n    \nexport\n \nAWS_DIRECTORY\n=\n~/.aws\n\n\n\nSet your \nAWS_ACCOUNT_NUMBER\n that will be used to create the resources needed for Fidelius to launch\n\n    \nexport\n \nAWS_ACCOUNT_NUMBER\n=\n12345678910\n\n\n\n\nStep 7 - Run Start Script\n\n\nWindows 10 users will have to manually build the code and run the containers.  You can follow the steps \n\n7A\n - \n7H\n.\n\n\nMac or Linux users can run the following script that will build all the Fidelius code/containers and bring\nFidelius up locally. You don't have to manually run steps 7A-7H, since the script will do this for you.\n\n\nRefresh your AWS tokens if you need to, otherwise run the start script.\n\nbash start.sh\n\n\n\nYou should see the following screens in this order: \n\n\n-------------------------------------------------------\n\n|\n         Building base Fidelius containers           \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n         Building Fidelius demo services             \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n         Building Fidelius setup container           \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n         Building Fidelius backend service           \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n         Building Fidelius UI                        \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n         Building Fidelius containers                \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n          Starting Fidelius Setup                     \n|\n\n-------------------------------------------------------\n.\n.\n.\n-------------------------------------------------------\n\n|\n          Starting Fidelius Local Environment         \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n              Fidelius User Endpoints                \n|\n\n\n|\n                                                     \n|\n\n\n|\n         DEV user -      https://localhost:443       \n|\n\n\n|\n         OPS user -      https://localhost:444       \n|\n\n\n|\n         MASTER user -   https://localhost:445       \n|\n\n\n|\n                                                     \n|\n\n-------------------------------------------------------\n\n\n\n\n7A. Build Containers\n\n\ncd containers\n\n\nrun docker-compose build\n\n\n7B. Build Fidelius demo services\n\n\ncd demo-services/fake-account-service\n\n\nrun mvn clean install\n\n\n7C. Build Fidelius setup container\n\n\ncd demo-services/fidelius-setup\n\n\nrun mvn clean install  \n\n\n7D. Build Fidelius backend service\n\n\ncd fidelius-service\n\n\nrun mvn clean install\n\n\n7E. Build Fidelius UI\n\n\ncd fidelius-ui\n\n\nrun npm install\n\n\nnpm run build\n\n\n7F. Build Fidelius containers\n\n\nrun docker-compose -f setup-docker-compose.yml build\n\n\nrun docker-compose -f local-docker-compose.yml build\n\n\n7G. Start Fidelius Setup\n\n\nrun docker-compose -f setup-docker-compose.yml up\n\n\nWait for process to complete\n\n\nrun docker-compose -f local-docker-compose.yml up\n\n\nStep 8 - Navigate to Fidelius\n\n\nNavigate to the links above to experience Fidelius Secrets Manager.  When you are done you can simply \nrun the stop script.  \n\n\nFidelius User Endpoints\n\n\n\n\n\n\n\n\nROLE\n\n\nURL\n\n\n\n\n\n\n\n\n\n\nDev\n\n\nhttps://localhost:443\n\n\n\n\n\n\nOps\n\n\nhttps://localhost:444\n\n\n\n\n\n\nMaster\n\n\nhttps://localhost:445\n\n\n\n\n\n\n\n\nNext Steps\n\n\nAfter having Fidelius running locally with default configurations, you might want to configure the steps so that you\ncan run or deploy Fidelius for your organization.\n\n\nThe application configurations can be found at \nConfiguration", 
+            "title": "Quick Start"
+        }, 
+        {
+            "location": "/QuickStart/#quick-start", 
+            "text": "Fidelius includes a simple way to get Fidelius running locally to get you started.  Before you start you need to make sure the right permissions are set in order for the script to create the resources\nrequired to get Fidelius running locally.  The script is able to    Create a DynamoDb table with the proper format to store secrets  Build the required docker containers  Start Fidelius locally with some services mocked talking to your DynamoDb table in order for you to be allowed to \nexperience all of Fidelius features.   Demo Features   Login as a Dev user  Login as an Ops user    Login as a Master user  Create secrets  View secrets  Update secrets  Delete secrets", 
+            "title": "Quick Start"
+        }, 
+        {
+            "location": "/QuickStart/#prerequisites", 
+            "text": "Fidelius requires the following tools to be installed and on your $PATH variable:   Java 8+  Maven 3+  NPM 3+  Docker", 
+            "title": "Prerequisites"
+        }, 
+        {
+            "location": "/QuickStart/#step-1-create-a-kms-key", 
+            "text": "Create a KMS key with an alias  credstash  in AWS KMS.  Reference can be found  here", 
+            "title": "Step 1 - Create a KMS key"
+        }, 
+        {
+            "location": "/QuickStart/#step-2-create-assume-role", 
+            "text": "Create a AWS role that your role can assume.  This role should be called  Cross_Account_Fidelius .  This can be changed\nin the future.  The role needs to have this IAM permissions.    { \n     Version :   2012-10-17 , \n     Statement :   [ \n         { \n             Action :   [ \n                 dynamodb:CreateTable , \n                 dynamodb:DescribeTable \n             ], \n             Effect :   Allow , \n             Resource :   arn:aws:dynamodb: REGION : ACCOUNT NUMBER :table/credential-store \n         }, \n         { \n             Action :   [ \n                 dynamodb:ListTables \n             ], \n             Effect :   Allow , \n             Resource :   * \n         } \n     ]  }", 
+            "title": "Step 2 - Create Assume Role"
+        }, 
+        {
+            "location": "/QuickStart/#step-3-add-kms-permissions", 
+            "text": "Add KMS permissions to  Cross_Account_Fidelius  { \n   Version :   2012-10-17 , \n   Statement :   [ \n     { \n       Action :   [ \n         kms:Decrypt \n       ], \n       Effect :   Allow , \n       Resource :   arn:aws:kms:us-east-1:AWSACCOUNTID:key/credstash \n     }, \n     { \n       Action :   [ \n         dynamodb:GetItem , \n         dynamodb:Query , \n         dynamodb:Scan \n       ], \n       Effect :   Allow , \n       Resource :   arn:aws:dynamodb:us-east-1:AWSACCOUNTID:table/credential-store \n     } \n   ]  }", 
+            "title": "Step 3 - Add KMS permissions"
+        }, 
+        {
+            "location": "/QuickStart/#step-4-grant-assume-role", 
+            "text": "Grant permission for your user role to assume into  Cross_Account_Fidelius . { \n     Version :   2012-10-17 , \n     Statement :   [ \n         { \n             Sid :   0 , \n             Effect :   Allow , \n             Action :   sts:AssumeRole , \n             Resource :   arn:aws:iam::AWSACCOUNTID:role/Cross_Account_Fidelius \n         } \n     ]  }", 
+            "title": "Step 4 - Grant Assume Role"
+        }, 
+        {
+            "location": "/QuickStart/#step-5-update-trust-relationship", 
+            "text": "Add your user role to Trust Relationship on  Cross_Account_fidelius     arn:aws:iam::AWSACCOUNTID:role/YOUR_USER_ROLE", 
+            "title": "Step 5 - Update Trust Relationship"
+        }, 
+        {
+            "location": "/QuickStart/#step-6-set-environment-variables", 
+            "text": "Set environment variables  If you need a proxy, set environment variable  http_proxy       export   http_proxy = proxy.com:80  Set the location of your  AWS_DIRECTORY  that contains your credentials      export   AWS_DIRECTORY = ~/.aws  Set your  AWS_ACCOUNT_NUMBER  that will be used to create the resources needed for Fidelius to launch      export   AWS_ACCOUNT_NUMBER = 12345678910", 
+            "title": "Step 6 - Set Environment Variables"
+        }, 
+        {
+            "location": "/QuickStart/#step-7-run-start-script", 
+            "text": "Windows 10 users will have to manually build the code and run the containers.  You can follow the steps  7A  -  7H .  Mac or Linux users can run the following script that will build all the Fidelius code/containers and bring\nFidelius up locally. You don't have to manually run steps 7A-7H, since the script will do this for you.  Refresh your AWS tokens if you need to, otherwise run the start script. bash start.sh  You should see the following screens in this order:   ------------------------------------------------------- |          Building base Fidelius containers            | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |          Building Fidelius demo services              | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |          Building Fidelius setup container            | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |          Building Fidelius backend service            | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |          Building Fidelius UI                         | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |          Building Fidelius containers                 | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |           Starting Fidelius Setup                      | \n-------------------------------------------------------\n.\n.\n.\n------------------------------------------------------- |           Starting Fidelius Local Environment          | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |               Fidelius User Endpoints                 |  |                                                       |  |          DEV user -      https://localhost:443        |  |          OPS user -      https://localhost:444        |  |          MASTER user -   https://localhost:445        |  |                                                       | \n-------------------------------------------------------", 
+            "title": "Step 7 - Run Start Script"
+        }, 
+        {
+            "location": "/QuickStart/#7a-build-containers", 
+            "text": "cd containers  run docker-compose build", 
+            "title": "7A. Build Containers"
+        }, 
+        {
+            "location": "/QuickStart/#7b-build-fidelius-demo-services", 
+            "text": "cd demo-services/fake-account-service  run mvn clean install", 
+            "title": "7B. Build Fidelius demo services"
+        }, 
+        {
+            "location": "/QuickStart/#7c-build-fidelius-setup-container", 
+            "text": "cd demo-services/fidelius-setup  run mvn clean install", 
+            "title": "7C. Build Fidelius setup container"
+        }, 
+        {
+            "location": "/QuickStart/#7d-build-fidelius-backend-service", 
+            "text": "cd fidelius-service  run mvn clean install", 
+            "title": "7D. Build Fidelius backend service"
+        }, 
+        {
+            "location": "/QuickStart/#7e-build-fidelius-ui", 
+            "text": "cd fidelius-ui  run npm install  npm run build", 
+            "title": "7E. Build Fidelius UI"
+        }, 
+        {
+            "location": "/QuickStart/#7f-build-fidelius-containers", 
+            "text": "run docker-compose -f setup-docker-compose.yml build  run docker-compose -f local-docker-compose.yml build", 
+            "title": "7F. Build Fidelius containers"
+        }, 
+        {
+            "location": "/QuickStart/#7g-start-fidelius-setup", 
+            "text": "run docker-compose -f setup-docker-compose.yml up  Wait for process to complete  run docker-compose -f local-docker-compose.yml up", 
+            "title": "7G. Start Fidelius Setup"
+        }, 
+        {
+            "location": "/QuickStart/#step-8-navigate-to-fidelius", 
+            "text": "Navigate to the links above to experience Fidelius Secrets Manager.  When you are done you can simply \nrun the stop script.    Fidelius User Endpoints     ROLE  URL      Dev  https://localhost:443    Ops  https://localhost:444    Master  https://localhost:445", 
+            "title": "Step 8 - Navigate to Fidelius"
+        }, 
+        {
+            "location": "/QuickStart/#next-steps", 
+            "text": "After having Fidelius running locally with default configurations, you might want to configure the steps so that you\ncan run or deploy Fidelius for your organization.  The application configurations can be found at  Configuration", 
+            "title": "Next Steps"
+        }, 
+        {
+            "location": "/prequisites/configuration/", 
+            "text": "Configuration\n\n\nOverview\n\n\nFidelius requires some configuration for it to run in your environment, see below for all of the supported configuration parameters\n\n\nAuthorization\n\n\nCurrently Fidelius only supports authorization through LDAP, the application expects authentication to be done via SSO, and looks for the username in a header.\n\n\n\n\n\n\n\n\nProperty\n\n\nDescription\n\n\nType\n\n\n\n\n\n\n\n\n\n\nspring.ldap.contextSource.url\n\n\nThe Endpoint Fidelius calls to fetch the account data for all of your AWS accounts.\n\n\nstring\n\n\n\n\n\n\nspring.ldap.contextSource.uri\n\n\nThe URI where Fidelius can call your account Info service.\n\n\nstring\n\n\n\n\n\n\nspring.ldap.contextSource.userDn\n\n\nThe DN for the user that gatekeeper connects as to query ldap (e.g. cn=admin,dc=example,dc=org )\n\n\nstring\n\n\n\n\n\n\naws.proxy.host\n\n\n(Optional) The Proxy Host. If you are not behind a proxy you can ignore this\n\n\nstring\n\n\n\n\n\n\naws.proxy.port\n\n\n(Optional) The Proxy Port. If you are not behind a proxy you can ignore this\n\n\nstring\n\n\n\n\n\n\nspring.ldap.contextSource.base\n\n\nThe base that LDAP calls will be made off of (e.g. dc=example,dc=org)\n\n\nstring\n\n\n\n\n\n\nspring.ldap.contextSource.password\n\n\nThe password to the ldap user\n\n\nstring\n\n\n\n\n\n\nfidelius.auth.userIdHeader\n\n\nThe header in which Fidelius looks to extract the authenticated user\n\n\nstring\n\n\n\n\n\n\nfidelius.auth.masterGroupsPattern\n\n\nA regular expression that is used to extract master group names from the LDAP results. The regular expression must have exactly one capture ( e.g developer_([A-Za-z0-9]+)_dev) pattern\n\n\nstring\n\n\n\n\n\n\nfidelius.auth.opsGroupsPattern\n\n\nA regular expression that is used to extract ops group names from the LDAP results. The regular expression must have exactly one capture ( e.g developer_([A-Za-z0-9]+)_dev) pattern\n\n\nstring\n\n\n\n\n\n\nfidelius.auth.devGroupsPattern\n\n\nA regular expression that is used to extract dev group names from the LDAP results. The regular expression must have exactly one capture ( e.g developer_([A-Za-z0-9]+)_dev) pattern\n\n\nstring\n\n\n\n\n\n\nfidelius.auth.ldap.IsActiveDirectory\n\n\nWhether your LDAP server is Microsoft Active Directory or not (Nested groups are not supported with Non-Active Directory LDAP servers)\n\n\nboolean\n\n\n\n\n\n\nfidelius.auth.ldap.objectClass\n\n\nThe Object class to look for users with (ex. posixAccount, person, user)\n\n\nstring\n\n\n\n\n\n\nfidelius.auth.ldap.usersIdAttribute\n\n\nThe uid\n\n\nstring\n\n\n\n\n\n\nfidelius.auth.ldap.usersNameAttribute\n\n\nThe name\n\n\nstring\n\n\n\n\n\n\nfidelius.auth.ldap.usersEmailAttribute\n\n\nThe email\n\n\nstring\n\n\n\n\n\n\nfidelius.auth.ldap.usersDnAttribute\n\n\nThe DN for the user that Fidelius connects as to query ldap (e.g. cn=admin,dc=example,dc=org )\n\n\nstring\n\n\n\n\n\n\nfidelius.auth.ldap.pattern\n\n\nA regular expression that is used to extract group names from the LDAP results. The regular expression must have exactly one capture ( e.g developer_([A-Za-z0-9]+)_dev) pattern\n\n\nstring\n\n\n\n\n\n\nfidelius.auth.ldap.groupsBase\n\n\nThe base where your groups are stored on your organization's LDAP server (e.g. ou=groups)\n\n\nstring\n\n\n\n\n\n\nfidelius.auth.ldap.server\n\n\nThe domain of the LDAP server that gatekeeper should connect to\n\n\nstring\n\n\n\n\n\n\nfidelius.auth.ldap.usersBase\n\n\nThe base in which the Users are stored on the LDAP Server (e.g. ou=Users,dc=example,dc=org)\n\n\nstring\n\n\n\n\n\n\nfidelius.auth.ldap.base\n\n\nThe base that LDAP calls will be made off of (e.g. dc=example,dc=org)\n\n\nstring\n\n\n\n\n\n\nfidelius.auth.ldap.usersCnAttribute\n\n\nThe cn\n\n\nstring\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nApplication\n\n\n\n\n\n\n\n\nProperty\n\n\nDescription\n\n\nType\n\n\n\n\n\n\n\n\n\n\nfidelius.membership-server-url\n\n\nThe endpoint of the service Fidelius uses to fetch the Ops/Master memberships\n\n\nstring\n\n\n\n\n\n\nfidelius.membership-server-uri\n\n\nThe URI Fidelius can use to call the membership service for OPS/Master memberships\n\n\nstring\n\n\n\n\n\n\nfidelius.dynamoTable\n\n\nName of DynamoDB table to be used to store secrets.\n\n\nstring\n\n\n\n\n\n\nfidelius.kmsKey\n\n\nKMS key used to encrypt/decrypt secrets.\n\n\nstring\n\n\n\n\n\n\nfidelius.validActiveDirectoryRegularExpression\n\n\nRegular Expression used to validate secrets marked labeled Active Directory.\n\n\nstring\n\n\n\n\n\n\nfidelius.validActiveDirectoryDescription\n\n\nDescription of Regular Expression to guide users to enter valid secret\n\n\nstring\n\n\n\n\n\n\n\n\nAWS\n\n\n\n\n\n\n\n\nProperty\n\n\nDescription\n\n\nType\n\n\n\n\n\n\n\n\n\n\nfidelius.account-server-url\n\n\nThe Endpoint Fidelius calls to fetch the account data for all of your AWS accounts.\n\n\nstring\n\n\n\n\n\n\nfidelius.account-server-uri\n\n\nThe URI where Fidelius can call your account Info service.\n\n\nstring\n\n\n\n\n\n\naws.proxy.host\n\n\n(Optional) The Proxy Host. If you are not behind a proxy you can ignore this\n\n\nstring\n\n\n\n\n\n\naws.proxy.port\n\n\n(Optional) The Proxy Port. If you are not behind a proxy you can ignore this\n\n\nstring\n\n\n\n\n\n\nfidelius.assumeRole\n\n\nThe AWS IAM role that Fidelius will assume to interact with AWS (e.g. Xacnt_APP_Fidelius)\n\n\nstring", 
+            "title": "Overview"
+        }, 
+        {
+            "location": "/prequisites/configuration/#configuration", 
+            "text": "", 
+            "title": "Configuration"
+        }, 
+        {
+            "location": "/prequisites/configuration/#overview", 
+            "text": "Fidelius requires some configuration for it to run in your environment, see below for all of the supported configuration parameters", 
+            "title": "Overview"
+        }, 
+        {
+            "location": "/prequisites/configuration/#authorization", 
+            "text": "Currently Fidelius only supports authorization through LDAP, the application expects authentication to be done via SSO, and looks for the username in a header.     Property  Description  Type      spring.ldap.contextSource.url  The Endpoint Fidelius calls to fetch the account data for all of your AWS accounts.  string    spring.ldap.contextSource.uri  The URI where Fidelius can call your account Info service.  string    spring.ldap.contextSource.userDn  The DN for the user that gatekeeper connects as to query ldap (e.g. cn=admin,dc=example,dc=org )  string    aws.proxy.host  (Optional) The Proxy Host. If you are not behind a proxy you can ignore this  string    aws.proxy.port  (Optional) The Proxy Port. If you are not behind a proxy you can ignore this  string    spring.ldap.contextSource.base  The base that LDAP calls will be made off of (e.g. dc=example,dc=org)  string    spring.ldap.contextSource.password  The password to the ldap user  string    fidelius.auth.userIdHeader  The header in which Fidelius looks to extract the authenticated user  string    fidelius.auth.masterGroupsPattern  A regular expression that is used to extract master group names from the LDAP results. The regular expression must have exactly one capture ( e.g developer_([A-Za-z0-9]+)_dev) pattern  string    fidelius.auth.opsGroupsPattern  A regular expression that is used to extract ops group names from the LDAP results. The regular expression must have exactly one capture ( e.g developer_([A-Za-z0-9]+)_dev) pattern  string    fidelius.auth.devGroupsPattern  A regular expression that is used to extract dev group names from the LDAP results. The regular expression must have exactly one capture ( e.g developer_([A-Za-z0-9]+)_dev) pattern  string    fidelius.auth.ldap.IsActiveDirectory  Whether your LDAP server is Microsoft Active Directory or not (Nested groups are not supported with Non-Active Directory LDAP servers)  boolean    fidelius.auth.ldap.objectClass  The Object class to look for users with (ex. posixAccount, person, user)  string    fidelius.auth.ldap.usersIdAttribute  The uid  string    fidelius.auth.ldap.usersNameAttribute  The name  string    fidelius.auth.ldap.usersEmailAttribute  The email  string    fidelius.auth.ldap.usersDnAttribute  The DN for the user that Fidelius connects as to query ldap (e.g. cn=admin,dc=example,dc=org )  string    fidelius.auth.ldap.pattern  A regular expression that is used to extract group names from the LDAP results. The regular expression must have exactly one capture ( e.g developer_([A-Za-z0-9]+)_dev) pattern  string    fidelius.auth.ldap.groupsBase  The base where your groups are stored on your organization's LDAP server (e.g. ou=groups)  string    fidelius.auth.ldap.server  The domain of the LDAP server that gatekeeper should connect to  string    fidelius.auth.ldap.usersBase  The base in which the Users are stored on the LDAP Server (e.g. ou=Users,dc=example,dc=org)  string    fidelius.auth.ldap.base  The base that LDAP calls will be made off of (e.g. dc=example,dc=org)  string    fidelius.auth.ldap.usersCnAttribute  The cn  string", 
+            "title": "Authorization"
+        }, 
+        {
+            "location": "/prequisites/configuration/#application", 
+            "text": "Property  Description  Type      fidelius.membership-server-url  The endpoint of the service Fidelius uses to fetch the Ops/Master memberships  string    fidelius.membership-server-uri  The URI Fidelius can use to call the membership service for OPS/Master memberships  string    fidelius.dynamoTable  Name of DynamoDB table to be used to store secrets.  string    fidelius.kmsKey  KMS key used to encrypt/decrypt secrets.  string    fidelius.validActiveDirectoryRegularExpression  Regular Expression used to validate secrets marked labeled Active Directory.  string    fidelius.validActiveDirectoryDescription  Description of Regular Expression to guide users to enter valid secret  string", 
+            "title": "Application"
+        }, 
+        {
+            "location": "/prequisites/configuration/#aws", 
+            "text": "Property  Description  Type      fidelius.account-server-url  The Endpoint Fidelius calls to fetch the account data for all of your AWS accounts.  string    fidelius.account-server-uri  The URI where Fidelius can call your account Info service.  string    aws.proxy.host  (Optional) The Proxy Host. If you are not behind a proxy you can ignore this  string    aws.proxy.port  (Optional) The Proxy Port. If you are not behind a proxy you can ignore this  string    fidelius.assumeRole  The AWS IAM role that Fidelius will assume to interact with AWS (e.g. Xacnt_APP_Fidelius)  string", 
+            "title": "AWS"
+        }, 
+        {
+            "location": "/prequisites/IAM/", 
+            "text": "IAM roles\n\n\nOverview\n\n\nDifferent IAM roles need to be setup so that Fidelius can properly restrict access and so \nthat the application can properly decrypt/encrypt secrets across all applications\n\n\nCross Account Role\n\n\nThe Fidelius backend service should be able to assume role into a cross account role created on every account\nwith the following permissions.\n\n\nThis role IAM role should contain the following permissions:\n\n{\n\n    \nVersion\n:\n \n2012-10-17\n,\n\n    \nStatement\n:\n \n[\n\n        \n{\n\n            \nEffect\n:\n \nAllow\n,\n\n            \nAction\n:\n \n[\n\n                \nkms:Describe*\n,\n\n                \nkms:DescribeKey\n,\n\n                \nkms:Get*\n,\n\n                \nkms:*Grant\n,\n\n                \nkms:List*\n,\n\n                \nkms:Encrypt\n,\n\n                \nkms:Decrypt\n,\n\n                \nkms:ReEncrypt*\n,\n\n                \nkms:Generate*\n\n            \n],\n\n            \nResource\n:\n \narn:aws:kms:us-west-1:111111111111:key/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\n\n        \n},\n\n        \n{\n\n            \nEffect\n:\n \nAllow\n,\n\n            \nAction\n:\n \n[\n\n                \nkms:ListAliases\n,\n\n                \nkms:ListKeys\n\n            \n],\n\n            \nResource\n:\n \n[\n\n                \n*\n\n            \n]\n\n        \n}\n\n    \n]\n\n\n}\n\n\n\n\nTrust Relationships\n\n\nThe cross account role should be assumed by the role used to launch the Fidelius backend service\n\n \narn:aws:iam::\n111111111111\n:role/FIDELIUS_BACKEND_SERVICE\n\n\n\n\nFidelius Backend Service\n\n\nThis role is used to launch the backend service.  This role should have permission to assume each\nof the cross account roles in all accounts with desired access.  That should look like this:\n\n\n{\n\n    \nVersion\n:\n \n2012-10-17\n,\n\n    \nStatement\n:\n \n[\n\n        \n{\n\n            \nSid\n:\n \n0\n,\n\n            \nEffect\n:\n \nAllow\n,\n\n            \nAction\n:\n \nsts:AssumeRole\n,\n\n            \nResource\n:\n \narn:aws:iam::*:role/Cross_Account_Fidelius\n\n        \n}\n\n    \n]\n\n\n}\n\n\n\n\n\nApplication Roles\n\n\nEach Application should have an IAM role that restricts the Application's encrypt/decrypt\nfor that specific Encryption-Context such as Application, Component, and SDLC.\n\n\nAPP\n\n\n{\n\n    \nVersion\n:\n \n2012-10-17\n,\n\n    \nStatement\n:\n \n[\n\n        \n{\n\n            \nSid\n:\n \n**ID**\n,\n\n            \nEffect\n:\n \nAllow\n,\n\n            \nAction\n:\n \n[\n\n                \ndynamodb:BatchGetItem\n,\n\n                \ndynamodb:BatchWriteItem\n,\n\n                \ndynamodb:DescribeStream\n,\n\n                \ndynamodb:DescribeTable\n,\n\n                \ndynamodb:GetItem\n,\n\n                \ndynamodb:GetRecords\n,\n\n                \ndynamodb:ListStreams\n,\n\n                \ndynamodb:ListTables\n,\n\n                \ndynamodb:PutItem\n,\n\n                \ndynamodb:Query\n,\n\n                \ndynamodb:Scan\n\n            \n],\n\n            \nResource\n:\n \n[\n\n                \narn:aws:dynamodb:*:*:table/credential-store\n\n            \n],\n\n            \nCondition\n:\n \n{\n\n                \nForAllValues:StringLike\n:\n \n{\n\n                    \ndynamodb:LeadingKeys\n:\n \n[\n\n                        \nAPP.*\n\n                    \n]\n\n                \n}\n\n            \n}\n\n        \n}\n\n    \n]\n\n\n}\n\n\n\n\nAPP.*\n represents that this app can decrypt/encrypt secrets with the Application field 'APP' with any 'Component' and any 'SDLC'.\n\n\nSDLC\n\n\n{\n\n    \nVersion\n:\n \n2012-10-17\n,\n\n    \nStatement\n:\n \n[\n\n        \n{\n\n            \nSid\n:\n \n**ID**\n,\n\n            \nEffect\n:\n \nAllow\n,\n\n            \nAction\n:\n \n[\n\n                \ndynamodb:BatchGetItem\n,\n\n                \ndynamodb:BatchWriteItem\n,\n\n                \ndynamodb:DescribeStream\n,\n\n                \ndynamodb:DescribeTable\n,\n\n                \ndynamodb:GetItem\n,\n\n                \ndynamodb:GetRecords\n,\n\n                \ndynamodb:ListStreams\n,\n\n                \ndynamodb:ListTables\n,\n\n                \ndynamodb:PutItem\n,\n\n                \ndynamodb:Query\n,\n\n                \ndynamodb:Scan\n\n            \n],\n\n            \nResource\n:\n \n[\n\n                \narn:aws:dynamodb:*:*:table/credential-store\n\n            \n],\n\n            \nCondition\n:\n \n{\n\n                \nForAllValues:StringLike\n:\n \n{\n\n                    \ndynamodb:LeadingKeys\n:\n \n[\n\n                        \nAPP.dev.*\n,\n\n                        \nAPP.*.dev.*\n\n                    \n]\n\n                \n}\n\n            \n}\n\n        \n}\n\n    \n]\n\n\n}\n\n\n\n\nAPP.dev\n represents that this app can decrypt/encrypt secrets with the Application field 'APP' on 'dev' only and any 'Component'.\n\n\nComponent\n\n\n{\n\n    \nVersion\n:\n \n2012-10-17\n,\n\n    \nStatement\n:\n \n[\n\n        \n{\n\n            \nSid\n:\n \n**ID**\n,\n\n            \nEffect\n:\n \nAllow\n,\n\n            \nAction\n:\n \n[\n\n                \ndynamodb:BatchGetItem\n,\n\n                \ndynamodb:BatchWriteItem\n,\n\n                \ndynamodb:DescribeStream\n,\n\n                \ndynamodb:DescribeTable\n,\n\n                \ndynamodb:GetItem\n,\n\n                \ndynamodb:GetRecords\n,\n\n                \ndynamodb:ListStreams\n,\n\n                \ndynamodb:ListTables\n,\n\n                \ndynamodb:PutItem\n,\n\n                \ndynamodb:Query\n,\n\n                \ndynamodb:Scan\n\n            \n],\n\n            \nResource\n:\n \n[\n\n                \narn:aws:dynamodb:*:*:table/credential-store\n\n            \n],\n\n            \nCondition\n:\n \n{\n\n                \nForAllValues:StringLike\n:\n \n{\n\n                    \ndynamodb:LeadingKeys\n:\n \n[\n\n                        \nAPP.database.dev.*\n\n                    \n]\n\n                \n}\n\n            \n}\n\n        \n}\n\n    \n]\n\n\n}\n\n\n\n\nAPP.database.dev\n represents that this app can only decrypt/encrypt secrets with the Application field 'APP' on 'dev' only and with 'Component', 'database'.", 
+            "title": "IAM"
+        }, 
+        {
+            "location": "/prequisites/IAM/#iam-roles", 
+            "text": "", 
+            "title": "IAM roles"
+        }, 
+        {
+            "location": "/prequisites/IAM/#overview", 
+            "text": "Different IAM roles need to be setup so that Fidelius can properly restrict access and so \nthat the application can properly decrypt/encrypt secrets across all applications", 
+            "title": "Overview"
+        }, 
+        {
+            "location": "/prequisites/IAM/#cross-account-role", 
+            "text": "The Fidelius backend service should be able to assume role into a cross account role created on every account\nwith the following permissions.  This role IAM role should contain the following permissions: { \n     Version :   2012-10-17 , \n     Statement :   [ \n         { \n             Effect :   Allow , \n             Action :   [ \n                 kms:Describe* , \n                 kms:DescribeKey , \n                 kms:Get* , \n                 kms:*Grant , \n                 kms:List* , \n                 kms:Encrypt , \n                 kms:Decrypt , \n                 kms:ReEncrypt* , \n                 kms:Generate* \n             ], \n             Resource :   arn:aws:kms:us-west-1:111111111111:key/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee \n         }, \n         { \n             Effect :   Allow , \n             Action :   [ \n                 kms:ListAliases , \n                 kms:ListKeys \n             ], \n             Resource :   [ \n                 * \n             ] \n         } \n     ]  }", 
+            "title": "Cross Account Role"
+        }, 
+        {
+            "location": "/prequisites/IAM/#trust-relationships", 
+            "text": "The cross account role should be assumed by the role used to launch the Fidelius backend service   arn:aws:iam:: 111111111111 :role/FIDELIUS_BACKEND_SERVICE", 
+            "title": "Trust Relationships"
+        }, 
+        {
+            "location": "/prequisites/IAM/#fidelius-backend-service", 
+            "text": "This role is used to launch the backend service.  This role should have permission to assume each\nof the cross account roles in all accounts with desired access.  That should look like this:  { \n     Version :   2012-10-17 , \n     Statement :   [ \n         { \n             Sid :   0 , \n             Effect :   Allow , \n             Action :   sts:AssumeRole , \n             Resource :   arn:aws:iam::*:role/Cross_Account_Fidelius \n         } \n     ]  }", 
+            "title": "Fidelius Backend Service"
+        }, 
+        {
+            "location": "/prequisites/IAM/#application-roles", 
+            "text": "Each Application should have an IAM role that restricts the Application's encrypt/decrypt\nfor that specific Encryption-Context such as Application, Component, and SDLC.", 
+            "title": "Application Roles"
+        }, 
+        {
+            "location": "/prequisites/IAM/#app", 
+            "text": "{ \n     Version :   2012-10-17 , \n     Statement :   [ \n         { \n             Sid :   **ID** , \n             Effect :   Allow , \n             Action :   [ \n                 dynamodb:BatchGetItem , \n                 dynamodb:BatchWriteItem , \n                 dynamodb:DescribeStream , \n                 dynamodb:DescribeTable , \n                 dynamodb:GetItem , \n                 dynamodb:GetRecords , \n                 dynamodb:ListStreams , \n                 dynamodb:ListTables , \n                 dynamodb:PutItem , \n                 dynamodb:Query , \n                 dynamodb:Scan \n             ], \n             Resource :   [ \n                 arn:aws:dynamodb:*:*:table/credential-store \n             ], \n             Condition :   { \n                 ForAllValues:StringLike :   { \n                     dynamodb:LeadingKeys :   [ \n                         APP.* \n                     ] \n                 } \n             } \n         } \n     ]  }   APP.*  represents that this app can decrypt/encrypt secrets with the Application field 'APP' with any 'Component' and any 'SDLC'.", 
+            "title": "APP"
+        }, 
+        {
+            "location": "/prequisites/IAM/#sdlc", 
+            "text": "{ \n     Version :   2012-10-17 , \n     Statement :   [ \n         { \n             Sid :   **ID** , \n             Effect :   Allow , \n             Action :   [ \n                 dynamodb:BatchGetItem , \n                 dynamodb:BatchWriteItem , \n                 dynamodb:DescribeStream , \n                 dynamodb:DescribeTable , \n                 dynamodb:GetItem , \n                 dynamodb:GetRecords , \n                 dynamodb:ListStreams , \n                 dynamodb:ListTables , \n                 dynamodb:PutItem , \n                 dynamodb:Query , \n                 dynamodb:Scan \n             ], \n             Resource :   [ \n                 arn:aws:dynamodb:*:*:table/credential-store \n             ], \n             Condition :   { \n                 ForAllValues:StringLike :   { \n                     dynamodb:LeadingKeys :   [ \n                         APP.dev.* , \n                         APP.*.dev.* \n                     ] \n                 } \n             } \n         } \n     ]  }   APP.dev  represents that this app can decrypt/encrypt secrets with the Application field 'APP' on 'dev' only and any 'Component'.", 
+            "title": "SDLC"
+        }, 
+        {
+            "location": "/prequisites/IAM/#component", 
+            "text": "{ \n     Version :   2012-10-17 , \n     Statement :   [ \n         { \n             Sid :   **ID** , \n             Effect :   Allow , \n             Action :   [ \n                 dynamodb:BatchGetItem , \n                 dynamodb:BatchWriteItem , \n                 dynamodb:DescribeStream , \n                 dynamodb:DescribeTable , \n                 dynamodb:GetItem , \n                 dynamodb:GetRecords , \n                 dynamodb:ListStreams , \n                 dynamodb:ListTables , \n                 dynamodb:PutItem , \n                 dynamodb:Query , \n                 dynamodb:Scan \n             ], \n             Resource :   [ \n                 arn:aws:dynamodb:*:*:table/credential-store \n             ], \n             Condition :   { \n                 ForAllValues:StringLike :   { \n                     dynamodb:LeadingKeys :   [ \n                         APP.database.dev.* \n                     ] \n                 } \n             } \n         } \n     ]  }   APP.database.dev  represents that this app can only decrypt/encrypt secrets with the Application field 'APP' on 'dev' only and with 'Component', 'database'.", 
+            "title": "Component"
+        }, 
+        {
+            "location": "/prequisites/kms/", 
+            "text": "KMS\n\n\nOverview\n\n\nFidelius uses KMS service to encrypt and decrypt secrets into DynamoDb table.\n\nKMS uses the 3 tags to pass on to the encryption context.  The Encryption context\nallows the ability to restrict decrypt/encrypt access from different applications or\nfrom specific components.  \n\n\nApplication\n\n\nApplication is a tag that can be used to restrict access to decrypt/encrypt secrets based\non roles with decrypt/encrypt for a specific Application.  An example could be a team within a \nlarger organization that has access to a specific application such as 'FIDELIUS'. Attempts\nto decrypt a secret such as \nFIDELIUS.dev.application\n from role from another team such as 'DEVOPS'\nwould be denied.\n\n\n{\n\n  \nEffect\n:\n \nAllow\n,\n\n  \nPrincipal\n:\n \n{\n\n    \nAWS\n:\n \narn:aws:iam::111122223333:role/RoleForExampleApp\n\n  \n},\n\n  \nAction\n:\n \n[\n\n    \nkms:Encrypt\n,\n\n    \nkms:Decrypt\n\n  \n],\n\n  \nResource\n:\n \narn:aws:kms:us-west-2:111122223333:key/*\n,\n\n  \nCondition\n:\n \n{\n\n    \nStringEquals\n:\n \n{\n\n      \nkms:EncryptionContext:Application\n:\n \nFIDELIUS\n\n    \n}\n\n  \n}\n\n\n}\n\n\n\n\n\nComponent (\nOptional\n)\n\n\nComponent is a tag that can be used to further restrict access to decrypt/encrypt secrets\nfor a specific application.  For example, you might want to restrict access so that\nonly the backend-service of an application can decrypt something like a database password.\nIn this case then if a secret could look something like this \nFIDELIUS.dev.backend-service.database\n.\nIf the application does not contain that backend-service role, then 'backend-service' won't get\nattached to the encryption-context and therefore deny access to decrypt.\n\n\n{\n\n  \nEffect\n:\n \nAllow\n,\n\n  \nPrincipal\n:\n \n{\n\n    \nAWS\n:\n \narn:aws:iam::111122223333:role/RoleForExampleApp\n\n  \n},\n\n  \nAction\n:\n \n[\n\n    \nkms:Encrypt\n,\n\n    \nkms:Decrypt\n\n  \n],\n\n  \nResource\n:\n \narn:aws:kms:us-west-2:111122223333:key/*\n,\n\n  \nCondition\n:\n \n{\n\n    \nStringEquals\n:\n \n{\n\n      \nkms:EncryptionContext:Application\n:\n \nFIDELIUS\n,\n\n      \nkms:EncryptionContext:Component\n:\n \nbackend-service\n\n    \n}\n\n  \n}\n\n\n}\n\n\n\n\n\nSDLC\n\n\nThe SDLC represents the Software Development Life Cycle for the secret.  This can be used\nto differentiate between multiple secrets within the same Account.  This could be something\nlike having both a QA environment and a QA-int environment where one could contain a different\nset of connections to specific databases used.  An example could be \nFIDELIUS.qa.database\n and \n\nFidelius.qa-int.database\n.  One would fetch the database secret for the dev database and another\nwould fetch the secret for the dev-int database.\n\n\nIt is recommended to maintain different AWS accounts per SDLC as this would ensure the proper\nisolation between SDLC such as a DEV, QA, and PROD environment.  This should also be applied\nto Fidelius and the Credential table.  Each Account would have a DynamoDb table that only contain\nsecrets from that Account.\n\n\n{\n\n  \nEffect\n:\n \nAllow\n,\n\n  \nPrincipal\n:\n \n{\n\n    \nAWS\n:\n \narn:aws:iam::111122223333:role/RoleForExampleApp\n\n  \n},\n\n  \nAction\n:\n \n[\n\n    \nkms:Encrypt\n,\n\n    \nkms:Decrypt\n\n  \n],\n\n  \nResource\n:\n \narn:aws:kms:us-west-2:111122223333:key/*\n,\n\n  \nCondition\n:\n \n{\n\n    \nStringEquals\n:\n \n{\n\n      \nkms:EncryptionContext:Application\n:\n \nFIDELIUS\n,\n\n      \nkms:EncryptionContext:SDLC\n:\n \nqa\n\n    \n}\n\n  \n}\n\n\n}", 
+            "title": "KMS"
+        }, 
+        {
+            "location": "/prequisites/kms/#kms", 
+            "text": "", 
+            "title": "KMS"
+        }, 
+        {
+            "location": "/prequisites/kms/#overview", 
+            "text": "Fidelius uses KMS service to encrypt and decrypt secrets into DynamoDb table. \nKMS uses the 3 tags to pass on to the encryption context.  The Encryption context\nallows the ability to restrict decrypt/encrypt access from different applications or\nfrom specific components.", 
+            "title": "Overview"
+        }, 
+        {
+            "location": "/prequisites/kms/#application", 
+            "text": "Application is a tag that can be used to restrict access to decrypt/encrypt secrets based\non roles with decrypt/encrypt for a specific Application.  An example could be a team within a \nlarger organization that has access to a specific application such as 'FIDELIUS'. Attempts\nto decrypt a secret such as  FIDELIUS.dev.application  from role from another team such as 'DEVOPS'\nwould be denied.  { \n   Effect :   Allow , \n   Principal :   { \n     AWS :   arn:aws:iam::111122223333:role/RoleForExampleApp \n   }, \n   Action :   [ \n     kms:Encrypt , \n     kms:Decrypt \n   ], \n   Resource :   arn:aws:kms:us-west-2:111122223333:key/* , \n   Condition :   { \n     StringEquals :   { \n       kms:EncryptionContext:Application :   FIDELIUS \n     } \n   }  }", 
+            "title": "Application"
+        }, 
+        {
+            "location": "/prequisites/kms/#component-optional", 
+            "text": "Component is a tag that can be used to further restrict access to decrypt/encrypt secrets\nfor a specific application.  For example, you might want to restrict access so that\nonly the backend-service of an application can decrypt something like a database password.\nIn this case then if a secret could look something like this  FIDELIUS.dev.backend-service.database .\nIf the application does not contain that backend-service role, then 'backend-service' won't get\nattached to the encryption-context and therefore deny access to decrypt.  { \n   Effect :   Allow , \n   Principal :   { \n     AWS :   arn:aws:iam::111122223333:role/RoleForExampleApp \n   }, \n   Action :   [ \n     kms:Encrypt , \n     kms:Decrypt \n   ], \n   Resource :   arn:aws:kms:us-west-2:111122223333:key/* , \n   Condition :   { \n     StringEquals :   { \n       kms:EncryptionContext:Application :   FIDELIUS , \n       kms:EncryptionContext:Component :   backend-service \n     } \n   }  }", 
+            "title": "Component (Optional)"
+        }, 
+        {
+            "location": "/prequisites/kms/#sdlc", 
+            "text": "The SDLC represents the Software Development Life Cycle for the secret.  This can be used\nto differentiate between multiple secrets within the same Account.  This could be something\nlike having both a QA environment and a QA-int environment where one could contain a different\nset of connections to specific databases used.  An example could be  FIDELIUS.qa.database  and  Fidelius.qa-int.database .  One would fetch the database secret for the dev database and another\nwould fetch the secret for the dev-int database.  It is recommended to maintain different AWS accounts per SDLC as this would ensure the proper\nisolation between SDLC such as a DEV, QA, and PROD environment.  This should also be applied\nto Fidelius and the Credential table.  Each Account would have a DynamoDb table that only contain\nsecrets from that Account.  { \n   Effect :   Allow , \n   Principal :   { \n     AWS :   arn:aws:iam::111122223333:role/RoleForExampleApp \n   }, \n   Action :   [ \n     kms:Encrypt , \n     kms:Decrypt \n   ], \n   Resource :   arn:aws:kms:us-west-2:111122223333:key/* , \n   Condition :   { \n     StringEquals :   { \n       kms:EncryptionContext:Application :   FIDELIUS , \n       kms:EncryptionContext:SDLC :   qa \n     } \n   }  }", 
+            "title": "SDLC"
+        }, 
+        {
+            "location": "/prequisites/dynamodb/", 
+            "text": "DynamoDb\n\n\nOverview\n\n\nFidelius uses DynamoDb to store and retrieve secrets.  In order for Fidelius to run you need to first create a dedicated\nDynamoDb table to be used by Fidelius.  You can accomplish this in one of the following 2 ways.\n\n\n1.) Quick start\n\n\nA DynamoDb table can be created using the \nQuick start script\n provided.  \n\n\n2.) AWS Console\n\n\nYou can manually create a DynamoDb table using the AWS console.  It must contain the following properties:\n\n\n\n\n\n\n\n\nProperty\n\n\nValue\n\n\n\n\n\n\n\n\n\n\nTable name\n\n\ncredential-store\n\n\n\n\n\n\nPrimary partition key\n\n\nname (String)\n\n\n\n\n\n\nPrimary sort key\n\n\nversion (String)", 
+            "title": "DynamoDb"
+        }, 
+        {
+            "location": "/prequisites/dynamodb/#dynamodb", 
+            "text": "", 
+            "title": "DynamoDb"
+        }, 
+        {
+            "location": "/prequisites/dynamodb/#overview", 
+            "text": "Fidelius uses DynamoDb to store and retrieve secrets.  In order for Fidelius to run you need to first create a dedicated\nDynamoDb table to be used by Fidelius.  You can accomplish this in one of the following 2 ways.", 
+            "title": "Overview"
+        }, 
+        {
+            "location": "/prequisites/dynamodb/#1-quick-start", 
+            "text": "A DynamoDb table can be created using the  Quick start script  provided.", 
+            "title": "1.) Quick start"
+        }, 
+        {
+            "location": "/prequisites/dynamodb/#2-aws-console", 
+            "text": "You can manually create a DynamoDb table using the AWS console.  It must contain the following properties:     Property  Value      Table name  credential-store    Primary partition key  name (String)    Primary sort key  version (String)", 
+            "title": "2.) AWS Console"
+        }, 
+        {
+            "location": "/UI/ui_setup_local/", 
+            "text": "Local Setup\n\n\nFidelius UI\n\n\n1.) Clone the git repository to your desktop\n\n\ngit clone https://github.com/FINRAOS/fidelius.git\n\n\n\n\n2.) Navigate to the directory the repository saved to\n\n\ncd\n fidelius/fidelius-ui\n\n\n\n\n3.) Run NPM install\n\nnpm install\n\n\n\n4.) Run NPM run start\n\nnpm run start\n\n\n\n5.) Start mock server\n\nnpm run api", 
+            "title": "Local Setup"
+        }, 
+        {
+            "location": "/UI/ui_setup_local/#local-setup", 
+            "text": "", 
+            "title": "Local Setup"
+        }, 
+        {
+            "location": "/UI/ui_setup_local/#fidelius-ui", 
+            "text": "1.) Clone the git repository to your desktop  git clone https://github.com/FINRAOS/fidelius.git  2.) Navigate to the directory the repository saved to  cd  fidelius/fidelius-ui  3.) Run NPM install npm install  4.) Run NPM run start npm run start  5.) Start mock server npm run api", 
+            "title": "Fidelius UI"
+        }, 
+        {
+            "location": "/UI/ui_secretsTable/", 
+            "text": "The Credentials Table\n\n\n\nThe center point of Fidelius is the credentials table. This is where the credentials residing on DynamoDB\ntables will displayed, allowing users to sort, view, and perform various operations on them.\n\n\nWhen Fidelius is loaded for the first time, the credentials table will be empty. To populate the table, use the\n\nAccount\n, \nRegion\n, and \nApplication\n dropdowns at the top of the table. \nAccount\n and \nRegion\n specify which DynamoDB\ntable on AWS that you want to access. Credentials stored in Fidelius are organized by applications that they belong to, so\nselecting an option under the \nApplication\n menu will retrieve all credentials belonging to the selected application.\nNote that you must select an option for all three of \nAccount\n, \nRegion\n, and \nApplication\n in order to retrieve credentials.\nThe table will populate once selections have been made in all three of those dropdowns.\n\n\nSorting and Filtering Credentials\n\n\nFidelius provides a variety of features for sorting and filtering credentials. The two boxes at the top-right of the table\ncan be used to filter credentials in the credentials table. The \nEnvironment\n dropdown contains options for filtering credentials\nbased on the \"Environment\" column of the table. Selecting \nALL\n in \nEnvironment\n will return to the default behavior of\ndisplaying credentials from any environment. Entering text into the \nSearch\n text box will filter credentials that contain the\nentered string anywhere in the credential's full name.\n\n\nTo sort the credentials table, click on the column headers on any of the columns in the table.", 
+            "title": "The Credentials Table"
+        }, 
+        {
+            "location": "/UI/ui_secretsTable/#the-credentials-table", 
+            "text": "The center point of Fidelius is the credentials table. This is where the credentials residing on DynamoDB\ntables will displayed, allowing users to sort, view, and perform various operations on them.  When Fidelius is loaded for the first time, the credentials table will be empty. To populate the table, use the Account ,  Region , and  Application  dropdowns at the top of the table.  Account  and  Region  specify which DynamoDB\ntable on AWS that you want to access. Credentials stored in Fidelius are organized by applications that they belong to, so\nselecting an option under the  Application  menu will retrieve all credentials belonging to the selected application.\nNote that you must select an option for all three of  Account ,  Region , and  Application  in order to retrieve credentials.\nThe table will populate once selections have been made in all three of those dropdowns.", 
+            "title": "The Credentials Table"
+        }, 
+        {
+            "location": "/UI/ui_secretsTable/#sorting-and-filtering-credentials", 
+            "text": "Fidelius provides a variety of features for sorting and filtering credentials. The two boxes at the top-right of the table\ncan be used to filter credentials in the credentials table. The  Environment  dropdown contains options for filtering credentials\nbased on the \"Environment\" column of the table. Selecting  ALL  in  Environment  will return to the default behavior of\ndisplaying credentials from any environment. Entering text into the  Search  text box will filter credentials that contain the\nentered string anywhere in the credential's full name.  To sort the credentials table, click on the column headers on any of the columns in the table.", 
+            "title": "Sorting and Filtering Credentials"
+        }, 
+        {
+            "location": "/UI/ui_view/", 
+            "text": "Viewing Credentials\n\n\nTo view a credential, click on the icon with three vertical dots to the right of the credential in the credentials\ntable, then select the \nView\n option. This will display the View Credential sidebar. The View Credential sidebar\ncontains two tabs: the Information tab and the History tab.\n\n\nInformation Tab\n\n\nThe Information tab displays all of the information on the credential, including its encrypted secret. By default, the \ncredential's secret is encrypted and represented by a series of dots under the Secret section. If the user has proper \npermissions, the eye icon next to the dots can be clicked to decrypt the secret and display it in plaintext on the \nscreen. A new icon, a series of overlapping squares, should appear. Clicking that icon will save the decrypted secret to\nthe clipboard.\n\n\n\n\nHistory Tab\n\n\nThe History tab displays a table of all of the edits made to a credential, including the editor's IAM role, when the\nedit was made, and the revision number. Clicking on the column headers will sort the table based on the contents of that\ncolumn. This tab can be opened directly from the credentials table by clicking the vertical three dots icon and\nselecting \nHistory\n.", 
+            "title": "Viewing Credentials"
+        }, 
+        {
+            "location": "/UI/ui_view/#viewing-credentials", 
+            "text": "To view a credential, click on the icon with three vertical dots to the right of the credential in the credentials\ntable, then select the  View  option. This will display the View Credential sidebar. The View Credential sidebar\ncontains two tabs: the Information tab and the History tab.", 
+            "title": "Viewing Credentials"
+        }, 
+        {
+            "location": "/UI/ui_view/#information-tab", 
+            "text": "The Information tab displays all of the information on the credential, including its encrypted secret. By default, the \ncredential's secret is encrypted and represented by a series of dots under the Secret section. If the user has proper \npermissions, the eye icon next to the dots can be clicked to decrypt the secret and display it in plaintext on the \nscreen. A new icon, a series of overlapping squares, should appear. Clicking that icon will save the decrypted secret to\nthe clipboard.", 
+            "title": "Information Tab"
+        }, 
+        {
+            "location": "/UI/ui_view/#history-tab", 
+            "text": "The History tab displays a table of all of the edits made to a credential, including the editor's IAM role, when the\nedit was made, and the revision number. Clicking on the column headers will sort the table based on the contents of that\ncolumn. This tab can be opened directly from the credentials table by clicking the vertical three dots icon and\nselecting  History .", 
+            "title": "History Tab"
+        }, 
+        {
+            "location": "/UI/ui_edit/", 
+            "text": "Editing Credentials\n\n\nUsers with the proper permissions can modify credentials through the Edit Credentials sidebar. This can be accessed by\nclicking the vertical three dots to the right of a credential in the credentials table and selecting \nEdit\n.\n\n\nTo modify a credential's secret, simply enter the new secret into the textbox in the Secret section. If the secret is a\nspecial kind of secret, such as an Active Directory password, click the respective radio button above the Secret\nsection. Fidelius will then automatically check the format of the entered secret to make sure it is correct. Click the\n\nUpdate\n button to save the edit.", 
+            "title": "Editing Credentials"
+        }, 
+        {
+            "location": "/UI/ui_edit/#editing-credentials", 
+            "text": "Users with the proper permissions can modify credentials through the Edit Credentials sidebar. This can be accessed by\nclicking the vertical three dots to the right of a credential in the credentials table and selecting  Edit .  To modify a credential's secret, simply enter the new secret into the textbox in the Secret section. If the secret is a\nspecial kind of secret, such as an Active Directory password, click the respective radio button above the Secret\nsection. Fidelius will then automatically check the format of the entered secret to make sure it is correct. Click the Update  button to save the edit.", 
+            "title": "Editing Credentials"
+        }, 
+        {
+            "location": "/UI/ui_delete/", 
+            "text": "Deleting Credentials\n\n\nUsers with proper permissions can remove a credential entirely from the DynamoDB table. To do this, click the vertical\nthree dots to the right of a credential in the credential table and select \nDelete\n. A confirmation dialog will appear\nasking you to confirm the delete. Selecting \nYes, Remove\n will perform the deletion, with a small pop-up appearing at\nthe bottom of the screen once the delete has completed.\n\n\n\n\nNote: This action will remove\n \nALL\n \nentries of a credential from the DynamoDB table, not just the most recent edit.\nThe\n \nDelete\n \noperation should not be performed unless there is no longer a need for the credential.", 
+            "title": "Deleting Credentials"
+        }, 
+        {
+            "location": "/UI/ui_delete/#deleting-credentials", 
+            "text": "Users with proper permissions can remove a credential entirely from the DynamoDB table. To do this, click the vertical\nthree dots to the right of a credential in the credential table and select  Delete . A confirmation dialog will appear\nasking you to confirm the delete. Selecting  Yes, Remove  will perform the deletion, with a small pop-up appearing at\nthe bottom of the screen once the delete has completed.   Note: This action will remove   ALL   entries of a credential from the DynamoDB table, not just the most recent edit.\nThe   Delete   operation should not be performed unless there is no longer a need for the credential.", 
+            "title": "Deleting Credentials"
+        }, 
+        {
+            "location": "/UI/ui_add/", 
+            "text": "Adding New Credentials\n\n\nOnce the credentials table has been populated with the contents of a DynamoDB table, users with the proper permissions\nwill notice that the \n+ Add Credential\n button towards the top of the table becomes enabled. Clicking this button\ndisplays the Add Credential sidebar, which allows a user to create a new credential.\n\n\n\n\nThe Add Credential sidebar is very similar to the Edit Credential sidebar, except that text boxes are now added in the\nEnvironment, Component, and Key sections. \n\n\n\n\n\n\n\n\nField\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\nApplication\n\n\nThe Application the secret will be stored under\n\n\n\n\n\n\nAccount\n\n\nThe AWS Account alias the secret will be stored under\n\n\n\n\n\n\nEnvironment\n\n\nThe environment or SDLC you would like to store the secret under\n\n\n\n\n\n\nComponent\n\n\nAn optional Component field you can add to the secret\n\n\n\n\n\n\nSecret Type\n\n\nThe type of secret to be stored.  This does not change the way the secret is stored.  It is used to provide validation.\n\n\n\n\n\n\nSecret\n\n\nThe contents of the secret to be encrypted and stored on DynamoDB under that credential.\n\n\n\n\n\n\n\n\nClick the \nAdd\n button at the bottom of the sidebar to save the new credential.", 
+            "title": "Adding New Credentials"
+        }, 
+        {
+            "location": "/UI/ui_add/#adding-new-credentials", 
+            "text": "Once the credentials table has been populated with the contents of a DynamoDB table, users with the proper permissions\nwill notice that the  + Add Credential  button towards the top of the table becomes enabled. Clicking this button\ndisplays the Add Credential sidebar, which allows a user to create a new credential.   The Add Credential sidebar is very similar to the Edit Credential sidebar, except that text boxes are now added in the\nEnvironment, Component, and Key sections.      Field  Description      Application  The Application the secret will be stored under    Account  The AWS Account alias the secret will be stored under    Environment  The environment or SDLC you would like to store the secret under    Component  An optional Component field you can add to the secret    Secret Type  The type of secret to be stored.  This does not change the way the secret is stored.  It is used to provide validation.    Secret  The contents of the secret to be encrypted and stored on DynamoDB under that credential.     Click the  Add  button at the bottom of the sidebar to save the new credential.", 
+            "title": "Adding New Credentials"
+        }, 
+        {
+            "location": "/UI/ui_roles/", 
+            "text": "User Roles\n\n\nWhen a user logs into Fidelius, they are assigned a role that specifies what actions the user is able to perform in\nFidelius. Currently, there are three main permission roles for users\n\n\nSummary of Permissions for the User Roles\n\n\n\n    \n\n        \n\n        \nDev\n\n        \nOps\n\n        \nMaster\n\n    \n\n    \n\n        \nCan view secrets information and history\n\n        \nYes, in any environment\n\n        \nYes, in any environment\n\n        \nYes, in any environment\n\n    \n\n    \n\n        \nCan decrypt and view secrets\n\n        \nOnly on non-production tables\n\n        \nYes\n\n        \nYes\n\n    \n\n    \n\n        \nCan add new secrets\n\n        \nOnly on non-production tables\n\n        \nYes\n\n        \nYes\n\n    \n\n    \n\n        \nCan delete secrets\n\n        \nOnly on non-production tables\n\n        \nOnly on non-production tables\n\n        \nCan delete any secret\n\n    \n\n    \n\n        \nCan access any application/AGS\n\n        \nNo\n\n        \nYes\n\n        \nYes\n\n    \n\n    \n\n        \nCan access a secrets table on any account and region\n\n        \nYes\n\n        \nYes\n\n        \nYes", 
+            "title": "User Roles"
+        }, 
+        {
+            "location": "/UI/ui_roles/#user-roles", 
+            "text": "When a user logs into Fidelius, they are assigned a role that specifies what actions the user is able to perform in\nFidelius. Currently, there are three main permission roles for users", 
+            "title": "User Roles"
+        }, 
+        {
+            "location": "/UI/ui_roles/#summary-of-permissions-for-the-user-roles", 
+            "text": "Dev \n         Ops \n         Master \n     \n     \n         Can view secrets information and history \n         Yes, in any environment \n         Yes, in any environment \n         Yes, in any environment \n     \n     \n         Can decrypt and view secrets \n         Only on non-production tables \n         Yes \n         Yes \n     \n     \n         Can add new secrets \n         Only on non-production tables \n         Yes \n         Yes \n     \n     \n         Can delete secrets \n         Only on non-production tables \n         Only on non-production tables \n         Can delete any secret \n     \n     \n         Can access any application/AGS \n         No \n         Yes \n         Yes \n     \n     \n         Can access a secrets table on any account and region \n         Yes \n         Yes \n         Yes", 
+            "title": "Summary of Permissions for the User Roles"
+        }, 
+        {
+            "location": "/SDK/sdk_quickstart/", 
+            "text": "Getting Started\n\n\nOverview\n\n\nThe Fidelius SDK is a Java API for securely accessing and storing secrets using AWS DynamoDB tables. The Fidelius SDK,\nbuilt off of the JCredstash project (\nhttps://github.com/jessecoyle/jcredstash\n), aims to provide an easy to use\nAPI that allows users to create, retrieve, and delete encrypted secrets stored on DynamoDB for Java Clients.\n\n\nMaven Dependency\n\n\ndependencies\n\n        \ndependency\n\n            \ngroupId\norg.finra.fidelius\n/groupId\n\n            \nartifactId\nfidelius-sdk\n/artifactId\n\n            \nversion\n1.0.0\n/version\n\n        \n/dependency\n\n\n/dependencies\n\n\n\n\n\nProxy Configuration\n\n\nMake sure to set the proxy if you are running this in an environment that requires a proxy.\n\n\nLocal Desktop\n\n\nexport\n \nCRED_PROXY\n=\nproxy.company.com\n\nexport\n \nCRED_PORT\n=\n8081\n\n\n\n\n\nAWS\n\n\nexport\n \nCRED_PROXY\n=\nawsproxy.company.com\n\nexport\n \nCRED_PORT\n=\n8082", 
+            "title": "Getting Started"
+        }, 
+        {
+            "location": "/SDK/sdk_quickstart/#getting-started", 
+            "text": "", 
+            "title": "Getting Started"
+        }, 
+        {
+            "location": "/SDK/sdk_quickstart/#overview", 
+            "text": "The Fidelius SDK is a Java API for securely accessing and storing secrets using AWS DynamoDB tables. The Fidelius SDK,\nbuilt off of the JCredstash project ( https://github.com/jessecoyle/jcredstash ), aims to provide an easy to use\nAPI that allows users to create, retrieve, and delete encrypted secrets stored on DynamoDB for Java Clients.", 
+            "title": "Overview"
+        }, 
+        {
+            "location": "/SDK/sdk_quickstart/#maven-dependency", 
+            "text": "dependencies \n         dependency \n             groupId org.finra.fidelius /groupId \n             artifactId fidelius-sdk /artifactId \n             version 1.0.0 /version \n         /dependency  /dependencies", 
+            "title": "Maven Dependency"
+        }, 
+        {
+            "location": "/SDK/sdk_quickstart/#proxy-configuration", 
+            "text": "Make sure to set the proxy if you are running this in an environment that requires a proxy.", 
+            "title": "Proxy Configuration"
+        }, 
+        {
+            "location": "/SDK/sdk_quickstart/#local-desktop", 
+            "text": "export   CRED_PROXY = proxy.company.com export   CRED_PORT = 8081", 
+            "title": "Local Desktop"
+        }, 
+        {
+            "location": "/SDK/sdk_quickstart/#aws", 
+            "text": "export   CRED_PROXY = awsproxy.company.com export   CRED_PORT = 8082", 
+            "title": "AWS"
+        }, 
+        {
+            "location": "/SDK/sdk_usage/", 
+            "text": "Usage\n\n\nThere are two main strategies to using the Fidelius SDK's API.\n\n\n1. Passing Application and SDLC to the APIs\n\n\nFideliusClient\n \nfideliusClient\n \n=\n \nnew\n \nFideliusClient\n();\n\n\nString\n \napplication\n \n=\n \nAPP\n;\n\n\nString\n \nsdlc\n \n=\n \ndev\n;\n\n\n\nfideliusClient\n.\nputCredential\n(\nname\n,\nsecret\n,\n \napplication\n,\n \nsdlc\n,\n \nnull\n,\n \nnull\n,\n \nnull\n);\n\n\nString\n \nsecret\n \n=\n \nfideliusClient\n.\ngetCredential\n(\nname\n,\n \napplication\n,\n \nsdlc\n,\n \nnull\n,\n \nnull\n);\n\n\n\n\n\n2. Configuring Application and SDLC as environment variables\n\n\nexport\n \nCRED_Application\n=\nAPP\n\n\nexport\n \nCRED_SDLC\n=\ndev\n\n\n\n\n\nFideliusClient\n \nfideliusClient\n \n=\n \nnew\n \nFideliusClient\n();\n\n\n\nfideliusClient\n.\nputCredential\n(\nname\n,\nsecret\n);\n\n\nString\n \nsecret\n \n=\n \nfideliusClient\n.\ngetCredential\n(\nname\n);", 
+            "title": "Usage"
+        }, 
+        {
+            "location": "/SDK/sdk_usage/#usage", 
+            "text": "There are two main strategies to using the Fidelius SDK's API.", 
+            "title": "Usage"
+        }, 
+        {
+            "location": "/SDK/sdk_usage/#1-passing-application-and-sdlc-to-the-apis", 
+            "text": "FideliusClient   fideliusClient   =   new   FideliusClient ();  String   application   =   APP ;  String   sdlc   =   dev ;  fideliusClient . putCredential ( name , secret ,   application ,   sdlc ,   null ,   null ,   null );  String   secret   =   fideliusClient . getCredential ( name ,   application ,   sdlc ,   null ,   null );", 
+            "title": "1. Passing Application and SDLC to the APIs"
+        }, 
+        {
+            "location": "/SDK/sdk_usage/#2-configuring-application-and-sdlc-as-environment-variables", 
+            "text": "export   CRED_Application = APP  export   CRED_SDLC = dev   FideliusClient   fideliusClient   =   new   FideliusClient ();  fideliusClient . putCredential ( name , secret );  String   secret   =   fideliusClient . getCredential ( name );", 
+            "title": "2. Configuring Application and SDLC as environment variables"
+        }, 
+        {
+            "location": "/SDK/sdk_methods/", 
+            "text": "Fidelius Client Methods\n\n\ngetCredential\n\n\nRetrieves the most recent version of the encryptedCredential as plaintext. \n\n\nExamples:\n\n\n\n\n\n\nFetches Application/SDLC/Component values from either Environment variables or from  instance tags when running on EC2 instance\n\n\nString\n \ncred\n \n=\n \nfideliusClient\n.\ngetCredential\n(\nencryptedCredential\n);\n\n\n\n\n\n\n\n\n\nUses Application/SDLC/Component values provided manually\n\n\nString\n \ncred2\n \n=\n \nfideliusClient\n.\ngetCredential\n(\nencryptedCredential\n,\n \nApplication\n,\n \nSDLC\n,\n \nComponent\n);\n\n\n\n\n\n\n\n\n\nputCredential\n\n\nEncrypts and puts encryptedCredential into the table. If the encryptedCredential exists, puts the encryptedCredential \nwith an incremented version number. \n\n\nExamples:\n\n\n\n\n\n\nFetches Application/SDLC/Component values from either Environment variables or from  instance tags when running on \nEC2 instance\n\n\nfideliusClient\n.\nputCredential\n(\nencryptedCredential\n,\n \ncontents as plaintext\n);\n\n\n\n\n\n\n\n\n\nFetches Application/SDLC/Component values from either Environment variables or from  instance tags when running on \nEC2 instance with specific table-name and KMS Key.\n\n\nfideliusClient\n.\nputCredential\n(\nencryptedCredential\n,\n \ncontents as plaintext\n,\n \ntable-name\n,\n \nKMS key\n);\n\n\n\n\n\n\n\n\n\nUses Application/SDLC/Component values provided manually\n    \nfideliusClient\n.\nputCredential\n(\nencryptedCredential\n,\n \ncontents as plaintext\n,\n \nApplication\n,\n \nSDLC\n,\n \nComponent\n,\n \ntable-name\n,\n \nKMS key\n);\n\n\n\n\n\n\n\n\nDefault Values (if passed as \nnull\n):\n\n\n\n\ntable: \"credential-store\"\n\n\nkmsKey: \"alias/credstash\"\n\n\n\n\ndeleteCredential\n\n\nRemoves entries corresponding to the specified credential from the database. \n\n\nExamples:\n\n\n\n\n\n\nDeletes a credential getting Application/SDLC/Component values from either Environment variables or from instance tags when running on \nEC2 instance\n\n\nfideliusClient\n.\ndeleteCredential\n(\nencryptedCredential\n);\n\n\n\n\n\n\n\n\n\nDeletes a credential \"Application.Component.SDLC.encryptedCredential\" from the table \"table-name\".\n\n\nfideliusClient\n.\ndeleteCredential\n(\ncredentialName\n,\n \nApplication\n,\n \nSDLC\n,\n \nComponent\n,\n \ntable-name\n);", 
+            "title": "Client methods"
+        }, 
+        {
+            "location": "/SDK/sdk_methods/#fidelius-client-methods", 
+            "text": "", 
+            "title": "Fidelius Client Methods"
+        }, 
+        {
+            "location": "/SDK/sdk_methods/#getcredential", 
+            "text": "Retrieves the most recent version of the encryptedCredential as plaintext.", 
+            "title": "getCredential"
+        }, 
+        {
+            "location": "/SDK/sdk_methods/#examples", 
+            "text": "Fetches Application/SDLC/Component values from either Environment variables or from  instance tags when running on EC2 instance  String   cred   =   fideliusClient . getCredential ( encryptedCredential );     Uses Application/SDLC/Component values provided manually  String   cred2   =   fideliusClient . getCredential ( encryptedCredential ,   Application ,   SDLC ,   Component );", 
+            "title": "Examples:"
+        }, 
+        {
+            "location": "/SDK/sdk_methods/#putcredential", 
+            "text": "Encrypts and puts encryptedCredential into the table. If the encryptedCredential exists, puts the encryptedCredential \nwith an incremented version number.", 
+            "title": "putCredential"
+        }, 
+        {
+            "location": "/SDK/sdk_methods/#examples_1", 
+            "text": "Fetches Application/SDLC/Component values from either Environment variables or from  instance tags when running on \nEC2 instance  fideliusClient . putCredential ( encryptedCredential ,   contents as plaintext );     Fetches Application/SDLC/Component values from either Environment variables or from  instance tags when running on \nEC2 instance with specific table-name and KMS Key.  fideliusClient . putCredential ( encryptedCredential ,   contents as plaintext ,   table-name ,   KMS key );     Uses Application/SDLC/Component values provided manually\n     fideliusClient . putCredential ( encryptedCredential ,   contents as plaintext ,   Application ,   SDLC ,   Component ,   table-name ,   KMS key );     Default Values (if passed as  null ):   table: \"credential-store\"  kmsKey: \"alias/credstash\"", 
+            "title": "Examples:"
+        }, 
+        {
+            "location": "/SDK/sdk_methods/#deletecredential", 
+            "text": "Removes entries corresponding to the specified credential from the database.", 
+            "title": "deleteCredential"
+        }, 
+        {
+            "location": "/SDK/sdk_methods/#examples_2", 
+            "text": "Deletes a credential getting Application/SDLC/Component values from either Environment variables or from instance tags when running on \nEC2 instance  fideliusClient . deleteCredential ( encryptedCredential );     Deletes a credential \"Application.Component.SDLC.encryptedCredential\" from the table \"table-name\".  fideliusClient . deleteCredential ( credentialName ,   Application ,   SDLC ,   Component ,   table-name );", 
+            "title": "Examples:"
+        }, 
+        {
+            "location": "/SDK/sdk_instantiation/", 
+            "text": "Additional Details\n\n\nInstantiation\n\n\nA Fidelius object can be instantiated with varying levels of configuration. The default constructor uses the\n\nDefaultAWSCredentialsProviderChain\n\nand default \nClientConfiguration\n.\n\n\nThe region is set from the \nAWS_DEFAULT_REGION\n environment variable, or \"\nus-east-1\n\" if the variable is not set.\n\n\n// Default Constructor\n\n\nFideliusClient\n \nfideliusClient\n \n=\n \nnew\n \nFideliusClient\n();\n\n\n\n\n\n\n\n\n\nNetwork-related settings (proxy, timeout, etc.) can be set by configuring and passing the \nClientConfiguration\n\nobject. If only proxy needs to be configured then the environment variables CRED_PROXY and CRED_PORT can be set and use the default ClientConfiguration.\n\n\n\n\n\n\nAuthentication is configured by passing in an \nAWSCredentialsProvider\n\n\n\n\n\n\nAWS Region can be specified by passing the appropriate string value. See:\n\nhttp://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/regions/Regions.html\n\n\n\n\n\n\nExample 1:\n Passing Proxy and Port with custom ClientConfiguration\n\n\n \nClientConfiguration\n \nclientConf\n \n=\n \nnew\n \nClientConfiguration\n()\n\n     \n.\nwithProxyHost\n(\nproxy.company.com\n)\n\n     \n.\nwithProxyPort\n(\n8081\n);\n\n \nAWSCredentialsProvider\n \nprovider\n \n=\n \nnew\n \nDefaultAWSCredentialsProviderChain\n();\n\n \nString\n \nregion\n \n=\n \nRegions\n.\nUS_EAST_1\n.\ngetName\n();\n\n\n \nFideliusClient\n \nfideliusClient\n \n=\n \nnew\n \nFideliusClient\n(\nclientConf\n,\n \nprovider\n,\n \nregion\n);\n\n\n\n\n\nExample 2:\n Setting proxy environment variables and using default ClientConfiguration\n\n\n\n\nLinux\n\nexport\n \nCRED_PROXY\n=\nproxy.company.com\n\nexport\n \nCRED_PORT\n=\n8081\n\n\n\n\nWindows\n\n//windows\n\nset\n \nCRED_PROXY\n=\nproxy.company.com\n\nset\n \nCRED_PORT\n=\n8081\n\n\n\n\nFideliusClient\n \nfideliusClient\n \n=\n \nnew\n \nFideliusClient\n();\n\n\n\n// or\n\n\n\nAWSCredentialsProvider\n \nprovider\n \n=\n \nnew\n \nDefaultAWSCredentialsProviderChain\n();\n\n\nFideliusClient\n \nfideliusClient\n \n=\n \nnew\n \nFideliusClient\n(\nRegions\n.\nUS_EAST_1\n.\ngetName\n());", 
+            "title": "Instantiation"
+        }, 
+        {
+            "location": "/SDK/sdk_instantiation/#additional-details", 
+            "text": "", 
+            "title": "Additional Details"
+        }, 
+        {
+            "location": "/SDK/sdk_instantiation/#instantiation", 
+            "text": "A Fidelius object can be instantiated with varying levels of configuration. The default constructor uses the DefaultAWSCredentialsProviderChain \nand default  ClientConfiguration .  The region is set from the  AWS_DEFAULT_REGION  environment variable, or \" us-east-1 \" if the variable is not set.  // Default Constructor  FideliusClient   fideliusClient   =   new   FideliusClient ();     Network-related settings (proxy, timeout, etc.) can be set by configuring and passing the  ClientConfiguration \nobject. If only proxy needs to be configured then the environment variables CRED_PROXY and CRED_PORT can be set and use the default ClientConfiguration.    Authentication is configured by passing in an  AWSCredentialsProvider    AWS Region can be specified by passing the appropriate string value. See: http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/regions/Regions.html", 
+            "title": "Instantiation"
+        }, 
+        {
+            "location": "/SDK/sdk_instantiation/#example-1-passing-proxy-and-port-with-custom-clientconfiguration", 
+            "text": "ClientConfiguration   clientConf   =   new   ClientConfiguration () \n      . withProxyHost ( proxy.company.com ) \n      . withProxyPort ( 8081 ); \n  AWSCredentialsProvider   provider   =   new   DefaultAWSCredentialsProviderChain (); \n  String   region   =   Regions . US_EAST_1 . getName (); \n\n  FideliusClient   fideliusClient   =   new   FideliusClient ( clientConf ,   provider ,   region );", 
+            "title": "Example 1: Passing Proxy and Port with custom ClientConfiguration"
+        }, 
+        {
+            "location": "/SDK/sdk_instantiation/#example-2-setting-proxy-environment-variables-and-using-default-clientconfiguration", 
+            "text": "Linux export   CRED_PROXY = proxy.company.com export   CRED_PORT = 8081   Windows //windows set   CRED_PROXY = proxy.company.com set   CRED_PORT = 8081   FideliusClient   fideliusClient   =   new   FideliusClient ();  // or  AWSCredentialsProvider   provider   =   new   DefaultAWSCredentialsProviderChain ();  FideliusClient   fideliusClient   =   new   FideliusClient ( Regions . US_EAST_1 . getName ());", 
+            "title": "Example 2: Setting proxy environment variables and using default ClientConfiguration"
+        }, 
+        {
+            "location": "/SDK/sdk_parameterPassing/", 
+            "text": "Additional Details\n\n\nPassing Application,SDLC and Component to get and put Credentials\n\n\nApplication, SDLC and Component values are used to:\n\n\n\n\nProvide the encryption context of the encryptedCredential\n\n\nForm the encryptedCredential name as:\n\n\nApplication\n.\nComponent\n.\nSDLC\n.\nencryptedCredential\n if the component is provided\n\n\nApplication\n.\nSDLC\n.\nencryptedCredential\n  otherwise\n\n\n\n\n\n\n\n\nApplication and SDLC are mandatory to be provided. Component is optional.\n\n\nThere are three possible ways to pass these values:\n\n\n\n\nDirectly to the \ngetCredential\n and \nputCredential\n APIs as parameters.\n\n\nSetting environment variables CRED_Application, CRED_SDLC and CRED_Component\n\n\nSetting EC2 instance tags namely Application, SDLC and Component.\n\n\n\n\nEnvironment variables take higher priority over EC2 instances tags.", 
+            "title": "Passing AGS,SDLC and Component to get and put Credentials"
+        }, 
+        {
+            "location": "/SDK/sdk_parameterPassing/#additional-details", 
+            "text": "", 
+            "title": "Additional Details"
+        }, 
+        {
+            "location": "/SDK/sdk_parameterPassing/#passing-applicationsdlc-and-component-to-get-and-put-credentials", 
+            "text": "Application, SDLC and Component values are used to:   Provide the encryption context of the encryptedCredential  Form the encryptedCredential name as:  Application . Component . SDLC . encryptedCredential  if the component is provided  Application . SDLC . encryptedCredential   otherwise     Application and SDLC are mandatory to be provided. Component is optional.  There are three possible ways to pass these values:   Directly to the  getCredential  and  putCredential  APIs as parameters.  Setting environment variables CRED_Application, CRED_SDLC and CRED_Component  Setting EC2 instance tags namely Application, SDLC and Component.   Environment variables take higher priority over EC2 instances tags.", 
+            "title": "Passing Application,SDLC and Component to get and put Credentials"
+        }, 
+        {
+            "location": "/SDK/sdk_localVsEC2/", 
+            "text": "Additional Details\n\n\nRunning from EC2 Instance vs. Local\n\n\nWhen running on an EC2 instance the prefered approach is to configure the Application, SDLC and Component as the \ninstance tags. However, if there is a usecase where one does NOT want to use the EC2 instance tags (example: jenkins \nbuild on a generic EC2 slave), then the environment variables CRED_Application, CRED_SDLC and CRED_COMPONENT can be \nconfigured which will take higher priority.\n\n\nExample using environment variables:\n\nCRED_Application\n=\nAPP\n\nCRED_Component\n=\ndatabase\n\nCRED_SDLC\n=\ndev\n\n\n\nWhen running locally, the prefered approach is to  set the environment variables. However, if there is a usecase to call\nthe \ngetCredential\n and \nputCredential\n multiple times with different Application/SDLC/Component values, then pass \nthose values directly to the APIs.", 
+            "title": "Running from EC2 Instance vs. Local"
+        }, 
+        {
+            "location": "/SDK/sdk_localVsEC2/#additional-details", 
+            "text": "", 
+            "title": "Additional Details"
+        }, 
+        {
+            "location": "/SDK/sdk_localVsEC2/#running-from-ec2-instance-vs-local", 
+            "text": "When running on an EC2 instance the prefered approach is to configure the Application, SDLC and Component as the \ninstance tags. However, if there is a usecase where one does NOT want to use the EC2 instance tags (example: jenkins \nbuild on a generic EC2 slave), then the environment variables CRED_Application, CRED_SDLC and CRED_COMPONENT can be \nconfigured which will take higher priority.  Example using environment variables: CRED_Application = APP CRED_Component = database CRED_SDLC = dev  When running locally, the prefered approach is to  set the environment variables. However, if there is a usecase to call\nthe  getCredential  and  putCredential  multiple times with different Application/SDLC/Component values, then pass \nthose values directly to the APIs.", 
+            "title": "Running from EC2 Instance vs. Local"
+        }, 
+        {
+            "location": "/SDK/sdk_javadocs/", 
+            "text": "Java documentation for the Fidelius SDK can be found here: \n\n\nFidelius Javadocs", 
+            "title": "API Documentation"
+        }
+    ]
+}
