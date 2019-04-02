@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+    
+        
+    <url>
+     <loc>https://finraos.github.io/Fidelius/</loc>
+     <lastmod>2019-04-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>https://finraos.github.io/Fidelius/QuickStart/</loc>
+     <lastmod>2019-04-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+    
+        
+    <url>
+     <loc>https://finraos.github.io/Fidelius/prequisites/configuration/</loc>
+     <lastmod>2019-04-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>https://finraos.github.io/Fidelius/prequisites/IAM/</loc>
+     <lastmod>2019-04-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>https://finraos.github.io/Fidelius/prequisites/kms/</loc>
+     <lastmod>2019-04-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>https://finraos.github.io/Fidelius/prequisites/dynamodb/</loc>
+     <lastmod>2019-04-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+    
+        
+    <url>
+     <loc>https://finraos.github.io/Fidelius</loc>
+     <lastmod></lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>https://finraos.github.io/Fidelius</loc>
+     <lastmod></lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+    
+        
+    <url>
+     <loc>https://finraos.github.io/Fidelius/SDK/sdk_quickstart/</loc>
+     <lastmod>2019-04-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>https://finraos.github.io/Fidelius/SDK/sdk_usage/</loc>
+     <lastmod>2019-04-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>https://finraos.github.io/Fidelius/SDK/sdk_methods/</loc>
+     <lastmod>2019-04-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>https://finraos.github.io/Fidelius</loc>
+     <lastmod></lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>https://finraos.github.io/Fidelius/SDK/sdk_javadocs/</loc>
+     <lastmod>2019-04-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+</urlset>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="163px" height="116px" viewBox="0 0 163 116" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 50.2 (55047) - http://www.bohemiancoding.com/sketch -->
+    <title>Figure/Fidelius/2</title>
+    <defs>
+        <path d="M12,0 L123,0 C129.627417,-1.21743675e-15 135,5.372583 135,12 L135,97 C135,98.6568542 133.656854,100 132,100 L3,100 C1.34314575,100 2.02906125e-16,98.6568542 0,97 L0,12 C-8.11624501e-16,5.372583 5.372583,1.21743675e-15 12,0 Z" id="path-1"></path>
+        <polygon id="path-3" points="0 2.84217094e-14 0 83 116 2.84217094e-14"></polygon>
+        <polygon id="path-5" points="0 83 116 0 116 83"></polygon>
+    </defs>
+    <g id="Features" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Features---Fidelius" transform="translate(-231.000000, -397.000000)">
+            <g id="Overview" transform="translate(143.000000, 110.000000)">
+                <g id="Feature-2" transform="translate(0.000000, 263.000000)">
+                    <g id="Figure/Fidelius/2" transform="translate(89.000000, 25.000000)">
+                        <g id="Monitor" transform="translate(13.000000, 0.000000)">
+                            <mask id="mask-2" fill="white">
+                                <use xlink:href="#path-1"></use>
+                            </mask>
+                            <use id="Rectangle-Copy-2" stroke="#CCCCCC" stroke-width="2" xlink:href="#path-1"></use>
+                            <rect id="Rectangle-Copy" stroke="#333333" stroke-width="10" fill="#000000" mask="url(#mask-2)" x="5" y="4" width="126" height="93"></rect>
+                        </g>
+                        <g id="App" transform="translate(23.000000, 9.000000)">
+                            <mask id="mask-4" fill="white">
+                                <use xlink:href="#path-3"></use>
+                            </mask>
+                            <g id="Path-11"></g>
+                            <rect id="Header" fill="#0288D1" mask="url(#mask-4)" x="0" y="0" width="116" height="10"></rect>
+                            <rect id="Main" fill="#333333" mask="url(#mask-4)" x="10" y="20" width="116" height="58"></rect>
+                            <rect id="Input" fill="#000000" mask="url(#mask-4)" x="15" y="25" width="20" height="6"></rect>
+                            <rect id="Input-Copy" fill="#000000" mask="url(#mask-4)" x="40" y="25" width="20" height="6"></rect>
+                            <rect id="Input-Copy-2" fill="#000000" mask="url(#mask-4)" x="65" y="25" width="20" height="6"></rect>
+                            <rect id="Table" fill="#000000" mask="url(#mask-4)" x="15" y="36" width="70" height="3"></rect>
+                            <rect id="Table-Copy" fill="#000000" mask="url(#mask-4)" x="15" y="44" width="70" height="1"></rect>
+                            <rect id="Table-Copy-2" fill="#000000" mask="url(#mask-4)" x="15" y="50" width="70" height="1"></rect>
+                            <rect id="Table-Copy-3" fill="#000000" mask="url(#mask-4)" x="15" y="56" width="70" height="1"></rect>
+                            <rect id="Table-Copy-4" fill="#000000" mask="url(#mask-4)" x="15" y="62" width="70" height="1"></rect>
+                            <rect id="Table-Copy-5" fill="#000000" mask="url(#mask-4)" x="15" y="68" width="70" height="1"></rect>
+                        </g>
+                        <g id="Code" transform="translate(23.000000, 9.000000)">
+                            <mask id="mask-6" fill="white">
+                                <use xlink:href="#path-5"></use>
+                            </mask>
+                            <g id="Path-12"></g>
+                            <text id="&lt;-&gt;" mask="url(#mask-6)" font-family="Hack-Bold, Hack" font-size="12" font-weight="bold" fill="#FFFFFF">
+                                <tspan x="20" y="80">&lt;  &gt;</tspan>
+                            </text>
+                            <rect fill="#FFFFFF" mask="url(#mask-6)" x="28" y="75" width="13" height="3"></rect>
+                            <rect fill="#F3D636" mask="url(#mask-6)" x="20" y="66" width="20" height="3"></rect>
+                            <rect fill="#F3D636" mask="url(#mask-6)" x="70" y="66" width="20" height="3"></rect>
+                            <rect fill="#238795" mask="url(#mask-6)" x="45" y="66" width="20" height="3"></rect>
+                            <rect fill="#F3D636" mask="url(#mask-6)" x="30" y="58" width="20" height="3"></rect>
+                            <rect fill="#F3D636" mask="url(#mask-6)" x="90" y="58" width="10" height="3"></rect>
+                            <rect fill="#5333A7" mask="url(#mask-6)" x="55" y="58" width="30" height="3"></rect>
+                            <rect fill="#F3D636" mask="url(#mask-6)" x="20" y="50" width="20" height="3"></rect>
+                            <rect fill="#5333A7" mask="url(#mask-6)" x="80" y="50" width="10" height="3"></rect>
+                            <rect fill="#238795" mask="url(#mask-6)" x="45" y="50" width="30" height="3"></rect>
+                            <rect fill="#F3D636" mask="url(#mask-6)" x="10" y="42" width="20" height="3"></rect>
+                            <rect fill="#5333A7" mask="url(#mask-6)" x="70" y="42" width="40" height="3"></rect>
+                            <rect fill="#238795" mask="url(#mask-6)" x="35" y="42" width="30" height="3"></rect>
+                            <rect fill="#F3D636" mask="url(#mask-6)" x="30" y="34" width="20" height="3"></rect>
+                            <rect fill="#F3D636" mask="url(#mask-6)" x="90" y="34" width="20" height="3"></rect>
+                            <rect fill="#238795" mask="url(#mask-6)" x="55" y="34" width="30" height="3"></rect>
+                            <rect fill="#F3D636" mask="url(#mask-6)" x="20" y="26" width="20" height="3"></rect>
+                            <rect fill="#238795" mask="url(#mask-6)" x="80" y="26" width="20" height="3"></rect>
+                            <rect fill="#238795" mask="url(#mask-6)" x="45" y="26" width="30" height="3"></rect>
+                            <rect fill="#F3D636" mask="url(#mask-6)" x="30" y="18" width="20" height="3"></rect>
+                            <rect fill="#5333A7" mask="url(#mask-6)" x="90" y="18" width="20" height="3"></rect>
+                            <rect fill="#238795" mask="url(#mask-6)" x="55" y="18" width="30" height="3"></rect>
+                        </g>
+                        <path d="M23.5,91.5 L138.5,9.5" id="Line" stroke="#CCCCCC" stroke-width="2"></path>
+                        <g id="Logo/Fidelius-(blue)" transform="translate(63.000000, 32.000000)">
+                            <image id="Asset-58" x="0" y="0" width="36" height="36" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAABGdBTUEAALGOGCHvlwAABQlJREFUWAnFWM1vW0UQn12/JJbsyKZJExcVxSVt0xRQalI+TjQXTuTDiBsc8KWQGwkFiRvurS2HmltVLulfEFPDAXFx7ojGygGCRIlV2rgfqDGJXcf222Vm7ff83stLbKcOGel5d2dmZ35vdnZ2n9nMJ6k1xiGWvDGVhkOir67fCUuhJxiwZTb9aUoqHAyWOEC8HWDR2cWwAC0eGgi8fSTgywkpE9e+OJ9s9b0ICOgyLpn8mOYwgMsNQHUrTEJWAEt4JEsnv3tv2Wk8evHHczqTE4zJGMrGSD44EMgeCfqGqI9Gs5JBkukieeXLN9LEs9Lc9TtBrxBRCTKK2jNWmQloa2sLcrl1CIdPgKZpVp08emiAknDBKiwUirB2LwfF4jMR9AN/680Iguu3qlA/g4426swwLocCbiit/nFXdUdOv6wipLxXq1W4f/9vePgwB319/dDffxQfZTgADhD/bhbg8ZOnkN98BrrwKGNSSvZg/TEsfv8T9Pp9QMbD4Zegv+8Fko8hCBttoo2/svdgZeV32NwqwPnXX1NygcAVIK/XqxgEjEDRQ+T3+1XEdOkFAR6QErMMd0CNamDqA7MhB7/8uqIeYr54bMCUUefJP0+hXK7YeN093WrMhVjWKGcQkC2MhjYtJZHXNwiclhJj3y49WH/UdEpPdw0QKXJ86bWmMw5YobfXb3ow4u9MZlPh/+hQ3hHRriRAaRpQvhwWdXU1drYmBdvAmrJnhHR9G3OolvhuoD1aj5y9+NE+MqxhDScv0Yh7uFR1xuc7vAgRECyUqlZxKFUVIL+/l/iuJPSyK7+TTDrHyB5PLrxPyPJ75pDEknXQJESaXNR3GUtTcTQKpNO3Xi05WR0flzRNRUilt5SQZgxmAoEglEq1Ku30KDFKzKzSdqnQK3D7h5/tzBZH05PvkmYmMR+hlQIFiE52gTuNzjDj2CChlSTmEdtlpyFYdZZZ9VvpnxwO19RYrfTQQC1Z/ZqRpwPVcdrXJuAvbf1O06tnTyuTUsi0YbueQzjEOwwx6bR3o4PYaQMDfeQqb73UmYAwRRSgUOiYGx7oNKCzo6eAcw5MMuXXcGrW7NTNqSTer7PBYHCIdlupZN9ZUlSBHsbNKYYNSnaJ14y2KnVk7BU1X4BwB0RSPPkXsGR+PTR0AlZXfzMdGh3a/lr3zorOPV0wPXnBUGu5xTfIXnXcwc0lIyu8VE1QGwqFXGuS6HBiY7lV/sinQTZAqmozuEVCipKTOlwg82XOF5w+bIBIiFGawyZPUcJ8sulTDnUqufGeHTeKodXJDkD1KKlQDg+fsuqqfrVS2MFrl0G5c+3S+I7lIjs7ABHz9o2pODYZOnCHh08SyyS9UjT7++4IEdttrisgUuaCq0nHj+PnTO2TSNlQy/Y8hy2Db90+IJVx8mt0nC0dJ/i5NU/8kZFR2xX3OZYtc/XzccrRXWlXQDQjdXMygUfKLTrfxsYiJqhqeUsVyV2tugvy25xPuIsa3D0BkRrmU8wNVGU737DSvJcXCMZtVzmnNgVEE5ygBgdDQFESLeQS7SgC8818ZNnp3G3cEiALqMu0fGfOjKq80ssb+Hm95/U2U+L8XKtgyA++QHsUnU1NCKluBgH6L+DPu2tQ3Ab9ww/esX/s425qlsBuntsGREaiscWg6NHi2P0MH+f/Q0s653PtRIVsGLQvQMZk4x+0waOBib6g+hyOX7k0vmDI99P+B+L1yksWBppoAAAAAElFTkSuQmCC"></image>
+                        </g>
+                        <path d="M25,0 L136,0 C142.627417,-1.21743675e-15 148,5.372583 148,12 L148,97 C148,98.6568542 146.656854,100 145,100 L16,100 C14.3431458,100 13,98.6568542 13,97 L13,12 C13,5.372583 18.372583,1.21743675e-15 25,0 Z" id="Rectangle" stroke="#CCCCCC" stroke-width="2"></path>
+                        <path d="M0.473322485,102.028925 L160.672168,102.028925 C159.409023,106.088156 158.151307,108.799649 156.899021,110.163405 C155.646734,111.527161 153.380206,112.653615 150.099434,113.542769 L10.8448224,113.542769 C7.31126456,112.492559 5.00279865,111.366104 3.9194247,110.163405 C2.83605075,108.960705 1.68735001,106.249212 0.473322485,102.028925 Z" id="Path-10" stroke="#CCCCCC" stroke-width="2"></path>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

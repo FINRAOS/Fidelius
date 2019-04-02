@@ -1,0 +1,92 @@
+site_name: Fidelius
+site_description: User manual and documentation for the Fidelius web application and SDK
+site_url: https://finraos.github.io/Fidelius
+
+
+#Copyright
+copyright: 'Copyright &copy; FINRA 2019'
+
+# Configuration
+theme:
+  name: null
+  custom_dir: finra-theme
+
+  # 404 page
+  static_templates:
+    - 404.html
+
+  # Don't include MkDocs' JavaScript
+  include_search_page: false
+  search_index_only: true
+
+  # Default values, taken from mkdocs_theme.yml
+  language: en
+  direction: ltr
+  feature:
+    tabs: true
+  palette:
+    primary: indigo
+    accent: indigo
+  font:
+    text: Roboto
+    code: Roboto Mono
+  favicon: 'assets/images/favicon-32x32.png'
+  logo: 'assets/images/fidelius.svg'
+
+# Extensions
+markdown_extensions:
+  - markdown.extensions.admonition
+  - markdown.extensions.codehilite:
+      guess_lang: false
+  - markdown.extensions.def_list
+  - markdown.extensions.footnotes
+  - markdown.extensions.meta
+  - markdown.extensions.toc:
+      permalink: true
+  - pymdownx.arithmatex
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:pymdownx.emoji.to_svg
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Page Tree
+pages:
+  - Fidelius:
+    - Overview: index.md
+    - Quick Start: QuickStart.md
+  - Prerequsites:
+    - Overview: prequisites/configuration.md
+    - IAM: prequisites/IAM.md
+    - KMS: prequisites/kms.md
+    - DynamoDb: prequisites/dynamodb.md
+  - UI:
+    - Setup:
+      - Local Setup: UI/ui_setup_local.md
+    - User Guide:
+      - The Credentials Table: UI/ui_secretsTable.md
+      - Viewing Credentials: UI/ui_view.md
+      - Editing Credentials: UI/ui_edit.md
+      - Deleting Credentials: UI/ui_delete.md
+      - Adding New Credentials: UI/ui_add.md
+      - User Roles: UI/ui_roles.md
+  - SDK:
+    - Getting Started: SDK/sdk_quickstart.md
+    - Usage: SDK/sdk_usage.md
+    - Client methods: SDK/sdk_methods.md
+    - Additonal Details:
+      - Instantiation: SDK/sdk_instantiation.md
+      - Passing AGS,SDLC and Component to get and put Credentials: SDK/sdk_parameterPassing.md
+      - Running from EC2 Instance vs. Local: SDK/sdk_localVsEC2.md
+    - API Documentation: SDK/sdk_javadocs.md
