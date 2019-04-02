@@ -32,10 +32,9 @@ Fidelius requires the following tools to be installed and on your $PATH variable
 ### Step 1 - Create a KMS key
  Create a KMS key with an alias `credstash` in AWS KMS.  Reference can be found [here](https://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html)
  
-### Step 2 - Create Assume Role
- 
-Create a AWS role that your role can assume.  This role should be called `Cross_Account_Fidelius`.  This can be changed
-in the future.  The role needs to have this IAM permissions.    
+### Step 2 - Create User Role
+
+Create a user role that will be used to run the setup script.  This role will also assume the application role.  This role should have the following permissions:
 ```json
 {
     "Version": "2012-10-17",
@@ -46,7 +45,7 @@ in the future.  The role needs to have this IAM permissions.
                 "dynamodb:DescribeTable"
             ],
             "Effect": "Allow",
-            "Resource": "arn:aws:dynamodb:<REGION>:<ACCOUNT NUMBER>:table/credential-store"
+            "Resource": "arn:aws:dynamodb:<REGION>:<ACCOUNT_NUMBER>:table/credential-store"
         },
         {
             "Action": [
@@ -58,44 +57,48 @@ in the future.  The role needs to have this IAM permissions.
     ]
 }
 ```
-
-### Step 3 - Add KMS permissions
-Add KMS permissions to `Cross_Account_Fidelius`
-```json 
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
-        "kms:Decrypt"
-      ],
-      "Effect": "Allow",
-      "Resource": "arn:aws:kms:us-east-1:AWSACCOUNTID:key/credstash"
-    },
-    {
-      "Action": [
-        "dynamodb:GetItem",
-        "dynamodb:Query",
-        "dynamodb:Scan"
-      ],
-      "Effect": "Allow",
-      "Resource": "arn:aws:dynamodb:us-east-1:AWSACCOUNTID:table/credential-store"
-    }
-  ]
-}
-```
-
-### Step 4 - Grant Assume Role 
-Grant permission for your user role to assume into `Cross_Account_Fidelius`.
+### Step 3 - Create Cross Account Role
+ 
+Create a AWS role that your user role can assume.  This role should be called `Cross_Account_Fidelius`.  This can be changed
+in the future.  The role needs to have this IAM permissions.    
 ```json
 {
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "0",
+            "Sid": "",
+            "Effect": "Allow",
+            "Action": [
+                "kms:Decrypt",
+                "kms:Encrypt",
+                "kms:GenerateDataKey",
+                "dynamodb:PutItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:Query",
+                "dynamodb:UpdateItem"
+            ],
+            "Resource": [
+                "arn:aws:kms:<REGION>:<ACCOUNT_NUMBER>:key/<KMS_KEY_ID>",
+                "arn:aws:dynamodb:<REGION>:<ACCOUNT_NUMBER>:table/credential-store"
+            ]
+        }
+    ]
+}
+```
+
+### Step 4 - Grant Assume Role 
+Grant permission for your user role from step 2 to assume into `Cross_Account_Fidelius` role create on Step 3.
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "",
             "Effect": "Allow",
             "Action": "sts:AssumeRole",
-            "Resource": "arn:aws:iam::AWSACCOUNTID:role/Cross_Account_Fidelius"
+            "Resource": "arn:aws:iam::<ACCOUNT_NUMBER>:role/Cross_Account_Fidelius"
         }
     ]
 }
