@@ -2,7 +2,7 @@
     "docs": [
         {
             "location": "/", 
-            "text": "Fidelius AWS Secrets Manager\n\n\n\n\n\n\nOverview\n\n\nFidelius Secrets Manager is an online application used for securely storing and accessing secrets using AWS DynamoDB\ntables. Fidelius aims to provide organizations with an easy-to-use, secure, and organized way to create, view, modify,\ncollections of encrypted secrets as well as provide a system for managing user and application access to those secrets.\n\n\nFidelius uses configurable LDAP through Open Directory or Active Directory to set permissions for users to access secrets.\nFidelius provides an \nangular application\n, a \nJava SDK package\n, and a backend service to set and retrieve secrets across\nmultiple environments.\n\n\nQuick Start\n\n\nCheck out \nQuickStart\n to get started!", 
+            "text": "Fidelius AWS Secrets Manager\n\n\n\n\n\n\nOverview\n\n\nFidelius Secrets Manager is an online application used for securely storing and accessing secrets using AWS DynamoDB\ntables. Fidelius aims to provide organizations with an easy-to-use, secure, and organized way to create, view, modify,\ncollections of encrypted secrets as well as provide a system for managing user and application access to those secrets.\n\n\nFidelius uses configurable LDAP through Open Directory or Active Directory to set permissions for users to access secrets.\nFidelius provides an \nangular application\n, a \nJava SDK package\n, and a backend service to set and retrieve secrets across\nmultiple environments.\n\n\nQuick Start\n\n\nCheck out \nQuickStart for Linux/Mac\n or \nQuickStart for Windows\n to get started!", 
             "title": "Overview"
         }, 
         {
@@ -17,13 +17,13 @@
         }, 
         {
             "location": "/#quick-start", 
-            "text": "Check out  QuickStart  to get started!", 
+            "text": "Check out  QuickStart for Linux/Mac  or  QuickStart for Windows  to get started!", 
             "title": "Quick Start"
         }, 
         {
             "location": "/QuickStart/", 
-            "text": "Quick Start\n\n\nFidelius includes a simple way to get Fidelius running locally to get you started.\n\n\nBefore you start you need to make sure the right permissions are set in order for the script to create the resources\nrequired to get Fidelius running locally.  The script is able to \n\n\n\n\nCreate a DynamoDb table with the proper format to store secrets\n\n\nBuild the required docker containers\n\n\nStart Fidelius locally with some services mocked talking to your DynamoDb table in order for you to be allowed to \nexperience all of Fidelius features.\n\n\n\n\nDemo Features\n\n\n\n\nLogin as a Dev user\n\n\nLogin as an Ops user  \n\n\nLogin as a Master user\n\n\nCreate secrets\n\n\nView secrets\n\n\nUpdate secrets\n\n\nDelete secrets\n\n\n\n\nPrerequisites\n\n\nFidelius requires the following tools to be installed and on your $PATH variable:\n\n\n\n\nJava 8+\n\n\nMaven 3+\n\n\nNPM 3+\n\n\nDocker\n\n\n\n\nStep 1 - Create a KMS key\n\n\nCreate a KMS key with an alias \ncredstash\n in AWS KMS.  Reference can be found \nhere\n\n\nStep 2 - Create Assume Role\n\n\nCreate a AWS role that your role can assume.  This role should be called \nCross_Account_Fidelius\n.  This can be changed\nin the future.  The role needs to have this IAM permissions.  \n\n\n{\n\n    \nVersion\n:\n \n2012-10-17\n,\n\n    \nStatement\n:\n \n[\n\n        \n{\n\n            \nAction\n:\n \n[\n\n                \ndynamodb:CreateTable\n,\n\n                \ndynamodb:DescribeTable\n\n            \n],\n\n            \nEffect\n:\n \nAllow\n,\n\n            \nResource\n:\n \narn:aws:dynamodb:\nREGION\n:\nACCOUNT NUMBER\n:table/credential-store\n\n        \n},\n\n        \n{\n\n            \nAction\n:\n \n[\n\n                \ndynamodb:ListTables\n\n            \n],\n\n            \nEffect\n:\n \nAllow\n,\n\n            \nResource\n:\n \n*\n\n        \n}\n\n    \n]\n\n\n}\n\n\n\n\nStep 3 - Add KMS permissions\n\n\nAdd KMS permissions to \nCross_Account_Fidelius\n\n\n{\n\n  \nVersion\n:\n \n2012-10-17\n,\n\n  \nStatement\n:\n \n[\n\n    \n{\n\n      \nAction\n:\n \n[\n\n        \nkms:Decrypt\n\n      \n],\n\n      \nEffect\n:\n \nAllow\n,\n\n      \nResource\n:\n \narn:aws:kms:us-east-1:AWSACCOUNTID:key/credstash\n\n    \n},\n\n    \n{\n\n      \nAction\n:\n \n[\n\n        \ndynamodb:GetItem\n,\n\n        \ndynamodb:Query\n,\n\n        \ndynamodb:Scan\n\n      \n],\n\n      \nEffect\n:\n \nAllow\n,\n\n      \nResource\n:\n \narn:aws:dynamodb:us-east-1:AWSACCOUNTID:table/credential-store\n\n    \n}\n\n  \n]\n\n\n}\n\n\n\n\nStep 4 - Grant Assume Role\n\n\nGrant permission for your user role to assume into \nCross_Account_Fidelius\n.\n\n{\n\n    \nVersion\n:\n \n2012-10-17\n,\n\n    \nStatement\n:\n \n[\n\n        \n{\n\n            \nSid\n:\n \n0\n,\n\n            \nEffect\n:\n \nAllow\n,\n\n            \nAction\n:\n \nsts:AssumeRole\n,\n\n            \nResource\n:\n \narn:aws:iam::AWSACCOUNTID:role/Cross_Account_Fidelius\n\n        \n}\n\n    \n]\n\n\n}\n\n\n\n\nStep 5 - Update Trust Relationship\n\n\nAdd your user role to Trust Relationship on \nCross_Account_fidelius\n \n\n \narn:aws:iam::AWSACCOUNTID:role/YOUR_USER_ROLE\n\n\n\n\nStep 6 - Set Environment Variables\n\n\nSet environment variables\n\n\nIf you need a proxy, set environment variable \nhttp_proxy\n\n\n    \nexport\n \nhttp_proxy\n=\nproxy.com:80\n\n\n\nSet the location of your \nAWS_DIRECTORY\n that contains your credentials\n\n    \nexport\n \nAWS_DIRECTORY\n=\n~/.aws\n\n\n\nSet your \nAWS_ACCOUNT_NUMBER\n that will be used to create the resources needed for Fidelius to launch\n\n    \nexport\n \nAWS_ACCOUNT_NUMBER\n=\n12345678910\n\n\n\n\nStep 7 - Run Start Script\n\n\nWindows 10 users will have to manually build the code and run the containers.  You can follow the steps \n\n7A\n - \n7H\n.\n\n\nMac or Linux users can run the following script that will build all the Fidelius code/containers and bring\nFidelius up locally. You don't have to manually run steps 7A-7H, since the script will do this for you.\n\n\nRefresh your AWS tokens if you need to, otherwise run the start script.\n\nbash start.sh\n\n\n\nYou should see the following screens in this order: \n\n\n-------------------------------------------------------\n\n|\n         Building base Fidelius containers           \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n         Building Fidelius demo services             \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n         Building Fidelius setup container           \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n         Building Fidelius backend service           \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n         Building Fidelius UI                        \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n         Building Fidelius containers                \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n          Starting Fidelius Setup                     \n|\n\n-------------------------------------------------------\n.\n.\n.\n-------------------------------------------------------\n\n|\n          Starting Fidelius Local Environment         \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n              Fidelius User Endpoints                \n|\n\n\n|\n                                                     \n|\n\n\n|\n         DEV user -      https://localhost:443       \n|\n\n\n|\n         OPS user -      https://localhost:444       \n|\n\n\n|\n         MASTER user -   https://localhost:445       \n|\n\n\n|\n                                                     \n|\n\n-------------------------------------------------------\n\n\n\n\n7A. Build Containers\n\n\ncd containers\n\n\nrun docker-compose build\n\n\n7B. Build Fidelius demo services\n\n\ncd demo-services/fake-account-service\n\n\nrun mvn clean install\n\n\n7C. Build Fidelius setup container\n\n\ncd demo-services/fidelius-setup\n\n\nrun mvn clean install  \n\n\n7D. Build Fidelius backend service\n\n\ncd fidelius-service\n\n\nrun mvn clean install\n\n\n7E. Build Fidelius UI\n\n\ncd fidelius-ui\n\n\nrun npm install\n\n\nnpm run build\n\n\n7F. Build Fidelius containers\n\n\nrun docker-compose -f setup-docker-compose.yml build\n\n\nrun docker-compose -f local-docker-compose.yml build\n\n\n7G. Start Fidelius Setup\n\n\nrun docker-compose -f setup-docker-compose.yml up\n\n\nWait for process to complete\n\n\nrun docker-compose -f local-docker-compose.yml up\n\n\nStep 8 - Navigate to Fidelius\n\n\nNavigate to the links above to experience Fidelius Secrets Manager.  When you are done you can simply \nrun the stop script.  \n\n\nFidelius User Endpoints\n\n\n\n\n\n\n\n\nROLE\n\n\nURL\n\n\n\n\n\n\n\n\n\n\nDev\n\n\nhttps://localhost:443\n\n\n\n\n\n\nOps\n\n\nhttps://localhost:444\n\n\n\n\n\n\nMaster\n\n\nhttps://localhost:445\n\n\n\n\n\n\n\n\nNext Steps\n\n\nAfter having Fidelius running locally with default configurations, you might want to configure the steps so that you\ncan run or deploy Fidelius for your organization.\n\n\nThe application configurations can be found at \nConfiguration", 
-            "title": "Quick Start"
+            "text": "Quick Start\n\n\nFidelius includes a simple way to get Fidelius running locally to get you started.\n\n\nBefore you start you need to make sure the right permissions are set in order for the script to create the resources\nrequired to get Fidelius running locally.  The script is able to \n\n\n\n\nCreate a DynamoDb table with the proper format to store secrets\n\n\nBuild the required docker containers\n\n\nStart Fidelius locally with some services mocked talking to your DynamoDb table in order for you to be allowed to \nexperience all of Fidelius features.\n\n\n\n\nDemo Features\n\n\n\n\nLogin as a Dev user\n\n\nLogin as an Ops user  \n\n\nLogin as a Master user\n\n\nCreate secrets\n\n\nView secrets\n\n\nUpdate secrets\n\n\nDelete secrets\n\n\n\n\nPrerequisites\n\n\nFidelius requires the following tools to be installed and on your $PATH variable:\n\n\n\n\nJava 8+\n\n\nMaven 3+\n\n\nNPM 3+\n\n\nDocker\n\n\nAWS-CLI\n\n\n\n\nStep 1 - Create a KMS key\n\n\nCreate a KMS key with an alias \ncredstash\n in AWS KMS.  Reference can be found \nhere\n\n\nStep 2 - Create User Role\n\n\nCreate a user role that will be used to run the setup script.  This role will also assume the application role.  This role should have the following permissions:\n\n{\n\n    \nVersion\n:\n \n2012-10-17\n,\n\n    \nStatement\n:\n \n[\n\n        \n{\n\n            \nAction\n:\n \n[\n\n                \ndynamodb:CreateTable\n,\n\n                \ndynamodb:DescribeTable\n\n            \n],\n\n            \nEffect\n:\n \nAllow\n,\n\n            \nResource\n:\n \narn:aws:dynamodb:\nREGION\n:\nACCOUNT_NUMBER\n:table/credential-store\n\n        \n},\n\n        \n{\n\n            \nAction\n:\n \n[\n\n                \ndynamodb:ListTables\n\n            \n],\n\n            \nEffect\n:\n \nAllow\n,\n\n            \nResource\n:\n \n*\n\n        \n}\n\n    \n]\n\n\n}\n\n\n\n\nStep 3 - Create Cross Account Role\n\n\nCreate a AWS role that your user role can assume.  This role should be called \nCross_Account_Fidelius\n.  This can be changed\nin the future.  The role needs to have this IAM permissions.  \n\n\n{\n\n    \nVersion\n:\n \n2012-10-17\n,\n\n    \nStatement\n:\n \n[\n\n        \n{\n\n            \nSid\n:\n \n,\n\n            \nEffect\n:\n \nAllow\n,\n\n            \nAction\n:\n \n[\n\n                \nkms:Decrypt\n,\n\n                \nkms:Encrypt\n,\n\n                \nkms:GenerateDataKey\n,\n\n                \ndynamodb:PutItem\n,\n\n                \ndynamodb:BatchWriteItem\n,\n\n                \ndynamodb:GetItem\n,\n\n                \ndynamodb:Scan\n,\n\n                \ndynamodb:Query\n,\n\n                \ndynamodb:UpdateItem\n\n            \n],\n\n            \nResource\n:\n \n[\n\n                \narn:aws:kms:\nREGION\n:\nACCOUNT_NUMBER\n:key/\nKMS_KEY_ID\n,\n\n                \narn:aws:dynamodb:\nREGION\n:\nACCOUNT_NUMBER\n:table/credential-store\n\n            \n]\n\n        \n}\n\n    \n]\n\n\n}\n\n\n\n\nStep 4 - Grant Assume Role\n\n\nGrant permission for your user role from step 2 to assume into \nCross_Account_Fidelius\n role create on Step 3.\n\n{\n\n    \nVersion\n:\n \n2012-10-17\n,\n\n    \nStatement\n:\n \n[\n\n        \n{\n\n            \nSid\n:\n \n,\n\n            \nEffect\n:\n \nAllow\n,\n\n            \nAction\n:\n \nsts:AssumeRole\n,\n\n            \nResource\n:\n \narn:aws:iam::\nACCOUNT_NUMBER\n:role/Cross_Account_Fidelius\n\n        \n}\n\n    \n]\n\n\n}\n\n\n\n\nStep 5 - Update Trust Relationship\n\n\nAdd your user role to Trust Relationship on \nCross_Account_fidelius\n \n\n \narn:aws:iam::AWSACCOUNTID:role/YOUR_USER_ROLE\n\n\n\n\nStep 6 - Set Environment Variables\n\n\nSet environment variables\n\n\nIf you need a proxy, set environment variable \nhttp_proxy\n\n\n    \nexport\n \nhttp_proxy\n=\nproxy.com:80\n\n\n\nSet the location of your \nAWS_DIRECTORY\n that contains your credentials\n\n    \nexport\n \nAWS_DIRECTORY\n=\n~/.aws\n\n\n\nSet your \nAWS_ACCOUNT_NUMBER\n that will be used to create the resources needed for Fidelius to launch\n\n    \nexport\n \nAWS_ACCOUNT_NUMBER\n=\n12345678910\n\n\n\n\nStep 7 - Run Start Script\n\n\nRun the following script that will build all the Fidelius code/containers and bring\nFidelius up locally.\n\n\nRefresh your AWS tokens if you need to, otherwise run the start script.\n\nbash start.sh\n\n\n\nYou should see the following screens in this order: \n\n\n-------------------------------------------------------\n\n|\n         Building base Fidelius containers           \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n         Building Fidelius demo services             \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n         Building Fidelius setup container           \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n         Building Fidelius backend service           \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n         Building Fidelius UI                        \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n         Building Fidelius containers                \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n          Starting Fidelius Setup                     \n|\n\n-------------------------------------------------------\n.\n.\n.\n-------------------------------------------------------\n\n|\n          Starting Fidelius Local Environment         \n|\n\n-------------------------------------------------------\n.\n.\n.\n\n-------------------------------------------------------\n\n|\n              Fidelius User Endpoints                \n|\n\n\n|\n                                                     \n|\n\n\n|\n         DEV user -      https://localhost:443       \n|\n\n\n|\n         OPS user -      https://localhost:444       \n|\n\n\n|\n         MASTER user -   https://localhost:445       \n|\n\n\n|\n                                                     \n|\n\n-------------------------------------------------------\n\n\n\n\nStep 8 - Navigate to Fidelius\n\n\nNavigate to the links above to experience Fidelius Secrets Manager.  \n\n\nFidelius User Endpoints\n\n\n\n\n\n\n\n\nROLE\n\n\nURL\n\n\n\n\n\n\n\n\n\n\nDev\n\n\nhttps://localhost:443\n\n\n\n\n\n\nOps\n\n\nhttps://localhost:444\n\n\n\n\n\n\nMaster\n\n\nhttps://localhost:445\n\n\n\n\n\n\n\n\nStep 9 - Stop Fidelius\n\n\nTo stop Fidelius service you can run the stop script\n\n\nbash stop.sh\n\n\n\n\nNext Steps\n\n\nAfter having Fidelius running locally with default configurations, you might want to configure the steps so that you\ncan run or deploy Fidelius for your organization.\n\n\nThe application configurations can be found at \nConfiguration", 
+            "title": "Quick Start for Linux/Mac"
         }, 
         {
             "location": "/QuickStart/#quick-start", 
@@ -32,7 +32,7 @@
         }, 
         {
             "location": "/QuickStart/#prerequisites", 
-            "text": "Fidelius requires the following tools to be installed and on your $PATH variable:   Java 8+  Maven 3+  NPM 3+  Docker", 
+            "text": "Fidelius requires the following tools to be installed and on your $PATH variable:   Java 8+  Maven 3+  NPM 3+  Docker  AWS-CLI", 
             "title": "Prerequisites"
         }, 
         {
@@ -41,18 +41,18 @@
             "title": "Step 1 - Create a KMS key"
         }, 
         {
-            "location": "/QuickStart/#step-2-create-assume-role", 
-            "text": "Create a AWS role that your role can assume.  This role should be called  Cross_Account_Fidelius .  This can be changed\nin the future.  The role needs to have this IAM permissions.    { \n     Version :   2012-10-17 , \n     Statement :   [ \n         { \n             Action :   [ \n                 dynamodb:CreateTable , \n                 dynamodb:DescribeTable \n             ], \n             Effect :   Allow , \n             Resource :   arn:aws:dynamodb: REGION : ACCOUNT NUMBER :table/credential-store \n         }, \n         { \n             Action :   [ \n                 dynamodb:ListTables \n             ], \n             Effect :   Allow , \n             Resource :   * \n         } \n     ]  }", 
-            "title": "Step 2 - Create Assume Role"
+            "location": "/QuickStart/#step-2-create-user-role", 
+            "text": "Create a user role that will be used to run the setup script.  This role will also assume the application role.  This role should have the following permissions: { \n     Version :   2012-10-17 , \n     Statement :   [ \n         { \n             Action :   [ \n                 dynamodb:CreateTable , \n                 dynamodb:DescribeTable \n             ], \n             Effect :   Allow , \n             Resource :   arn:aws:dynamodb: REGION : ACCOUNT_NUMBER :table/credential-store \n         }, \n         { \n             Action :   [ \n                 dynamodb:ListTables \n             ], \n             Effect :   Allow , \n             Resource :   * \n         } \n     ]  }", 
+            "title": "Step 2 - Create User Role"
         }, 
         {
-            "location": "/QuickStart/#step-3-add-kms-permissions", 
-            "text": "Add KMS permissions to  Cross_Account_Fidelius  { \n   Version :   2012-10-17 , \n   Statement :   [ \n     { \n       Action :   [ \n         kms:Decrypt \n       ], \n       Effect :   Allow , \n       Resource :   arn:aws:kms:us-east-1:AWSACCOUNTID:key/credstash \n     }, \n     { \n       Action :   [ \n         dynamodb:GetItem , \n         dynamodb:Query , \n         dynamodb:Scan \n       ], \n       Effect :   Allow , \n       Resource :   arn:aws:dynamodb:us-east-1:AWSACCOUNTID:table/credential-store \n     } \n   ]  }", 
-            "title": "Step 3 - Add KMS permissions"
+            "location": "/QuickStart/#step-3-create-cross-account-role", 
+            "text": "Create a AWS role that your user role can assume.  This role should be called  Cross_Account_Fidelius .  This can be changed\nin the future.  The role needs to have this IAM permissions.    { \n     Version :   2012-10-17 , \n     Statement :   [ \n         { \n             Sid :   , \n             Effect :   Allow , \n             Action :   [ \n                 kms:Decrypt , \n                 kms:Encrypt , \n                 kms:GenerateDataKey , \n                 dynamodb:PutItem , \n                 dynamodb:BatchWriteItem , \n                 dynamodb:GetItem , \n                 dynamodb:Scan , \n                 dynamodb:Query , \n                 dynamodb:UpdateItem \n             ], \n             Resource :   [ \n                 arn:aws:kms: REGION : ACCOUNT_NUMBER :key/ KMS_KEY_ID , \n                 arn:aws:dynamodb: REGION : ACCOUNT_NUMBER :table/credential-store \n             ] \n         } \n     ]  }", 
+            "title": "Step 3 - Create Cross Account Role"
         }, 
         {
             "location": "/QuickStart/#step-4-grant-assume-role", 
-            "text": "Grant permission for your user role to assume into  Cross_Account_Fidelius . { \n     Version :   2012-10-17 , \n     Statement :   [ \n         { \n             Sid :   0 , \n             Effect :   Allow , \n             Action :   sts:AssumeRole , \n             Resource :   arn:aws:iam::AWSACCOUNTID:role/Cross_Account_Fidelius \n         } \n     ]  }", 
+            "text": "Grant permission for your user role from step 2 to assume into  Cross_Account_Fidelius  role create on Step 3. { \n     Version :   2012-10-17 , \n     Statement :   [ \n         { \n             Sid :   , \n             Effect :   Allow , \n             Action :   sts:AssumeRole , \n             Resource :   arn:aws:iam:: ACCOUNT_NUMBER :role/Cross_Account_Fidelius \n         } \n     ]  }", 
             "title": "Step 4 - Grant Assume Role"
         }, 
         {
@@ -67,51 +67,116 @@
         }, 
         {
             "location": "/QuickStart/#step-7-run-start-script", 
-            "text": "Windows 10 users will have to manually build the code and run the containers.  You can follow the steps  7A  -  7H .  Mac or Linux users can run the following script that will build all the Fidelius code/containers and bring\nFidelius up locally. You don't have to manually run steps 7A-7H, since the script will do this for you.  Refresh your AWS tokens if you need to, otherwise run the start script. bash start.sh  You should see the following screens in this order:   ------------------------------------------------------- |          Building base Fidelius containers            | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |          Building Fidelius demo services              | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |          Building Fidelius setup container            | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |          Building Fidelius backend service            | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |          Building Fidelius UI                         | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |          Building Fidelius containers                 | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |           Starting Fidelius Setup                      | \n-------------------------------------------------------\n.\n.\n.\n------------------------------------------------------- |           Starting Fidelius Local Environment          | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |               Fidelius User Endpoints                 |  |                                                       |  |          DEV user -      https://localhost:443        |  |          OPS user -      https://localhost:444        |  |          MASTER user -   https://localhost:445        |  |                                                       | \n-------------------------------------------------------", 
+            "text": "Run the following script that will build all the Fidelius code/containers and bring\nFidelius up locally.  Refresh your AWS tokens if you need to, otherwise run the start script. bash start.sh  You should see the following screens in this order:   ------------------------------------------------------- |          Building base Fidelius containers            | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |          Building Fidelius demo services              | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |          Building Fidelius setup container            | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |          Building Fidelius backend service            | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |          Building Fidelius UI                         | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |          Building Fidelius containers                 | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |           Starting Fidelius Setup                      | \n-------------------------------------------------------\n.\n.\n.\n------------------------------------------------------- |           Starting Fidelius Local Environment          | \n-------------------------------------------------------\n.\n.\n.\n\n------------------------------------------------------- |               Fidelius User Endpoints                 |  |                                                       |  |          DEV user -      https://localhost:443        |  |          OPS user -      https://localhost:444        |  |          MASTER user -   https://localhost:445        |  |                                                       | \n-------------------------------------------------------", 
             "title": "Step 7 - Run Start Script"
         }, 
         {
-            "location": "/QuickStart/#7a-build-containers", 
-            "text": "cd containers  run docker-compose build", 
-            "title": "7A. Build Containers"
-        }, 
-        {
-            "location": "/QuickStart/#7b-build-fidelius-demo-services", 
-            "text": "cd demo-services/fake-account-service  run mvn clean install", 
-            "title": "7B. Build Fidelius demo services"
-        }, 
-        {
-            "location": "/QuickStart/#7c-build-fidelius-setup-container", 
-            "text": "cd demo-services/fidelius-setup  run mvn clean install", 
-            "title": "7C. Build Fidelius setup container"
-        }, 
-        {
-            "location": "/QuickStart/#7d-build-fidelius-backend-service", 
-            "text": "cd fidelius-service  run mvn clean install", 
-            "title": "7D. Build Fidelius backend service"
-        }, 
-        {
-            "location": "/QuickStart/#7e-build-fidelius-ui", 
-            "text": "cd fidelius-ui  run npm install  npm run build", 
-            "title": "7E. Build Fidelius UI"
-        }, 
-        {
-            "location": "/QuickStart/#7f-build-fidelius-containers", 
-            "text": "run docker-compose -f setup-docker-compose.yml build  run docker-compose -f local-docker-compose.yml build", 
-            "title": "7F. Build Fidelius containers"
-        }, 
-        {
-            "location": "/QuickStart/#7g-start-fidelius-setup", 
-            "text": "run docker-compose -f setup-docker-compose.yml up  Wait for process to complete  run docker-compose -f local-docker-compose.yml up", 
-            "title": "7G. Start Fidelius Setup"
-        }, 
-        {
             "location": "/QuickStart/#step-8-navigate-to-fidelius", 
-            "text": "Navigate to the links above to experience Fidelius Secrets Manager.  When you are done you can simply \nrun the stop script.    Fidelius User Endpoints     ROLE  URL      Dev  https://localhost:443    Ops  https://localhost:444    Master  https://localhost:445", 
+            "text": "Navigate to the links above to experience Fidelius Secrets Manager.    Fidelius User Endpoints     ROLE  URL      Dev  https://localhost:443    Ops  https://localhost:444    Master  https://localhost:445", 
             "title": "Step 8 - Navigate to Fidelius"
         }, 
         {
+            "location": "/QuickStart/#step-9-stop-fidelius", 
+            "text": "To stop Fidelius service you can run the stop script  bash stop.sh", 
+            "title": "Step 9 - Stop Fidelius"
+        }, 
+        {
             "location": "/QuickStart/#next-steps", 
+            "text": "After having Fidelius running locally with default configurations, you might want to configure the steps so that you\ncan run or deploy Fidelius for your organization.  The application configurations can be found at  Configuration", 
+            "title": "Next Steps"
+        }, 
+        {
+            "location": "/QuickStartWindows/", 
+            "text": "Quick Start for Windows\n\n\nIf you are running Mac or Linux we provide a \nstart script\n.\n\n\nBefore you start you need to make sure the right permissions are set in order for the script to create the resources\nrequired to get Fidelius running locally.  With the following steps you will be able to:\n\n\n\n\nCreate a DynamoDb table with the proper format to store secrets\n\n\nBuild the required docker containers\n\n\nStart Fidelius locally with some services mocked talking to your DynamoDb table in order for you to be allowed to \nexperience all of Fidelius features.\n\n\n\n\nDemo Features\n\n\n\n\nLogin as a Dev user\n\n\nLogin as an Ops user  \n\n\nLogin as a Master user\n\n\nCreate secrets\n\n\nView secrets\n\n\nUpdate secrets\n\n\nDelete secrets\n\n\n\n\nPrerequisites\n\n\nFidelius requires the following tools to be installed:\n\n\n\n\nJava 8+\n\n\nMaven 3+\n\n\nNPM 3+\n\n\nDocker\n\n\nAWS-CLI\n\n\n\n\nStep 1 - Create a KMS key\n\n\nCreate a KMS key with an alias \ncredstash\n in AWS KMS.  Reference can be found \nhere\n\n\nStep 2 - Create User Role\n\n\nCreate a user role that will be used to run the setup script.  This role will also assume the application role.  This role should have the following permissions:\n\n{\n\n    \nVersion\n:\n \n2012-10-17\n,\n\n    \nStatement\n:\n \n[\n\n        \n{\n\n            \nAction\n:\n \n[\n\n                \ndynamodb:CreateTable\n,\n\n                \ndynamodb:DescribeTable\n\n            \n],\n\n            \nEffect\n:\n \nAllow\n,\n\n            \nResource\n:\n \narn:aws:dynamodb:\nREGION\n:\nACCOUNT_NUMBER\n:table/credential-store\n\n        \n},\n\n        \n{\n\n            \nAction\n:\n \n[\n\n                \ndynamodb:ListTables\n\n            \n],\n\n            \nEffect\n:\n \nAllow\n,\n\n            \nResource\n:\n \n*\n\n        \n}\n\n    \n]\n\n\n}\n\n\n\n\nStep 3 - Create Cross Account Role\n\n\nCreate a AWS role that your user role can assume.  This role should be called \nCross_Account_Fidelius\n.  This can be changed\nin the future.  The role needs to have this IAM permissions.  \n\n\n{\n\n    \nVersion\n:\n \n2012-10-17\n,\n\n    \nStatement\n:\n \n[\n\n        \n{\n\n            \nSid\n:\n \n,\n\n            \nEffect\n:\n \nAllow\n,\n\n            \nAction\n:\n \n[\n\n                \nkms:Decrypt\n,\n\n                \nkms:Encrypt\n,\n\n                \nkms:GenerateDataKey\n,\n\n                \ndynamodb:PutItem\n,\n\n                \ndynamodb:BatchWriteItem\n,\n\n                \ndynamodb:GetItem\n,\n\n                \ndynamodb:Scan\n,\n\n                \ndynamodb:Query\n,\n\n                \ndynamodb:UpdateItem\n\n            \n],\n\n            \nResource\n:\n \n[\n\n                \narn:aws:kms:\nREGION\n:\nACCOUNT_NUMBER\n:key/\nKMS_KEY_ID\n,\n\n                \narn:aws:dynamodb:\nREGION\n:\nACCOUNT_NUMBER\n:table/credential-store\n\n            \n]\n\n        \n}\n\n    \n]\n\n\n}\n\n\n\n\nStep 4 - Grant Assume Role\n\n\nGrant permission for your user role from step 2 to assume into \nCross_Account_Fidelius\n role create on Step 3.\n\n{\n\n    \nVersion\n:\n \n2012-10-17\n,\n\n    \nStatement\n:\n \n[\n\n        \n{\n\n            \nSid\n:\n \n,\n\n            \nEffect\n:\n \nAllow\n,\n\n            \nAction\n:\n \nsts:AssumeRole\n,\n\n            \nResource\n:\n \narn:aws:iam::\nACCOUNT_NUMBER\n:role/Cross_Account_Fidelius\n\n        \n}\n\n    \n]\n\n\n}\n\n\n\n\nStep 5 - Update Trust Relationship\n\n\nAdd your user role to Trust Relationship on \nCross_Account_fidelius\n \n\n \narn:aws:iam::AWSACCOUNTID:role/YOUR_USER_ROLE\n\n\n\n\nStep 6 - Set Environment Variables\n\n\nSet environment variables\n\n\nIf you need a proxy, set environment variable \nhttp_proxy\n\n\n    \nexport\n \nhttp_proxy\n=\nproxy.com:80\n\n\n\nSet the location of your \nAWS_DIRECTORY\n that contains your credentials\n\n    \nexport\n \nAWS_DIRECTORY\n=\n~/.aws\n\n\n\nSet your \nAWS_ACCOUNT_NUMBER\n that will be used to create the resources needed for Fidelius to launch\n\n    \nexport\n \nAWS_ACCOUNT_NUMBER\n=\n12345678910\n\n\n\n\nStep 7 - Run Fidelius\n\n\nRefresh your AWS tokens then proceed to 7A.\n\n\n7A. Build Containers\n\n\ncd containers\n\ndocker-compose build\n\n\n\n\n7B. Build Fidelius demo services\n\n\ncd demo-services/fake-account-service\n\nmvn clean install\n\n\n\n\n7C. Build Fidelius setup container\n\n\ncd demo-services/fidelius-setup\n\nmvn clean install  \n\n\n\n\n7D. Build Fidelius backend service\n\n\ncd fidelius-service\n\nmvn clean install\n\n\n\n\n7E. Build Fidelius UI\n\n\ncd fidelius-ui\n\nnpm install\n\nnpm run build\n\n\n\n\n7F. Build Fidelius containers\n\n\ndocker-compose -f setup-docker-compose.yml build\n\ndocker-compose -f local-docker-compose.yml build\n\n\n\n\n7G. Start Fidelius Setup\n\n\ndocker-compose -f setup-docker-compose.yml up\n\n\n\n\nWait for process to complete\n\n\ndocker-compose -f local-docker-compose.yml up\n\n\n\n\nStep 8 - Navigate to Fidelius\n\n\nNavigate to the links above to experience Fidelius Secrets Manager.\n\n\nFidelius User Endpoints\n\n\n\n\n\n\n\n\nROLE\n\n\nURL\n\n\n\n\n\n\n\n\n\n\nDev\n\n\nhttps://localhost:443\n\n\n\n\n\n\nOps\n\n\nhttps://localhost:444\n\n\n\n\n\n\nMaster\n\n\nhttps://localhost:445\n\n\n\n\n\n\n\n\nNext Steps\n\n\nAfter having Fidelius running locally with default configurations, you might want to configure the steps so that you\ncan run or deploy Fidelius for your organization.\n\n\nThe application configurations can be found at \nConfiguration", 
+            "title": "Quick Start for Windows"
+        }, 
+        {
+            "location": "/QuickStartWindows/#quick-start-for-windows", 
+            "text": "If you are running Mac or Linux we provide a  start script .  Before you start you need to make sure the right permissions are set in order for the script to create the resources\nrequired to get Fidelius running locally.  With the following steps you will be able to:   Create a DynamoDb table with the proper format to store secrets  Build the required docker containers  Start Fidelius locally with some services mocked talking to your DynamoDb table in order for you to be allowed to \nexperience all of Fidelius features.   Demo Features   Login as a Dev user  Login as an Ops user    Login as a Master user  Create secrets  View secrets  Update secrets  Delete secrets", 
+            "title": "Quick Start for Windows"
+        }, 
+        {
+            "location": "/QuickStartWindows/#prerequisites", 
+            "text": "Fidelius requires the following tools to be installed:   Java 8+  Maven 3+  NPM 3+  Docker  AWS-CLI", 
+            "title": "Prerequisites"
+        }, 
+        {
+            "location": "/QuickStartWindows/#step-1-create-a-kms-key", 
+            "text": "Create a KMS key with an alias  credstash  in AWS KMS.  Reference can be found  here", 
+            "title": "Step 1 - Create a KMS key"
+        }, 
+        {
+            "location": "/QuickStartWindows/#step-2-create-user-role", 
+            "text": "Create a user role that will be used to run the setup script.  This role will also assume the application role.  This role should have the following permissions: { \n     Version :   2012-10-17 , \n     Statement :   [ \n         { \n             Action :   [ \n                 dynamodb:CreateTable , \n                 dynamodb:DescribeTable \n             ], \n             Effect :   Allow , \n             Resource :   arn:aws:dynamodb: REGION : ACCOUNT_NUMBER :table/credential-store \n         }, \n         { \n             Action :   [ \n                 dynamodb:ListTables \n             ], \n             Effect :   Allow , \n             Resource :   * \n         } \n     ]  }", 
+            "title": "Step 2 - Create User Role"
+        }, 
+        {
+            "location": "/QuickStartWindows/#step-3-create-cross-account-role", 
+            "text": "Create a AWS role that your user role can assume.  This role should be called  Cross_Account_Fidelius .  This can be changed\nin the future.  The role needs to have this IAM permissions.    { \n     Version :   2012-10-17 , \n     Statement :   [ \n         { \n             Sid :   , \n             Effect :   Allow , \n             Action :   [ \n                 kms:Decrypt , \n                 kms:Encrypt , \n                 kms:GenerateDataKey , \n                 dynamodb:PutItem , \n                 dynamodb:BatchWriteItem , \n                 dynamodb:GetItem , \n                 dynamodb:Scan , \n                 dynamodb:Query , \n                 dynamodb:UpdateItem \n             ], \n             Resource :   [ \n                 arn:aws:kms: REGION : ACCOUNT_NUMBER :key/ KMS_KEY_ID , \n                 arn:aws:dynamodb: REGION : ACCOUNT_NUMBER :table/credential-store \n             ] \n         } \n     ]  }", 
+            "title": "Step 3 - Create Cross Account Role"
+        }, 
+        {
+            "location": "/QuickStartWindows/#step-4-grant-assume-role", 
+            "text": "Grant permission for your user role from step 2 to assume into  Cross_Account_Fidelius  role create on Step 3. { \n     Version :   2012-10-17 , \n     Statement :   [ \n         { \n             Sid :   , \n             Effect :   Allow , \n             Action :   sts:AssumeRole , \n             Resource :   arn:aws:iam:: ACCOUNT_NUMBER :role/Cross_Account_Fidelius \n         } \n     ]  }", 
+            "title": "Step 4 - Grant Assume Role"
+        }, 
+        {
+            "location": "/QuickStartWindows/#step-5-update-trust-relationship", 
+            "text": "Add your user role to Trust Relationship on  Cross_Account_fidelius     arn:aws:iam::AWSACCOUNTID:role/YOUR_USER_ROLE", 
+            "title": "Step 5 - Update Trust Relationship"
+        }, 
+        {
+            "location": "/QuickStartWindows/#step-6-set-environment-variables", 
+            "text": "Set environment variables  If you need a proxy, set environment variable  http_proxy       export   http_proxy = proxy.com:80  Set the location of your  AWS_DIRECTORY  that contains your credentials      export   AWS_DIRECTORY = ~/.aws  Set your  AWS_ACCOUNT_NUMBER  that will be used to create the resources needed for Fidelius to launch      export   AWS_ACCOUNT_NUMBER = 12345678910", 
+            "title": "Step 6 - Set Environment Variables"
+        }, 
+        {
+            "location": "/QuickStartWindows/#step-7-run-fidelius", 
+            "text": "Refresh your AWS tokens then proceed to 7A.", 
+            "title": "Step 7 - Run Fidelius"
+        }, 
+        {
+            "location": "/QuickStartWindows/#7a-build-containers", 
+            "text": "cd containers\n\ndocker-compose build", 
+            "title": "7A. Build Containers"
+        }, 
+        {
+            "location": "/QuickStartWindows/#7b-build-fidelius-demo-services", 
+            "text": "cd demo-services/fake-account-service\n\nmvn clean install", 
+            "title": "7B. Build Fidelius demo services"
+        }, 
+        {
+            "location": "/QuickStartWindows/#7c-build-fidelius-setup-container", 
+            "text": "cd demo-services/fidelius-setup\n\nmvn clean install", 
+            "title": "7C. Build Fidelius setup container"
+        }, 
+        {
+            "location": "/QuickStartWindows/#7d-build-fidelius-backend-service", 
+            "text": "cd fidelius-service\n\nmvn clean install", 
+            "title": "7D. Build Fidelius backend service"
+        }, 
+        {
+            "location": "/QuickStartWindows/#7e-build-fidelius-ui", 
+            "text": "cd fidelius-ui\n\nnpm install\n\nnpm run build", 
+            "title": "7E. Build Fidelius UI"
+        }, 
+        {
+            "location": "/QuickStartWindows/#7f-build-fidelius-containers", 
+            "text": "docker-compose -f setup-docker-compose.yml build\n\ndocker-compose -f local-docker-compose.yml build", 
+            "title": "7F. Build Fidelius containers"
+        }, 
+        {
+            "location": "/QuickStartWindows/#7g-start-fidelius-setup", 
+            "text": "docker-compose -f setup-docker-compose.yml up  Wait for process to complete  docker-compose -f local-docker-compose.yml up", 
+            "title": "7G. Start Fidelius Setup"
+        }, 
+        {
+            "location": "/QuickStartWindows/#step-8-navigate-to-fidelius", 
+            "text": "Navigate to the links above to experience Fidelius Secrets Manager.  Fidelius User Endpoints     ROLE  URL      Dev  https://localhost:443    Ops  https://localhost:444    Master  https://localhost:445", 
+            "title": "Step 8 - Navigate to Fidelius"
+        }, 
+        {
+            "location": "/QuickStartWindows/#next-steps", 
             "text": "After having Fidelius running locally with default configurations, you might want to configure the steps so that you\ncan run or deploy Fidelius for your organization.  The application configurations can be found at  Configuration", 
             "title": "Next Steps"
         }, 
