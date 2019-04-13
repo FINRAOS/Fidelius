@@ -65,7 +65,8 @@ markdown_extensions:
 pages:
   - Fidelius:
     - Overview: index.md
-    - Quick Start: QuickStart.md
+    - Quick Start for Linux/Mac: QuickStart.md
+    - Quick Start for Windows: QuickStartWindows.md
   - Prerequsites:
     - Overview: prequisites/configuration.md
     - IAM: prequisites/IAM.md

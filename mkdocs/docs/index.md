@@ -13,5 +13,5 @@ Fidelius provides an [angular application](UI/ui_setup_local.md), a [Java SDK pa
 multiple environments.
 
 ## Quick Start
-Check out [QuickStart](QuickStart.md) to get started!
+Check out [QuickStart for Linux/Mac](QuickStart.md) or [QuickStart for Windows](QuickStartWindows.md) to get started!
 
