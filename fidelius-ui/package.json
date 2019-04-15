@@ -37,7 +37,7 @@
     "start": "ng serve --port=8080 --host=0.0.0.0 --disable-host-check=true --proxy-config=proxy.conf.json",
     "start-optimized": "ng serve --prod --env=prod --aot --buildOptimizer --port=8080 --host=0.0.0.0 --disable-host-check=true --proxy-config=proxy.conf.json",
     "build": "ng build",
-    "test": "ng test",
+    "test": "ng test --single-run",
     "lint": "ng lint",
     "e2e": "ng e2e",
     "docker-build": "echo Building Angular Application && ng build --prod --env=prod --aot --buildOptimizer && echo Building Docker Image && docker build -t fidelius-ui .",
