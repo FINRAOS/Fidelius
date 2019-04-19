@@ -24,11 +24,52 @@
     <groupId>org.finra.fidelius</groupId>
     <artifactId>fidelius-sdk</artifactId>
     <version>1.0.0</version>
-
     <packaging>jar</packaging>
-
     <name>fidelius-sdk</name>
     <description>SDK for Fidelius Secrets Manager</description>
+    <url>https://finraos.github.io/Fidelius/</url>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:https://github.com/FINRAOS/Fidelius.git</connection>
+        <developerConnection>scm:git:https://github.com/FINRAOS/Fidelius.git</developerConnection>
+        <url>https://github.com/FINRAOS/Fidelius.git</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>kood1</id>
+            <name>Daniel Koo</name>
+            <email>danieljamin.koo@gmail.com</email>
+            <url>http://github.com/kood1</url>
+        </developer>
+        <developer>
+            <id>lathanagaraj</id>
+            <name>Latha Nagaraj</name>
+            <email>latha.nagaraj@gmail.com</email>
+            <url>https://github.com/lathanagaraj</url>
+        </developer>
+        <developer>
+            <id>SMxJrz</id>
+            <name>Stephen Mele</name>
+            <email>Smelecs@gmail.com</email>
+            <url>https://github.com/SMxJrz</url>
+        </developer>
+        <developer>
+            <id>HurielHernandez</id>
+            <name>Huriel Hernandez</name>
+            <email>huriel.hdz@gmail.com</email>
+            <url>http://github.com/HurielHernandez</url>
+        </developer>
+    </developers>
 
     <properties>
         <aws.version>1.11.303</aws.version>
@@ -126,9 +167,23 @@
             <version>1.54</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.6.1</version>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.7</version>
+                <configuration>
+                    <skip>false</skip>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -155,10 +210,81 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.5.3</version>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <failOnError>false</failOnError>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>release</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.5</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <configuration>
+                                    <gpgArguments>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+    <distributionManagement>
+        <repository>
+            <id>sonatype-nexus-staging</id>
+            <name>Sonatype Nexus release repository</name>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+        </repository>
+        <snapshotRepository>
+            <id>sonatype-nexus-snapshots</id>
+            <name>Sonatype Snapshot Repository</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 
 </project>

@@ -1,0 +1,393 @@
+# Java Maven CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-java/ for more details
+#
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: circleci/openjdk:8u171-jdk
+    working_directory: ~/repo
+    environment:
+      MAVEN_OPTS: -Xmx3200m
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            # when lock file changes, use increasingly general patterns to restore cache
+            - maven-repo-{{ .Branch }}-{{ checksum "fidelius-service/pom.xml" }}
+            - maven-repo-{{ .Branch }}-
+            - maven-repo
+      - run:
+          name: Run Tests and Build Backend Services
+          command: |
+            pushd fidelius-service
+            mvn clean package
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: maven-repo-{{ .Branch }}-{{ checksum "fidelius-service/pom.xml" }}
+      - run:
+          name: Save Tests
+          command: |
+            mkdir -p ~/junit
+            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
+      - store_test_results:
+          path: ~/junit
+      - save_cache:
+          key: fidelius-service-{{ .Branch }}-{{ epoch }}
+          paths:
+              - fidelius-service/target/fidelius-service-1.0.jar
+  build_ui:
+    docker:
+      - image: circleci/node:10-stretch-browsers
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+              - v1-dependencies-{{ checksum "fidelius-ui/package.json" }}
+              - v1-dependencies-
+      - run:
+          name: Install Dependencies
+          command: |
+            pushd fidelius-ui
+            npm install --verbose
+      - save_cache:
+          key: v1-dependencies-{{ checksum "fidelius-ui/package.json" }}
+          paths:
+              - ~/fidelius-ui/node_modules
+      - run:
+          name: Run Tests
+          command: |
+            pushd fidelius-ui
+            npm run test
+      - run:
+          name: Save-Tests
+          command: |
+            mkdir -p ~/junit
+            find . -type f -regex ".*/test/junit/.*xml" -exec cp {} ~/junit/ \;
+      - run:
+          name: Build Application
+          command: |
+            pushd fidelius-ui
+            npm run build --aot --build-optimizer --prod
+            tar -czvf dist.tar.gz dist
+      - save_cache:
+          key: fidelius-ui-{{ .Branch }}-{{ epoch }}
+          paths:
+              - fidelius-ui/dist.tar.gz
+      - store_test_results:
+          path: ~/junit
+  build_base_docker:
+    working_directory: /repo
+    docker:
+      - image: docker:17.05.0-ce-git
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build Base Container
+          command: |
+            cd containers/base
+            docker build -t fidelius/base ./
+      - run:
+          name: Save Docker image layer cache
+          command: |
+            mkdir -p /caches
+            docker save -o /caches/base.tar fidelius/base
+      - save_cache:
+          key: fid_cntnr_base_v1-{{ .Branch }}-{{ checksum "/caches/base.tar" }}
+          paths:
+            - /caches/base.tar
+  build_java_docker:
+    working_directory: /repo
+    docker:
+      - image: docker:17.05.0-ce-git
+    steps:
+      - checkout
+      - setup_remote_docker
+      - restore_cache:
+          keys:
+            - fid_cntnr_base_v1-{{ .Branch }}
+          paths:
+            - /caches/base.tar
+      - run:
+          name: Load Docker image layer cache
+          command: |
+            set +o pipefail
+            docker load -i /caches/base.tar | true
+      - run:
+          name: Build Java Container
+          command: |
+            cd containers/java
+            docker build -t fidelius/java ./
+      - run:
+          name: Save Docker image layer cache
+          command: |
+            mkdir -p /caches
+            docker save -o /caches/java.tar fidelius/java
+      - save_cache:
+          key: fid_cntnr_java_v1-{{ .Branch }}-{{ checksum "/caches/java.tar" }}
+          paths:
+            - /caches/java.tar
+  build_nginx_docker:
+    working_directory: /repo
+    docker:
+      - image: docker:17.05.0-ce-git
+    steps:
+      - checkout
+      - setup_remote_docker
+      - restore_cache:
+          keys:
+            - fid_cntnr_base_v1-{{ .Branch }}
+          paths:
+            - /caches/base.tar
+      - run:
+          name: Load Docker image layer cache
+          command: |
+            set +o pipefail
+            docker load -i /caches/base.tar | true
+      - run:
+          name: Build Nginx Container
+          command: |
+            cd containers/nginx
+            docker build -t fidelius/nginx ./
+      - run:
+          name: Save Docker image layer cache
+          command: |
+            mkdir -p /caches
+            docker save -o /caches/nginx.tar fidelius/nginx
+      - save_cache:
+          key: fid_cntnr_nginx_v1-{{ .Branch }}-{{ checksum "/caches/nginx.tar" }}
+          paths:
+            - /caches/nginx.tar
+  build_and_push_ui:
+    working_directory: ~/repo
+    docker:
+      - image: docker:17.05.0-ce-git
+    steps:
+      - checkout
+      - setup_remote_docker
+      - restore_cache:
+          keys:
+            - fid_cntnr_nginx_v1-{{ .Branch }}
+          paths:
+            - /caches/nginx.tar
+      - restore_cache:
+          keys:
+            - fidelius-ui-{{ .Branch }}
+      - run:
+          name: Load Docker image + stage UI code
+          command: |
+            set +o pipefail
+            docker load -i /caches/nginx.tar | true
+            mv /home/circleci/repo/fidelius-ui/dist.tar.gz ~/repo/fidelius-ui
+            cd fidelius-ui
+            tar -xzvf dist.tar.gz
+      - run:
+          name: Build Fidelius UI Container
+          command: |
+            cd fidelius-ui
+            docker build -t fidelius/ui ./
+      - run:
+          name: Push Fidelius UI Container to docker repo
+          command: |
+            source .circleci/push.sh fidelius/ui fidelius-ui
+  build_sdk:
+    working_directory: ~/repo
+    docker:
+      - image: circleci/openjdk:8u171-jdk
+    environment:
+      MAVEN_OPTS: -Xmx3200m
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            # when lock file changes, use increasingly general patterns to restore cache
+            - maven-repo-{{ .Branch }}-{{ checksum "fidelius-sdk/pom.xml" }}
+            - maven-repo-{{ .Branch }}-
+            - maven-repo
+      - run:
+          name: Build Fidelius SDK
+          command: |
+            pushd fidelius-sdk
+            export AWS_REGION=us-east-1
+            mvn clean package
+            unset AWS_REGION
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: fidelius-sdk-{{ checksum "fidelius-sdk/pom.xml" }}
+      - store_test_results:
+          path: fidelius-sdk/target/surefire-reports
+      - store_artifacts:
+          path: fidelius-sdk/target/fidelius-sdk-1.0.0.jar
+  deploy_sdk:
+    working_directory: ~/repo
+    docker:
+      - image: circleci/openjdk:8u171-jdk
+    environment:
+      MAVEN_OPTS: -Xmx3200m
+    steps:
+      - checkout
+      - restore_cache:
+         keys:
+           - fidelius-sdk-{{ checksum "fidelius-sdk/pom.xml" }}
+         paths:
+           - fidelius-sdk/target/fidelius-sdk-1.0.0.jar
+      - restore_cache:
+         keys:
+           - fidelius-service-{{ .Branch }}
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: fidelius-sdk-{{ checksum "fidelius-sdk/pom.xml" }}
+      - store_test_results:
+          path: fidelius-sdk/target/surefire-reports
+      - store_artifacts:
+          path: fidelius-sdk/target/fidelius-sdk-1.0.0.jar
+      - run:
+          name: Import GPG key
+          command: |
+            GPG_TTY=$(tty)
+            export GPG_TTY
+            echo -e "$NEXUS_RM_KEY" | gpg --batch --import
+      - run:
+          name: Deploy Fidelius SDK
+          command: |
+            pushd fidelius-sdk
+            mvn deploy -DskipTests -Prelease --settings ../.circleci/settings.xml
+  build_and_push_service:
+    working_directory: ~/repo
+    docker:
+      - image: docker:17.05.0-ce-git
+    steps:
+      - checkout
+      - setup_remote_docker
+      - restore_cache:
+          keys:
+            - fid_cntnr_java_v1-{{ .Branch }}
+          paths:
+            - /caches/java.tar
+      - restore_cache:
+          keys:
+            - fidelius-service-{{ .Branch }}
+      - run:
+          name: Load Docker image
+          command: |
+            set +o pipefail
+            docker load -i /caches/java.tar | true
+            mv /home/circleci/repo/fidelius-service/target ~/repo/fidelius-service/
+      - run:
+          name: Build Fidelius Service Container
+          command: |
+            cd fidelius-service
+            docker build --build-arg jar_file=fidelius-service-1.0.jar -t fidelius/service ./
+            docker images
+      - run:
+          name: Push Fielius Service Container to docker repo
+          command: |
+            source .circleci/push.sh fidelius/service fidelius-service
+workflows:
+  version: 2.1
+  ci-push:
+    jobs:
+      - build
+      - build_ui
+      - build_base_docker
+      - build_sdk
+      - confirm_deploy:
+          type: approval
+          requires:
+            - build_sdk
+      - deploy_sdk:
+          requires:
+            - build_sdk
+            - confirm_deploy
+      - build_java_docker:
+          requires:
+            - build_base_docker
+      - build_nginx_docker:
+          requires:
+            - build_base_docker
+      - build_and_push_ui:
+          requires:
+            - build_ui
+            - build_base_docker
+            - build_nginx_docker
+      - build_and_push_service:
+          requires:
+            - build
+            - build_base_docker
+            - build_java_docker
+  tag-and-release:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - build_ui:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - deploy_sdk:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+          requires:
+            - build_sdk
+      - build_sdk:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - build_base_docker:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - build_java_docker:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+          requires:
+            - build_base_docker
+      - build_nginx_docker:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+          requires:
+            - build_base_docker
+      - build_and_push_ui:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+          requires:
+            - build_ui
+            - build_base_docker
+            - build_nginx_docker
+      - build_and_push_service:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+          requires:
+            - build
+            - build_base_docker
+            - build_java_docker
