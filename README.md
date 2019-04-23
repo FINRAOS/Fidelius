@@ -1,6 +1,9 @@
 <img src="/img/logo.png" alt="drawing" width="400px"/>
 
 ## What is Fidelius?
+
+[![Join the chat at https://gitter.im/FINRAOS/Fidelius](https://badges.gitter.im/FINRAOS/Fidelius.svg)](https://gitter.im/FINRAOS/Fidelius?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Fidelius is a tool to protect and manage your credentials, keys, and any other secrets in AWS
 
 <img src="/img/Fidelius_Screenshot_1.png" alt="drawing" width="900px"/>
