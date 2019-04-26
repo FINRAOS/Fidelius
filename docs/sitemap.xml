@@ -5,19 +5,25 @@
         
     <url>
      <loc>https://finraos.github.io/Fidelius/</loc>
-     <lastmod>2019-04-09</lastmod>
+     <lastmod>2019-04-29</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>https://finraos.github.io/Fidelius/QuickStart/</loc>
-     <lastmod>2019-04-09</lastmod>
+     <lastmod>2019-04-29</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>https://finraos.github.io/Fidelius/QuickStartWindows/</loc>
-     <lastmod>2019-04-09</lastmod>
+     <lastmod>2019-04-29</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>https://finraos.github.io/Fidelius/Video/</loc>
+     <lastmod>2019-04-29</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -27,25 +33,25 @@
         
     <url>
      <loc>https://finraos.github.io/Fidelius/prequisites/configuration/</loc>
-     <lastmod>2019-04-09</lastmod>
+     <lastmod>2019-04-29</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>https://finraos.github.io/Fidelius/prequisites/IAM/</loc>
-     <lastmod>2019-04-09</lastmod>
+     <lastmod>2019-04-29</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>https://finraos.github.io/Fidelius/prequisites/kms/</loc>
-     <lastmod>2019-04-09</lastmod>
+     <lastmod>2019-04-29</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>https://finraos.github.io/Fidelius/prequisites/dynamodb/</loc>
-     <lastmod>2019-04-09</lastmod>
+     <lastmod>2019-04-29</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -71,19 +77,19 @@
         
     <url>
      <loc>https://finraos.github.io/Fidelius/SDK/sdk_quickstart/</loc>
-     <lastmod>2019-04-09</lastmod>
+     <lastmod>2019-04-29</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>https://finraos.github.io/Fidelius/SDK/sdk_usage/</loc>
-     <lastmod>2019-04-09</lastmod>
+     <lastmod>2019-04-29</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>https://finraos.github.io/Fidelius/SDK/sdk_methods/</loc>
-     <lastmod>2019-04-09</lastmod>
+     <lastmod>2019-04-29</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -95,7 +101,7 @@
         
     <url>
      <loc>https://finraos.github.io/Fidelius/SDK/sdk_javadocs/</loc>
-     <lastmod>2019-04-09</lastmod>
+     <lastmod>2019-04-29</lastmod>
      <changefreq>daily</changefreq>
     </url>
         

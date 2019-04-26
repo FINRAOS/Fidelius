@@ -67,6 +67,7 @@ pages:
     - Overview: index.md
     - Quick Start for Linux/Mac: QuickStart.md
     - Quick Start for Windows: QuickStartWindows.md
+    - Video: Video.md
   - Prerequsites:
     - Overview: prequisites/configuration.md
     - IAM: prequisites/IAM.md
