@@ -13,10 +13,11 @@ organized way to create, view, modify, collections of encrypted secrets as well 
 system for managing user and application access to those secrets.
 
 ## AWS Public Sector Summit 2018
-<iframe width="560" height="315" src="https://www.youtube.com/embed/DMQ7IHOIe78?start=2426" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+[![IMAGE](http://img.youtube.com/vi/DMQ7IHOIe78/0.jpg)](https://youtu.be/DMQ7IHOIe78?t=2426)
 
 ## Demo
-<iframe width="560" height="315" src="https://www.youtube.com/embed/j_1afHVTtso" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+[![IMAGE](http://img.youtube.com/vi/j_1afHVTtso/0.jpg)](https://youtu.be/j_1afHVTtso)
 
 ## Features
 - Centralized service
