@@ -12,6 +12,12 @@ using AWS DynamoDB tables. Fidelius aims to provide organizations with an easy-t
 organized way to create, view, modify, collections of encrypted secrets as well as provide a 
 system for managing user and application access to those secrets.
 
+## AWS Public Sector Summit 2018
+<iframe width="560" height="315" src="https://www.youtube.com/embed/DMQ7IHOIe78?start=2426" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+## Demo
+<iframe width="560" height="315" src="https://www.youtube.com/embed/j_1afHVTtso" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ## Features
 - Centralized service
     - multiple apps
