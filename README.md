@@ -14,7 +14,7 @@ system for managing user and application access to those secrets.
 
 ## AWS Public Sector Summit 2018
 
-[![IMAGE](http://img.youtube.com/vi/DMQ7IHOIe78/0.jpg)](https://youtu.be/DMQ7IHOIe78?t=2426)
+[![IMAGE](http://img.youtube.com/vi/DMQ7IHOIe78/0.jpg)](https://youtu.be/DMQ7IHOIe78?t=2145)
 
 ## Demo
 [![IMAGE](http://img.youtube.com/vi/j_1afHVTtso/0.jpg)](https://youtu.be/j_1afHVTtso)
