@@ -47,7 +47,8 @@
     {% endblock %}
     {% block styles %}
       <link rel="stylesheet" href="{{ base_url }}/assets/stylesheets/application.css">
-      {% if palette.primary or palette.accent %}
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+    {% if palette.primary or palette.accent %}
         <link rel="stylesheet" href="{{ base_url }}/assets/stylesheets/application-palette.css">
       {% endif %}
     {% endblock %}

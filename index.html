@@ -7,6 +7,8 @@
 		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
 		<link rel="stylesheet" href="css/social-share-kit.css" type="text/css">
 		<link rel="stylesheet" href="css/main.min.css">
+		<!-- Magnific Popup core CSS file -->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.1.0/magnific-popup.min.css">
 		<link rel="icon" type="image/x-icon" href="img/favicon.ico">
 
 		<!-- Global site tag (gtag.js) - Google Analytics -->
@@ -19,6 +21,8 @@
 		</script>
 	</head>
 	<body>
+
+
 		<header id="finra-tech">
 			<div id="header-container">
 				<a href="http://technology.finra.org/" target="_blank">FINRA Technology</a>
@@ -39,6 +43,7 @@
 					</section>
 					<section id="splash-cta" class="reveal">
 						<a class="btn-primary" href="docs.html"><span>Get Started</span></a>
+						<a class="btn-secondary popup-youtube" href="https://www.youtube.com/watch?v=j_1afHVTtso"><span>Watch Video</span></a>
 						<a class="btn-secondary" href="https://github.com/FINRAOS/Fidelius"><span>View on GitHub</span></a>
 					</section>
 					<nav id="splash-menu-anchors" class="reveal">
@@ -163,7 +168,6 @@
 				</div>
 			</div>
 		</footer>
-
 		<!-- ScrollReveal -->
 		<!-- https://github.com/jlmakes/scrollreveal -->
 		<script src="https://unpkg.com/scrollreveal/dist/scrollreveal.min.js"></script>
@@ -174,5 +178,21 @@
 
 		<script src="js/scroll.js"></script>
 		<script src="js/social.js"></script>
+		<!-- jQuery 1.7.2+ or Zepto.js 1.0+ -->
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+		<!-- Magnific Popup core JS file -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.1.0/jquery.magnific-popup.min.js"></script>
+		<script>
+            $(document).ready(function() {
+                $('.popup-youtube').magnificPopup({
+                    disableOn: 700,
+                    type: 'iframe',
+                    mainClass: 'mfp-fade',
+                    removalDelay: 160,
+                    preloader: false,
+                    fixedContentPos: false
+                });
+            });
+		</script>
 	</body>
 </html>
