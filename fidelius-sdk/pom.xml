@@ -23,7 +23,7 @@
 
     <groupId>org.finra.fidelius</groupId>
     <artifactId>fidelius-sdk</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>fidelius-sdk</name>
     <description>SDK for Fidelius Secrets Manager</description>
