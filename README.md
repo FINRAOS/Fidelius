@@ -1,6 +1,6 @@
 <img src="/img/logo.png" alt="drawing" width="400px"/>
 
-[![CircleCI](https://circleci.com/gh/FINRAOS/Fidelius/tree/master.svg?style=svg)](https://circleci.com/gh/FINRAOS/Fidelius/tree/master)[![Join the chat at https://gitter.im/FINRAOS/Fidelius](https://badges.gitter.im/FINRAOS/Fidelius.svg)](https://gitter.im/FINRAOS/Fidelius?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![CircleCI](https://circleci.com/gh/FINRAOS/Fidelius/tree/master.svg?style=svg)](https://circleci.com/gh/FINRAOS/Fidelius/tree/master) [![Join the chat at https://gitter.im/FINRAOS/Fidelius](https://badges.gitter.im/FINRAOS/Fidelius.svg)](https://gitter.im/FINRAOS/Fidelius?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## What is Fidelius?
 Fidelius is a tool to protect and manage your credentials, keys, and any other secrets in AWS
