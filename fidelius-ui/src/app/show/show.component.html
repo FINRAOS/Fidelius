@@ -124,6 +124,13 @@
                [type]="hideSecret ? 'password' : 'text'"
                disabled
                readonly>
+        <mat-icon matSuffix class="push-right-sm"
+                  matTooltip="Copy secret"
+                  matTooltipPosition="above"
+                  *ngIf="canViewSecret; else disabledCopySecret"
+                  (click)="loadAndCopySecret()">
+          content_copy
+        </mat-icon>
         <mat-icon matSuffix
                   matTooltip="Show/Hide secret"
                   matTooltipPosition="above"
@@ -131,6 +138,13 @@
                   (click)="showSecret()">
           {{hideSecret ? 'visibility' : 'visibility_off'}}
         </mat-icon>
+        <ng-template #disabledCopySecret>
+          <mat-icon matSuffix
+                    class="tc-grey-800"
+                    matTooltip="Contact Ops">
+            content_copy
+          </mat-icon>
+        </ng-template>
         <ng-template #disabledShowSecret>
           <mat-icon matSuffix
                     class="tc-grey-800"

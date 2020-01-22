@@ -60,7 +60,7 @@
 				"get"
 			]
 		},
-		"api/fidelius/credentials": {
+		"api/fidelius/credentials/": {
 			"latency": 750,
 			"mockFile": "credentials.json",
 			"verbs": [
@@ -84,6 +84,72 @@
 			"switchResponses": {
 				"accountQa": {
 					"httpStatus": 404
+				}
+			}
+		},
+		"api/fidelius/credentials/:credential": {
+			"latency": 350,
+			"mockFile": "create.json",
+			"verbs": [
+				"get"
+			],
+			"templateSwitch": [
+				{
+					"key": "key",
+					"switch": "$.credential.shortKey",
+					"type": "jsonpath"
+				},
+				{
+					"key": "account",
+					"switch": "$.credential.account",
+					"type": "jsonpath"
+				},
+				{
+					"key": "application",
+					"switch": "$.credential.application",
+					"type": "jsonpath"
+				},
+				{
+					"key": "environment",
+					"switch": "$.credential.environment",
+					"type": "jsonpath"
+				},
+				{
+					"key": "component",
+					"switch": "$.credential.component",
+					"type": "jsonpath"
+				},
+				{
+					"key": "account",
+					"switch": "account",
+					"type": "string"
+				}
+			],
+			"contentType": "application/json",
+			"switch": [
+				"credential.account"
+			],
+			"responses": {
+				"delete": {
+					"httpStatus": 200,
+					"mockFile": "create.json"
+				},
+				"put": {
+					"httpStatus": 200,
+					"mockFile": "create.json"
+				},
+				"post": {
+					"httpStatus": 201,
+					"mockFile": "create.json"
+				},
+				"get": {
+					"httpsStatus": 200,
+					"mockFile": "secret.json"
+				}
+			},
+			"switchResponses": {
+				"credential.accountQa": {
+					"httpStatus": 401
 				}
 			}
 		},

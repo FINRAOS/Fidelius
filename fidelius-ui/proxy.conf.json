@@ -1,6 +1,6 @@
 {
   "/api/fidelius/*": {
-    "target": "http://localhost:8000",
+    "target": "http://localhost:7878",
     "secure": "false",
     "logLevel": "debug",
     "headers": {
