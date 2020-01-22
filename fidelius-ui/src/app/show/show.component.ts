@@ -70,7 +70,6 @@ constructor( private _credentialService: CredentialService,
     let message: string = 'Copied to clipboard';
     this._snackBarService.open(message, '',  { duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom' });
     this.copyingSecret = !this.copyingSecret;
-
   }
 
   showSecret(): void {
@@ -81,6 +80,23 @@ constructor( private _credentialService: CredentialService,
       this._changeDetectorRef.detectChanges();
     }
     this.hideSecret = !this.hideSecret;
+  }
+
+  loadAndCopySecret(): void {
+    this.loadingSecret = true;
+    this._credentialService.getSecret(this.credential).subscribe( (secret: Credential) => {
+      this.credential.secret = secret.secret;
+      this.loadingSecret = false;
+      this.copy();
+      this.credential.secret = this.secretPlaceholderText;
+      this._changeDetectorRef.detectChanges();
+    }, (error: any) => {
+      this.credential.secret = this.secretPlaceholderText;
+      this.loadedSecret = false;
+      this.loadingSecret = false;
+      this._alertService.openAlert(error);
+      this._changeDetectorRef.detectChanges();
+    });
   }
 
   loadSecret(): void {
