@@ -19,14 +19,18 @@ package org.finra.fidelius;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.document.*;
 import com.amazonaws.services.dynamodbv2.document.spec.QuerySpec;
 import com.amazonaws.services.dynamodbv2.document.utils.NameMap;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.kms.AWSKMS;
 import com.amazonaws.services.kms.AWSKMSClient;
+import com.amazonaws.services.kms.AWSKMSClientBuilder;
 import com.amazonaws.services.kms.model.DecryptRequest;
 import com.amazonaws.services.kms.model.DecryptResult;
 import com.amazonaws.services.kms.model.GenerateDataKeyRequest;
@@ -47,29 +51,33 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class JCredStash {
-    protected AmazonDynamoDBClient amazonDynamoDBClient;
-    protected AWSKMSClient awskmsClient;
+    protected AmazonDynamoDB amazonDynamoDBClient;
+    protected AWSKMS awskmsClient;
     protected CredStashCrypto cryptoImpl;
     protected AWSSecurityTokenService awsSecurityTokenService;
     protected DynamoDB dynamoDB;
 
     protected JCredStash() {
-        this.amazonDynamoDBClient = new AmazonDynamoDBClient();
-        this.awskmsClient = new AWSKMSClient();
+        this.amazonDynamoDBClient = AmazonDynamoDBClientBuilder.defaultClient();
+        this.awskmsClient = AWSKMSClientBuilder.defaultClient();
         this.cryptoImpl = new CredStashBouncyCastleCrypto();
         this.awsSecurityTokenService = AWSSecurityTokenServiceClient.builder().withClientConfiguration(new ClientConfiguration()).build();
         this.dynamoDB = new DynamoDB(amazonDynamoDBClient);
     }
 
     protected JCredStash(AWSCredentialsProvider awsCredentialsProvider) {
-        this.amazonDynamoDBClient = new AmazonDynamoDBClient(awsCredentialsProvider);
-        this.awskmsClient = new AWSKMSClient(awsCredentialsProvider);
+        this.amazonDynamoDBClient = AmazonDynamoDBClientBuilder.standard()
+                .withCredentials(awsCredentialsProvider)
+                .build();
+        this.awskmsClient = AWSKMSClientBuilder.standard()
+                .withCredentials(awsCredentialsProvider)
+                .build();
         this.cryptoImpl = new CredStashBouncyCastleCrypto();
         this.awsSecurityTokenService = AWSSecurityTokenServiceClient.builder().withClientConfiguration(new ClientConfiguration()).build();
         this.dynamoDB = new DynamoDB(amazonDynamoDBClient);
     }
 
-    protected JCredStash(AmazonDynamoDBClient amazonDynamoDBClient, AWSKMSClient awskmsClient) {
+    protected JCredStash(AmazonDynamoDB amazonDynamoDBClient, AWSKMS awskmsClient) {
         this.amazonDynamoDBClient = amazonDynamoDBClient;
         this.awskmsClient = awskmsClient;
         this.cryptoImpl = new CredStashBouncyCastleCrypto();
@@ -77,7 +85,7 @@ public class JCredStash {
         this.dynamoDB = new DynamoDB(amazonDynamoDBClient);
     }
 
-    protected JCredStash(AmazonDynamoDBClient amazonDynamoDBClient, AWSKMSClient awskmsClient, AWSSecurityTokenService awsSecurityTokenService) {
+    protected JCredStash(AmazonDynamoDB amazonDynamoDBClient, AWSKMS awskmsClient, AWSSecurityTokenService awsSecurityTokenService) {
         this.amazonDynamoDBClient = amazonDynamoDBClient;
         this.awskmsClient = awskmsClient;
         this.cryptoImpl = new CredStashBouncyCastleCrypto();

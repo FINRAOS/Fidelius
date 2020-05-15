@@ -25,13 +25,21 @@ import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.regions.*;
+import com.amazonaws.regions.Region;
 import com.amazonaws.retry.PredefinedRetryPolicies;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
+import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.ec2.model.*;
+import com.amazonaws.services.kms.AWSKMS;
 import com.amazonaws.services.kms.AWSKMSClient;
+import com.amazonaws.services.kms.AWSKMSClientBuilder;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClient;
+import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
 import com.amazonaws.util.EC2MetadataUtils;
 import org.slf4j.Logger;
@@ -45,7 +53,7 @@ public class FideliusClient {
     protected JCredStash jCredStash;
     protected AWSSecurityTokenService awsSecurityTokenService;
 
-    private AmazonEC2Client client;
+    private final AmazonEC2 client;
 
     public FideliusClient() {
         this(null, new DefaultAWSCredentialsProviderChain());
@@ -56,7 +64,7 @@ public class FideliusClient {
     }
 
     public FideliusClient(ClientConfiguration clientConf, AWSCredentialsProvider provider) {
-        this(clientConf, provider, Regions.US_EAST_1.getName());
+        this(clientConf, provider, null);
     }
 
     public FideliusClient(ClientConfiguration clientConf, AWSCredentialsProvider provider, String region) {
@@ -71,25 +79,36 @@ public class FideliusClient {
             kmsEc2ClientConfiguration.setRetryPolicy(PredefinedRetryPolicies.getDefaultRetryPolicyWithCustomMaxRetries(5));
         }
 
-        AmazonDynamoDBClient ddb = new AmazonDynamoDBClient(provider, clientConf)
-                .withRegion(Regions.fromName(region));
-
-        AWSKMSClient kms = new AWSKMSClient(provider, kmsEc2ClientConfiguration)
-                .withRegion(Regions.fromName(region));
-
-        awsSecurityTokenService =  AWSSecurityTokenServiceClient
-                .builder()
-                .withClientConfiguration(clientConf)
+        AmazonDynamoDBClientBuilder ddbBuilder = AmazonDynamoDBClientBuilder.standard()
                 .withCredentials(provider)
-                .withRegion(Regions.fromName(region))
-                .build();
+                .withClientConfiguration(clientConf);
 
-        client = new AmazonEC2Client(provider, kmsEc2ClientConfiguration);
+        AWSKMSClientBuilder kmsBuilder = AWSKMSClientBuilder.standard()
+                .withCredentials(provider)
+                .withClientConfiguration(kmsEc2ClientConfiguration);
 
-        jCredStash = new JCredStash(ddb, kms, awsSecurityTokenService);
+        AWSSecurityTokenServiceClientBuilder stsBuilder =  AWSSecurityTokenServiceClientBuilder.standard()
+                .withClientConfiguration(clientConf)
+                .withCredentials(provider);
+
+        AmazonEC2ClientBuilder clientBuilder = AmazonEC2ClientBuilder.standard()
+                .withCredentials(provider)
+                .withClientConfiguration(kmsEc2ClientConfiguration);
+
+        if(region != null){
+            Regions regionEnum = Regions.fromName(region);
+            ddbBuilder.withRegion(regionEnum);
+            kmsBuilder.withRegion(regionEnum);
+            stsBuilder.withRegion(regionEnum);
+            clientBuilder.withRegion(regionEnum);
+        }
+
+        client = clientBuilder.build();
+        awsSecurityTokenService = stsBuilder.build();
+        jCredStash = new JCredStash(ddbBuilder.build(), kmsBuilder.build(), awsSecurityTokenService);
     }
 
-    protected void setFideliusClient(AmazonDynamoDBClient ddb, AWSKMSClient kms) {
+    protected void setFideliusClient(AmazonDynamoDB ddb, AWSKMS kms) {
         jCredStash = new JCredStash(ddb, kms, awsSecurityTokenService);
     }
 
@@ -213,7 +232,7 @@ public class FideliusClient {
      *
      * @param name Base name of the credential to retrieve
      * @return The plaintext contents of the credential (most recent version)
-     * @throws Exception
+     * @throws Exception - if the credential cannot be retrieved
      */
     public String getCredential(String name) throws Exception {
         return getCredential(name, null, null, null, Constants.DEFAULT_TABLE, null, true);
@@ -225,7 +244,7 @@ public class FideliusClient {
      * @param name Base name of the credential to retrieve
      * @param table The table where credential is stored
      * @return The plaintext contents of the credential (most recent version)
-     * @throws Exception
+     * @throws Exception - if the credential cannot be retrieved
      */
     public String getCredential(String name, String table) throws Exception {
         return getCredential(name, null, null, null, table, null, true);
@@ -239,7 +258,7 @@ public class FideliusClient {
      * @param table         Nullable    Table where credential is stored; defaults to "credential-store"
      *
      * @return The plaintext contents of the credential (most recent version)
-     * @throws Exception
+     * @throws Exception - if the credential cannot be retrieved
      */
     public String getCredential(String name, String application,  String sdlc,  String component,
                                 String table) throws Exception {
@@ -257,7 +276,7 @@ public class FideliusClient {
      * @param retryForApplication    Nullable  Boolean that enables search retry by removing component to find FID_CONTEXT_APPLICATION specific credential
      *
      * @return The plaintext contents of the credential (most recent version)
-     * @throws Exception
+     * @throws Exception - if the credential cannot be retrieved
      *
      */
     protected String getCredential(String name, String application,  String sdlc,  String component,
@@ -308,7 +327,7 @@ public class FideliusClient {
      * @param contents  Plaintext contents of the secret
      *
      * @return Version Padded version of credential created in String format
-     * @throws Exception
+     * @throws Exception - if the credential cannot be stored
      */
     public String putCredential(String name, String contents) throws Exception {
         return putCredential(name, contents, null, null, null, null,null);
@@ -322,7 +341,7 @@ public class FideliusClient {
      * @param kmsKey    Name of the KMS key used for wrapping; defaults to 'alias/credstash'
      *
      * @return Version Padded version of credential created in String format
-     * @throws Exception
+     * @throws Exception - if the credential cannot be stored
      */
     public String  putCredential(String name, String contents, String table, String kmsKey) throws Exception{
         return putCredential(name, contents, null, null, null, table,  kmsKey);
@@ -338,7 +357,7 @@ public class FideliusClient {
      * @param kmsKey        Nullable    Name of the KMS key used for wrapping; defaults to 'alias/credstash'
      *
      * @return Version              Padded version of credential created in String format
-     * @throws Exception
+     * @throws Exception - if the credential cannot be stored
      */
     public String putCredential(String name, String contents, String application, String sdlc, String component,
                               String table, String kmsKey) throws Exception {
@@ -356,7 +375,7 @@ public class FideliusClient {
      * @param kmsKey        Nullable    Name of the KMS key used for wrapping; defaults to 'alias/credstash'
      *
      * @return Version                   Padded version of credential created in String format
-     * @throws Exception
+     * @throws Exception - if the credential cannot be stored
      */
     protected String putCredential(String name, String contents, String application, String sdlc, String component,
                               String table, String user, String kmsKey) throws Exception {
@@ -388,8 +407,7 @@ public class FideliusClient {
      * @param component     Nullable    Name of the associated component (not case-sensitive)
      * @param table         Nullable    Table where credential is stored; defaults to "credential-store"
      *
-     * @return null
-     * @throws Exception
+     * @throws Exception - if the credential cannot be deleted
      */
     public void deleteCredential(String name, String application,  String sdlc,  String component,
                                  String table) throws Exception {
@@ -404,8 +422,7 @@ public class FideliusClient {
      * @param table         Nullable    Table where credential is stored; defaults to "credential-store"
      * @param user          Nullable    Name of the user that deleted component
      *
-     * @return null
-     * @throws Exception
+     * @throws Exception - if the credential cannot be deleted
      */
     protected void deleteCredential(String name, String application,  String sdlc,  String component, String table,
                                     String user) throws Exception {
