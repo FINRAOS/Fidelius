@@ -21,18 +21,24 @@
      fxLayoutAlign="center center"
      fxLayoutGap="15px">
   <mat-form-field fxFlex="auto">
-    <mat-select placeholder="Account"
-                name="account"
-                [disableRipple]="disableAnimations"
-                [(ngModel)]="selected.account"
-                (selectionChange)="searchCredentials()"
-                required>
-      <mat-option *ngFor="let account of accounts"
-                  [value]="account"
-                  ngDefaultControl >
-        {{ account.alias }}
-      </mat-option>
-    </mat-select>
+    <input matInput
+           placeholder="Account"
+           [matAutocomplete]="accountAutoComplete"
+           [formControl]="accountControl"
+           name="account"
+           required>
+    <mat-autocomplete #accountAutoComplete="matAutocomplete"
+                      (optionSelected)="accountHandler($event)">
+      <mat-optgroup [label]="group.key.toUpperCase()" *ngFor="let group of accountOptions | async | groupBy: 'sdlc' ">
+        <mat-option [value]="account" *ngFor="let account of group.value">
+          {{ account.alias }}
+        </mat-option>
+      </mat-optgroup >
+    </mat-autocomplete>
+    <mat-hint align="end">
+      <span [hidden]="!accountControl.errors?.invalidAccount" class="tc-red-600">Invalid Account </span>
+      <span [hidden]="accountControl.pristine || !accountControl.errors?.required" class="tc-red-600">Required. </span>
+    </mat-hint>
   </mat-form-field>
   <mat-form-field fxFlex="auto">
     <mat-select placeholder="Region"
@@ -51,12 +57,12 @@
   <mat-form-field fxFlex="auto">
     <input matInput
            [placeholder]="applicationListName"
-           [matAutocomplete]="auto"
+           [matAutocomplete]="applicationAutocomplete"
            [formControl]="applicationControl"
            name="application"
            required>
-    <mat-autocomplete #auto="matAutocomplete"
-                      (optionSelected)="handler($event)">
+    <mat-autocomplete #applicationAutocomplete="matAutocomplete"
+                      (optionSelected)="applicationHandler($event)">
       <mat-option *ngFor="let application of applicationOptions | async"
                   [value]="application">
         {{ application }}

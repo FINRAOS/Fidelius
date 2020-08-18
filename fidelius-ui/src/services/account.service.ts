@@ -19,6 +19,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { API_URL } from '../config/application';
+import { map } from 'rxjs/operators';
 
 @Injectable()
 export class AccountService {
@@ -27,7 +28,11 @@ export class AccountService {
   constructor(private _http: HttpClient) { }
 
   getAccounts(): Observable<Account[]> {
-    return this._http.get<Account[]>(this.URL + '/accounts');
+    return this._http.get<Account[]>(this.URL + '/accounts').pipe(map((accounts: Account[]) =>{
+      accounts = accounts.sort((a,b) => a.alias.localeCompare(b.alias));
+      accounts = accounts.sort( (a,b) => a.sdlc.localeCompare(b.sdlc));
+      return accounts;
+    }));
   }
 }
 

@@ -22,9 +22,10 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule, MatInputModule, MatSelectModule } from '@angular/material';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { ICredential, Selected } from '../../services/credential.service';
+import { Selected } from '../../services/credential.service';
 import { Account } from '../../services/account.service';
 import { MainComponent } from '../main/main.component';
+import { GroupByPipe } from '../pipes/group-by.pipe';
 
 describe('SearchComponent', () => {
   let component: SearchComponent;
@@ -32,7 +33,7 @@ describe('SearchComponent', () => {
 
   class MockMainComponent {
     selected = {
-      "application": "TESTAGS",
+      "application": "TESTAPP",
       "region": "east",
       "account": {
         "alias": "Prod",
@@ -52,7 +53,7 @@ describe('SearchComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ SearchComponent],
+      declarations: [ SearchComponent, GroupByPipe],
       schemas:[ CUSTOM_ELEMENTS_SCHEMA],
       providers: [
         {provide: MainComponent, useClass: MockMainComponent },
@@ -66,7 +67,7 @@ describe('SearchComponent', () => {
     fixture = TestBed.createComponent(SearchComponent);
     component = fixture.componentInstance;
 
-    component.agsList = ['APP'];
+    component.applicationList = ['APP'];
     component.accounts = [];
     localStorage.clear();
 
@@ -121,12 +122,12 @@ describe('SearchComponent', () => {
     expect(component.selected.region).toEqual(undefined);
   });
 
-  it('should not load ags from local storage that is not in the within ags list', async() => {
+  it('should not load app from local storage that is not in the within app list', async() => {
     let account: Account = new Account();
     account.alias = 'Prod';
     account.regions = [{ name: 'east-2'}];
     component.accounts = [account];
-    component.agsList = ['APP'];
+    component.applicationList = ['APP'];
     localStorage.setItem('application', 'CREDSTSH');
     fixture.detectChanges();
 
@@ -136,7 +137,12 @@ describe('SearchComponent', () => {
   });
 
   it('should save Selected when searchCredentials() is called', async() => {
+    let account: Account = new Account();
+    account.alias = 'Qa';
+    account.regions = [{ name: 'west-1'}];
+    component.accounts = [account];
     component.selected.account.alias = 'Qa';
+    component.accountControl.setValue('Qa');
     component.selected.region = 'west-1';
     component.selected.application = 'APP';
 
@@ -149,7 +155,7 @@ describe('SearchComponent', () => {
     expect(localStorage.getItem('application')).toEqual('APP');
   });
 
-  it('should emit Selected if valid account, ags, and region', function(done: any) {
+  it('should emit Selected if valid account, app, and region', function(done: any) {
     const parentComponent: MainComponent = fixture.debugElement.injector.get(MainComponent);
     spyOn(parentComponent, 'searchCredentials');
     component.selected.account.alias = 'Qa';
@@ -206,5 +212,48 @@ describe('SearchComponent', () => {
 
     expect(component.loadFromLocalStorage()).toHaveBeenCalled();
   });
+
+  it('should set application value on auto-complete', async() => {
+    spyOn(component, 'searchCredentials');
+    let event: any = {'option': {'value': 'APP'}};
+
+    component.applicationHandler(event);
+    fixture.detectChanges();
+
+    expect(component.searchCredentials).toHaveBeenCalledTimes(1);
+    expect(component.selected.application).toEqual('APP');
+  });
+
+  it('should set account value on auto-complete when region does not exist', async() => {
+    spyOn(component, 'searchCredentials');
+    let account: Account = new Account();
+    account.alias = 'Prod';
+    account.regions = [{ name: 'east-2'}];
+    let event: any = {'option': {'value': account}};
+
+    component.accountHandler(event);
+    fixture.detectChanges();
+
+    expect(component.searchCredentials).toHaveBeenCalledTimes(1);
+    expect(component.selected.account.alias).toEqual('Prod');
+    expect(component.selected.region).toEqual(undefined);
+  });
+
+  it('should set account value on auto-complete when region exists', async() => {
+    spyOn(component, 'searchCredentials');
+    let account: Account = new Account();
+    account.alias = 'Prod';
+    account.regions = [{ name: 'east-2'}];
+    let event: any = {'option': {'value': account}};
+    component.selected.region = 'east-2';
+
+    component.accountHandler(event);
+    fixture.detectChanges();
+
+    expect(component.searchCredentials).toHaveBeenCalledTimes(1);
+    expect(component.selected.account.alias).toEqual('Prod');
+    expect(component.selected.region).toEqual('east-2');
+  });
+
 
 });

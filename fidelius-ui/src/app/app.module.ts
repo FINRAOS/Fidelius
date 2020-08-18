@@ -53,6 +53,7 @@ import { DeleteDialogComponent } from './main/delete-dialog/delete-dialog.compon
 import {CookieService} from 'ngx-cookie-service';
 import {FlexLayoutModule} from '@angular/flex-layout';
 import {BrowserService} from '../services/browser.service';
+import { GroupByPipe } from './pipes/group-by.pipe';
 
 @NgModule({
   imports:      [
@@ -107,6 +108,7 @@ import {BrowserService} from '../services/browser.service';
     CredentialsTableComponent,
     LoadingComponent,
     DeleteDialogComponent,
+    GroupByPipe
      ],
   providers: [CredentialService,
     AccountService,
