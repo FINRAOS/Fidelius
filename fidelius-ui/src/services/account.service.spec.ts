@@ -17,8 +17,9 @@
 
 import { TestBed, inject } from '@angular/core/testing';
 
-import { AccountService } from './account.service';
+import { Account, AccountService } from './account.service';
 import { HttpClientModule } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 describe('AccountService', () => {
   beforeEach(() => {
@@ -31,4 +32,128 @@ describe('AccountService', () => {
   it('should be created', inject([AccountService], (service: AccountService) => {
     expect(service).toBeTruthy();
   }));
+
+  it('should group accounts by sdlc and sort by alias', inject ([AccountService], (service: AccountService) => {
+    spyOn((service as any)._http, 'get').and.returnValue(Observable.of(testAccountList));
+    let results: Account[];
+    service.getAccounts().subscribe( (accounts: Account[]) => {results = accounts;});
+
+    expect(results.length).toEqual(9);
+    expect(results[0].alias).toEqual('A-DEV');
+    expect(results[1].alias).toEqual('C-DEV');
+    expect(results[2].alias).toEqual('L-DEV');
+    expect(results[3].alias).toEqual('PROD-A');
+    expect(results[4].alias).toEqual('PROD-B');
+    expect(results[5].alias).toEqual('PROD-z');
+    expect(results[6].alias).toEqual('A-QA');
+    expect(results[7].alias).toEqual('L-QA');
+    expect(results[8].alias).toEqual('Z-QA');
+  }));
 });
+
+
+
+const testAccountList: any[] = [
+  {
+    "accountId": "12345678913",
+    "name": "",
+    "sdlc": "prod",
+    "alias": "PROD-B",
+    "regions": [
+      {
+        "name": "us-east-1"
+      }
+    ]
+  },
+  {
+    "accountId": "12345678910",
+    "name": "",
+    "sdlc": "qa",
+    "alias": "Z-QA",
+    "regions": [
+      {
+        "name": "us-east-1"
+      },
+      {
+        "name": "us-east-2"
+      }
+    ]
+  },
+  {
+    "accountId": "12345678911",
+    "name": "",
+    "sdlc": "dev",
+    "alias": "L-DEV",
+    "regions": [
+      {
+        "name": "us-east-1"
+      }
+    ]
+  },
+  {
+    "accountId": "12345678912",
+    "name": "",
+    "sdlc": "qa",
+    "alias": "A-QA",
+    "regions": [
+      {
+        "name": "us-east-1"
+      }
+    ]
+  },
+  {
+    "accountId": "12345678923",
+    "name": "",
+    "sdlc": "dev",
+    "alias": "A-DEV",
+    "regions": [
+      {
+        "name": "us-east-1"
+      }
+    ]
+  },
+  {
+    "accountId": "12345678914",
+    "name": "",
+    "sdlc": "qa",
+    "alias": "L-QA",
+    "regions": [
+      {
+        "name": "us-east-1"
+      }
+    ]
+  },
+  {
+    "accountId": "12345678919",
+    "name": "",
+    "sdlc": "dev",
+    "alias": "C-DEV",
+    "regions": [
+      {
+        "name": "us-east-1"
+      }
+    ]
+  },
+  {
+    "accountId": "12345678913",
+    "name": "",
+    "sdlc": "prod",
+    "alias": "PROD-z",
+    "regions": [
+      {
+        "name": "us-east-1"
+      }
+    ]
+  },
+  {
+    "accountId": "12345678913",
+    "name": "",
+    "sdlc": "prod",
+    "alias": "PROD-A",
+    "regions": [
+      {
+        "name": "us-east-1"
+      }
+    ]
+  }
+];
