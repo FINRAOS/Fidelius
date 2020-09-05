@@ -73,7 +73,7 @@ public class DBCredential {
 
     @DynamoDBIgnore
     public String getShortKey() {
-        if(component != null)
+        if(component != null && !component.isEmpty())
             return name.split("\\."+component+"\\."+sdlc+"\\.")[1];
         else {
             Pattern p = Pattern.compile("([-\\w]+)\\.([-\\w]+)\\.(\\S+)");
