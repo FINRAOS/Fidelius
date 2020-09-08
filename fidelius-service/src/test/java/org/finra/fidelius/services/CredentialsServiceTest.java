@@ -160,6 +160,100 @@ public class CredentialsServiceTest {
     }
 
     @Test
+    public void getAllCredentialsShouldBeAbleToMigrateCredentialsWithEmptyComponent() {
+        List<DBCredential> fakeData = new ArrayList<>();
+
+        DBCredential fakeCred1 = new DBCredential();
+        fakeCred1.setName("APP.TestComponent.dev.testKey");
+        fakeCred1.setComponent("");
+        fakeCred1.setVersion("0001");
+        fakeCred1.setUpdatedBy("Jon Snow");
+        fakeCred1.setUpdatedDate("2018-04-04T12:51:37.803Z");
+
+        DBCredential fakeCred2 = new DBCredential();
+        fakeCred2.setName("APP.dev.testKey2");
+        fakeCred1.setComponent("");
+        fakeCred1.setSdlc("");
+        fakeCred2.setVersion("0001");
+        fakeCred2.setUpdatedBy("Ned Stark");
+        fakeCred2.setUpdatedDate("2018-04-04T12:51:37.803Z");
+
+        DBCredential fakeCred3 = new DBCredential();
+        fakeCred3.setName("APP.dev.testKey3.extra");
+        fakeCred3.setVersion("0001");
+        fakeCred3.setUpdatedBy("");
+        fakeCred3.setUpdatedDate("");
+
+        DBCredential fakeCred4 = new DBCredential();
+        fakeCred4.setName("APP.TestComponent.dev.testKey");
+        fakeCred4.setComponent("TestComponent");
+        fakeCred4.setSdlc("dev");
+        fakeCred4.setVersion("0001");
+        fakeCred4.setUpdatedBy("Ned Stark");
+        fakeCred4.setUpdatedDate("2018-04-04T12:51:37.803Z");
+
+        DBCredential fakeCred5 = new DBCredential();
+        fakeCred5.setName("APP.dev.testKey2");
+        fakeCred5.setSdlc("dev");
+        fakeCred5.setVersion("0001");
+        fakeCred5.setUpdatedBy("Ned Stark");
+        fakeCred5.setUpdatedDate("2018-04-04T12:51:37.803Z");
+
+        DBCredential fakeCred6 = new DBCredential();
+        fakeCred6.setName("APP.dev.testKey3.extra");
+        fakeCred6.setSdlc("testKey3");
+        fakeCred6.setComponent("dev");
+        fakeCred6.setVersion("0001");
+        fakeCred6.setUpdatedBy("Ned Stark");
+        fakeCred6.setUpdatedDate("2018-04-04T12:51:37.803Z");
+
+        fakeData.add(fakeCred1);
+        fakeData.add(fakeCred2);
+        fakeData.add(fakeCred3);
+
+        when(dynamoDBService.scanDynamoDB(any(), eq(DBCredential.class), any())).thenReturn(fakeData);
+        when(migrateService.guessCredentialProperties(fakeCred1)).thenReturn(fakeCred4);
+        when(migrateService.guessCredentialProperties(fakeCred2)).thenReturn(fakeCred5);
+        when(migrateService.guessCredentialProperties(fakeCred3)).thenReturn(fakeCred6);
+
+        List<Credential> expectedCreds = new ArrayList<>();
+
+        expectedCreds.add(new Credential("testKey2",
+                "APP.dev.testKey2",
+                "some-account",
+                "region",
+                "APP",
+                "dev",
+                null,
+                "Ned Stark",
+                "2018-04-04T12:51:37.803Z"));
+
+        expectedCreds.add(new Credential("testKey",
+                "APP.TestComponent.dev.testKey",
+                "some-account",
+                "region",
+                "APP",
+                "dev",
+                "TestComponent",
+                "Ned Stark",
+                "2018-04-04T12:51:37.803Z"));
+
+        expectedCreds.add(new Credential("extra",
+                "APP.dev.testKey3.extra",
+                "some-account",
+                "region",
+                "APP",
+                "testKey3",
+                "dev",
+                "Ned Stark",
+                "2018-04-04T12:51:37.803Z"));
+
+        List<Credential> results = credentialsService.getAllCredentials("table", "some-account", "region", "APP");
+
+        assertEquals(results.get(0), expectedCreds.get(0));
+    }
+
+    @Test
     public void getAllCredentialsShouldBeAbleToMigrateCredentialsWithoutSDLC() {
         List<DBCredential> fakeData = new ArrayList<>();
 

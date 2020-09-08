@@ -243,7 +243,7 @@ public class CredentialsService {
         String user = fideliusRoleService.getUserProfile().getUserId();
 
         try {
-            if (component.equals("null")) {
+            if (component != null && (component.isEmpty() || component.equals("null"))) {
                 component = null;
             }
             String credentialSecret = fideliusService.getCredential(shortKey, application, environment, component,
