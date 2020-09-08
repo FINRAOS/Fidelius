@@ -64,11 +64,23 @@ public class DBCredential {
     }
 
     @DynamoDBAttribute(attributeName = "sdlc")
-    public String getSdlc(){ return sdlc;}
+    public String getSdlc(){
+        if (sdlc != null && !sdlc.isEmpty()) {
+            return sdlc;
+        } else {
+            return null;
+        }
+    }
     public void setSdlc(String sdlc){ this.sdlc = sdlc;}
 
     @DynamoDBAttribute(attributeName = "component")
-    public String getComponent(){ return component;}
+    public String getComponent() {
+        if (component != null && !component.isEmpty()) {
+            return component;
+        } else {
+            return null;
+        }
+    }
     public void setComponent(String component){ this.component = component;}
 
     @DynamoDBIgnore
