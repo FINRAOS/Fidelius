@@ -187,7 +187,7 @@ export class MainComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.checkAuthorization();
 
-    if (selected !== undefined && selected.application !== '') {
+    if (selected !== undefined && selected.application !== '' && selected.region !== undefined) {
       this.loading = true;
       this._credentialService.getCredentials(selected).subscribe((credentials: ICredential[]) => {
           if (credentials) {
