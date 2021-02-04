@@ -289,7 +289,7 @@ export class MainComponent implements OnInit, OnDestroy {
     this.closeSideNav();
   }
 
-  reload(): void {
+  refreshTable(): void {
     this.searchCredentials(this.selected);
   }
 }
