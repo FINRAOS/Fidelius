@@ -82,6 +82,14 @@
                         <mat-icon>add</mat-icon>
                         Add Secret
                       </button>
+                      <button mat-button
+                              class="push-left"
+                              color="accent"
+                              [disableRipple]="isIEOrEdge"
+                              (click)="reload()">
+                        <mat-icon>refresh</mat-icon>
+                        Refresh Table
+                      </button>
                       <ng-template #disabledAddCredential >
                         <span matTooltip="Contact Ops" matTooltipPosition="above">
                           <button mat-button class="push-left"
