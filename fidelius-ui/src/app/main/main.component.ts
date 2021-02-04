@@ -288,4 +288,8 @@ export class MainComponent implements OnInit, OnDestroy {
     this.selectedCredential = undefined;
     this.closeSideNav();
   }
+
+  refreshTable(): void {
+    this.searchCredentials(this.selected);
+  }
 }
