@@ -136,11 +136,12 @@ export class MainComponent implements OnInit, OnDestroy {
   }
 
   applyFilter(filterValue: string): void {
-      this.dataSource.filter = filterValue;
-      this._changeDetectorRef.detectChanges();
+    this.dataSource.filter = filterValue;
+    this._changeDetectorRef.detectChanges();
   }
 
   applyEnvironmentFilter(environment: string): void {
+    this.loadAllCredentials(this.selected);
     if (environment === 'all') {
       this.dataSource.data = this.credentials;
       this._changeDetectorRef.detectChanges();
@@ -149,6 +150,7 @@ export class MainComponent implements OnInit, OnDestroy {
         .filter((credential: Credential) => {
           return credential.environment !== null && credential.environment.toLowerCase() === environment;
         });
+
     }
   }
 
@@ -186,16 +188,32 @@ export class MainComponent implements OnInit, OnDestroy {
   searchCredentials(selected: Selected): void {
     this.loading = true;
     this.checkAuthorization();
-
     if (selected !== undefined && selected.application !== '' && selected.region !== undefined) {
       this.loading = true;
       this._credentialService.getCredentials(selected).subscribe((credentials: ICredential[]) => {
           if (credentials) {
-            this.dataSource = new MatTableDataSource(credentials);
-            this.credentials = credentials;
             this.environments = this.getUniqueEnvironments(credentials);
-            this.selected.environment = undefined;
-            this.selected.key = undefined;
+
+            let localEnvironment: string = localStorage.getItem('environment');
+            if (this.environments.includes(localEnvironment) && localEnvironment !== ''){
+              this.selected.environment = localEnvironment;
+            } else {
+              this.selected.environment = 'all';
+              localStorage.setItem('environment', 'all');
+            }
+            if(localEnvironment.toLowerCase() !== 'all') {
+              credentials = credentials.filter((credential: Credential) => {
+                return credential.environment !== null && credential.environment.toLowerCase() === localEnvironment;
+              });
+            }
+
+
+            this.selected.key = localStorage.getItem('key');
+
+
+            this.dataSource = new MatTableDataSource(credentials);
+            this.dataSource.filter = this.selected.key;
+            this.credentials = credentials;
             this._changeDetectorRef.detectChanges();
             this._router.navigate(['']);
           } else {
@@ -218,6 +236,27 @@ export class MainComponent implements OnInit, OnDestroy {
         this.loading = false;
         this.loaded = false;
         this._changeDetectorRef.detectChanges();
+    }
+  }
+
+  loadAllCredentials(selected: Selected): void {
+    this.checkAuthorization();
+    if (selected !== undefined && selected.application !== '' && selected.region !== undefined) {
+      this._credentialService.getCredentials(selected).subscribe((credentials: ICredential[]) => {
+        if (credentials) {
+          this.credentials = credentials;
+        } else {
+          this.selected.environment = undefined;
+          this.selected.key = undefined;
+        }
+      }, (error: any) => {
+        this._alertService.openAlert(error);
+        this.dataSource = new MatTableDataSource<ICredential[]>();
+        this._changeDetectorRef.detectChanges();
+      });
+    } else {
+      this.dataSource = new MatTableDataSource<ICredential[]>();
+      this.environments = [];
     }
   }
 

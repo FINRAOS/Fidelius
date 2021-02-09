@@ -72,34 +72,40 @@
                   <fidelius-loading [condition]="loading"></fidelius-loading>
                   <div [ngStyle]="!loading ? {'display':'block'} : {'display':'none'}">
                     <mat-card-title class="pull-bottom pad-bottom-lg">
-                      <span class="text-sm">{{dataSource.filteredData.length}} Secrets found</span>
-                      <button mat-button
-                              class="push-left"
-                              color="accent"
-                              [disableRipple]="isIEOrEdge"
-                              (click)="openSideNav(null,'add', null)"
-                              *ngIf="authorizations.createCredential; else disabledAddCredential">
-                        <mat-icon>add</mat-icon>
-                        Add Secret
-                      </button>
-                      <button mat-button
-                              class="push-left"
-                              color="accent"
-                              [disableRipple]="isIEOrEdge"
-                              (click)="refreshTable()">
-                        <mat-icon>refresh</mat-icon>
-                        Refresh Table
-                      </button>
-                      <ng-template #disabledAddCredential >
-                        <span matTooltip="Contact Ops" matTooltipPosition="above">
-                          <button mat-button class="push-left"
-                                  color="primary"
-                                  disabled>
+                      <div fxLayout="row" fxLayoutAlign="space-between">
+                        <span>
+                          <span class="text-sm">{{dataSource.filteredData.length}} Secrets found</span>
+                        </span>
+                        <span>
+                          <button mat-button
+                                  color="accent"
+                                  [disableRipple]="isIEOrEdge"
+                                  (click)="openSideNav(null,'add', null)"
+                                  *ngIf="authorizations.createCredential; else disabledAddCredential">
                             <mat-icon>add</mat-icon>
-                            Add Secret
+                            Add
+                          </button>
+                          <ng-template #disabledAddCredential >
+                            <span matTooltip="Contact Ops" matTooltipPosition="above">
+                              <button mat-button
+                                      color="primary"
+                                      disabled>
+                                <mat-icon>add</mat-icon>
+                                Add Secret
+                              </button>
+                            </span>
+                          </ng-template>
+                          <button mat-button
+                                  layout-padding="0px"
+                                  layout-margin="0px"
+                                  color="accent"
+                                  [disableRipple]="isIEOrEdge"
+                                  (click)="refreshTable()">
+                            <mat-icon>refresh</mat-icon>
+                            Refresh
                           </button>
                         </span>
-                      </ng-template>
+                      </div>
                     </mat-card-title>
                     <fidelius-credentials-table
                       [dataSource]="dataSource"

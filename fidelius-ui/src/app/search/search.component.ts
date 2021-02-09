@@ -122,6 +122,12 @@ export class SearchComponent implements OnInit, OnChanges, AfterViewInit, OnDest
       this.selected.application = '';
     }
 
+    if (this.environments.includes(this.selected.environment)){
+      localStorage.setItem('environment', this.selected.environment);
+    } else {
+      this.selected.environment = '';
+    }
+
     if (this.selected.application !== this.previousSelected.application ||
         this.selected.region !== this.previousSelected.region ||
         this.selected.account !== this.previousSelected.account) {
@@ -133,6 +139,7 @@ export class SearchComponent implements OnInit, OnChanges, AfterViewInit, OnDest
   applyFilter(filterValue: string): void {
     filterValue = filterValue.trim();
     filterValue = filterValue.toLowerCase();
+    localStorage.setItem('key', filterValue);
     this._parentComponent.applyFilter(filterValue);
 
   }
@@ -140,8 +147,13 @@ export class SearchComponent implements OnInit, OnChanges, AfterViewInit, OnDest
   applyEnvironment(environment: string): void {
       environment = environment.trim();
       environment = environment.toLowerCase();
+      if (this.environments.includes(this.selected.environment)){
+        localStorage.setItem('environment', this.selected.environment);
+      } else {
+        this.selected.environment = '';
+      }
       this._parentComponent.applyEnvironmentFilter(environment);
-  }
+ }
 
   loadFromLocalStorage(): void {
     this.selected.account = this.accounts.find(x => x.alias === localStorage.getItem('account'));
