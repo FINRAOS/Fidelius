@@ -64,6 +64,7 @@ export class MainComponent implements OnInit, OnDestroy {
   accounts: Account[] = [];
   environments: string[] = [];
   credentials: ICredential[];
+  allCredentials: ICredential[];
   user: IUser;
   heartbeatSub: Subscription = undefined;
   sideNavSubscription: Subscription = undefined;
@@ -141,7 +142,7 @@ export class MainComponent implements OnInit, OnDestroy {
   }
 
   applyEnvironmentFilter(environment: string): void {
-    this.loadAllCredentials(this.selected);
+    this.credentials = this.allCredentials;
     if (environment === 'all') {
       this.dataSource.data = this.credentials;
       this._changeDetectorRef.detectChanges();
@@ -193,7 +194,7 @@ export class MainComponent implements OnInit, OnDestroy {
       this._credentialService.getCredentials(selected).subscribe((credentials: ICredential[]) => {
           if (credentials) {
             this.environments = this.getUniqueEnvironments(credentials);
-
+            this.allCredentials = credentials;
             let localEnvironment: string = localStorage.getItem('environment');
             if (this.environments.includes(localEnvironment) && localEnvironment !== ''){
               this.selected.environment = localEnvironment;
@@ -238,28 +239,7 @@ export class MainComponent implements OnInit, OnDestroy {
         this._changeDetectorRef.detectChanges();
     }
   }
-
-  loadAllCredentials(selected: Selected): void {
-    this.checkAuthorization();
-    if (selected !== undefined && selected.application !== '' && selected.region !== undefined) {
-      this._credentialService.getCredentials(selected).subscribe((credentials: ICredential[]) => {
-        if (credentials) {
-          this.credentials = credentials;
-        } else {
-          this.selected.environment = undefined;
-          this.selected.key = undefined;
-        }
-      }, (error: any) => {
-        this._alertService.openAlert(error);
-        this.dataSource = new MatTableDataSource<ICredential[]>();
-        this._changeDetectorRef.detectChanges();
-      });
-    } else {
-      this.dataSource = new MatTableDataSource<ICredential[]>();
-      this.environments = [];
-    }
-  }
-
+  
   confirmDelete(credential: Credential): void {
     let config: MatDialogConfig = {
       data: {
