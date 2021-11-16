@@ -14,7 +14,6 @@
  * limitations under the License.
  *
  */
-
 package org.finra.fidelius.model;
 
 import org.hibernate.validator.constraints.NotBlank;
