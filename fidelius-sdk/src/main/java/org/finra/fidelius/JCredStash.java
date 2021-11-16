@@ -20,7 +20,6 @@ package org.finra.fidelius;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.document.*;
@@ -29,7 +28,6 @@ import com.amazonaws.services.dynamodbv2.document.utils.NameMap;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.services.kms.AWSKMS;
-import com.amazonaws.services.kms.AWSKMSClient;
 import com.amazonaws.services.kms.AWSKMSClientBuilder;
 import com.amazonaws.services.kms.model.DecryptRequest;
 import com.amazonaws.services.kms.model.DecryptResult;
@@ -189,6 +187,15 @@ public class JCredStash {
 
     }
 
+    protected MetadataParameters getMetadata(String tableName, String metadataKey, Map<String, String> context)  {
+
+        // First find the relevant rows from the credstash table
+        Map<String, AttributeValue> dynamoMetadata = readDynamoItem(tableName, metadataKey);
+        MetadataParameters metadataParameters = MetadataModelMapper.fromDynamo(dynamoMetadata);
+        return metadataParameters;
+
+    }
+
     protected String decrypt(EncryptedCredential encryptedCredential, Map<String,String> context){
         // First obtain that original key again using KMS
         ByteBuffer plainText = decryptKeyWithKMS(encryptedCredential.getDataKeyBytes(), context);
@@ -265,6 +272,22 @@ public class JCredStash {
         return encryptedCredentialObj;
     }
 
+    protected MetadataParameters add(String name, String version, String sourceType, String source, String user, String kmsKey, Map<String,String> context){
+
+        String updatedOn = ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT);
+
+        MetadataParameters metadataParameters = new MetadataParameters()
+                .setFullName(name)
+                .setSourceType(sourceType)
+                .setSource(source)
+                .setVersion(version)
+                .setUpdateBy(user)
+                .setUpdatedOn(updatedOn)
+                .setSdlc(context.get(Constants.FID_CONTEXT_SDLC))
+                .setComponent(context.get(Constants.FID_CONTEXT_COMPONENT));
+        return metadataParameters;
+    }
+
     protected void putSecret(String tableName, String secretName, String contents, String version, String kmsKey, Map<String, String> context) throws Exception {
         putSecret(tableName,  secretName,  contents,  version, null,  kmsKey, context);
     }
@@ -288,6 +311,35 @@ public class JCredStash {
 
         EncryptedCredential encryptedCredential = encrypt(secretName,contents,version, user, kmsKey,context);
         final Map<String, AttributeValue> data = CredModelMapper.toDynamo(encryptedCredential);
+
+        HashMap<String, String> cond = new HashMap<>();
+        cond.put("#n", "name");
+        PutItemRequest request = new PutItemRequest(tableName, data)
+                .withConditionExpression("attribute_not_exists(#n)")
+                .withExpressionAttributeNames(cond);
+        amazonDynamoDBClient.putItem(request);
+    }
+
+    protected void putMetadata(String tableName, String secretName, String version, String sourceType,
+                               String source, String user, String kmsKey, Map<String, String> context) throws Exception {
+
+        // tableName defaults to encryptedCredential-store
+        tableName = (tableName == null || tableName.length() == 0) ? "encryptedCredential-store" : tableName;
+
+        // version defaults to 1; is zero-padded to length 19
+        version = (version == null || version.length() == 0) ? String.format("%019d", 1) : version;
+
+        // User that created secret: Defaults to IAM user
+        user = ( user == null || user.length() == 0) ? getUpdatedBy(): user;
+
+        // kmsKey defaults to alias/credstash
+        kmsKey = (kmsKey == null || kmsKey.length() == 0) ? Constants.DEFAULT_KMS_KEY : kmsKey;
+
+        // context defaults to empty map
+        context = (context == null) ? new HashMap<String, String>() : context;
+
+        MetadataParameters metadataParameters = add(secretName, version, sourceType, source, user, kmsKey, context);
+        final Map<String, AttributeValue> data = MetadataModelMapper.toDynamo(metadataParameters);
 
         HashMap<String, String> cond = new HashMap<>();
         cond.put("#n", "name");

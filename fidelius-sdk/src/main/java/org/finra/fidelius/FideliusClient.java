@@ -25,20 +25,15 @@ import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.regions.*;
-import com.amazonaws.regions.Region;
 import com.amazonaws.retry.PredefinedRetryPolicies;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.ec2.model.*;
 import com.amazonaws.services.kms.AWSKMS;
-import com.amazonaws.services.kms.AWSKMSClient;
 import com.amazonaws.services.kms.AWSKMSClientBuilder;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClient;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
 import com.amazonaws.util.EC2MetadataUtils;
@@ -128,6 +123,20 @@ public class FideliusClient {
                 prefixedName = tags.get(Constants.FID_CONTEXT_APPLICATION) + "." + tags.get(Constants.FID_CONTEXT_COMPONENT) + "." + tags.get(Constants.FID_CONTEXT_SDLC) + "." + credentialName;
             } else {
                 prefixedName = tags.get(Constants.FID_CONTEXT_APPLICATION) + "." + tags.get(Constants.FID_CONTEXT_SDLC) + "." + credentialName;
+            }
+            return prefixedName;
+        } else {
+            return null;
+        }
+    }
+
+    private  String getPrefixedNameForMetadata(String credentialName, Map tags) {
+        if (tags.containsKey(Constants.FID_CONTEXT_APPLICATION) && tags.containsKey(Constants.FID_CONTEXT_SDLC)) {
+            String prefixedName;
+            if (tags.containsKey(Constants.FID_CONTEXT_COMPONENT)) {
+                prefixedName = "META#" + tags.get(Constants.FID_CONTEXT_APPLICATION) + "." + tags.get(Constants.FID_CONTEXT_COMPONENT) + "." + tags.get(Constants.FID_CONTEXT_SDLC) + "." + credentialName;
+            } else {
+                prefixedName = "META#" + tags.get(Constants.FID_CONTEXT_APPLICATION) + "." + tags.get(Constants.FID_CONTEXT_SDLC) + "." + credentialName;
             }
             return prefixedName;
         } else {
@@ -249,6 +258,7 @@ public class FideliusClient {
     public String getCredential(String name, String table) throws Exception {
         return getCredential(name, null, null, null, table, null, true);
     }
+
     /**
      *
      * @param name                      Base name of the credential to retrieve
@@ -332,6 +342,7 @@ public class FideliusClient {
     public String putCredential(String name, String contents) throws Exception {
         return putCredential(name, contents, null, null, null, null,null);
     }
+
     /**
      * The FID_CONTEXT_APPLICATION, FID_CONTEXT_SDLC, and (optionally) Component will be determined from the instance metadata (Does not work from local)
      *
@@ -346,6 +357,7 @@ public class FideliusClient {
     public String  putCredential(String name, String contents, String table, String kmsKey) throws Exception{
         return putCredential(name, contents, null, null, null, table,  kmsKey);
     }
+
     /**
      *
      * @param name                      Name of the secret
@@ -401,6 +413,29 @@ public class FideliusClient {
     }
     /**
      *
+     * @param name                      Name of the secret
+     * @param contents                  Plaintext contents of the secret
+     * @param application   Nullable    FID_CONTEXT_APPLICATION Name
+     * @param sdlc          Nullable    FID_CONTEXT_SDLC (dev/qa/prod)
+     * @param component     Nullable    Component name
+     * @param sourceType                Source type
+     * @param source                    Source name
+     * @param table         Nullable    Table where credential is stored; defaults to 'credential-store'
+     * @param user          Nullable    User that created Credential; defaults to IAM user
+     * @param kmsKey        Nullable    Name of the KMS key used for wrapping; defaults to 'alias/credstash'
+     *
+     * @return Version                   Padded version of credential created in String format
+     * @throws Exception - if the credential cannot be stored
+     */
+    public String putCredentialWithMetadata(String name, String contents, String application, String sdlc, String component,
+                                               String source, String sourceType, String table, String user, String kmsKey) throws Exception {
+        String version = putCredential(name, contents, application, sdlc, component, table, user, kmsKey);
+        putMetadata(name, application, sdlc, component, sourceType, source, table, user, kmsKey);
+        return version;
+    }
+
+    /**
+     *
      * @param name                      Base name of the credential to delete
      * @param application   Nullable    FID_CONTEXT_APPLICATION name (not case-sensitive)
      * @param sdlc          Nullable    FID_CONTEXT_SDLC (dev/qa/prod) (not case-sensitive)
@@ -413,6 +448,24 @@ public class FideliusClient {
                                  String table) throws Exception {
         deleteCredential(name, application, sdlc, component,  table, null);
     }
+
+    /**
+     *
+     * @param name                      Base name of the credential to delete
+     * @param application   Nullable    FID_CONTEXT_APPLICATION name (not case-sensitive)
+     * @param sdlc          Nullable    FID_CONTEXT_SDLC (dev/qa/prod) (not case-sensitive)
+     * @param component     Nullable    Name of the associated component (not case-sensitive)
+     * @param table         Nullable    Table where credential is stored; defaults to "credential-store"
+     * @param user          Nullable    Name of the user that deleted component
+     *
+     * @throws Exception - if the credential cannot be deleted
+     */
+    public void deleteCredentialWithMetadata(String name, String application,  String sdlc,  String component, String table,
+                                    String user) throws Exception {
+        deleteCredential(name, application, sdlc, component,  table, user);
+        deleteMetadata(name, application, sdlc, component, table, user);
+    }
+
     /**
      *
      * @param name                      Base name of the credential to delete
@@ -441,6 +494,132 @@ public class FideliusClient {
             logger.info("User "+ user + " deleted credential " + prefixedName);
         } catch (RuntimeException e) { // Credential not found
             logger.info("Credential " + prefixedName + " not found. [" + e.toString() + "] ");
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     *
+     * @param name                  Base name of the credential to retrieve
+     * @param application   Nullable    FID_CONTEXT_APPLICATION name (not case-sensitive)
+     * @param sdlc          Nullable    FID_CONTEXT_SDLC (dev/qa/prod) (not case-sensitive)
+     * @param component     Nullable    Name of the associated component (not case-sensitive)
+     * @param table         Nullable    Table where credential is stored; defaults to "credential-store"
+     * @param user          Nullable    Name of user that requested to retrieve credential
+     * @param retryForApplication    Nullable  Boolean that enables search retry by removing component to find FID_CONTEXT_APPLICATION specific credential
+     *
+     * @return metadata - Information about metadata (most recent version)
+     * @throws Exception - if the credential cannot be retrieved
+     *
+     */
+    protected MetadataParameters getMetadata(String name, String application, String sdlc, String component,
+                                             String table, String user, Boolean retryForApplication) throws Exception {
+
+        if (table == null || table.length() == 0)
+            table = Constants.DEFAULT_TABLE;
+
+        if (user == null || user.length() == 0)
+            user = getUser();
+
+        HashMap<String, String> context = createContextMap(application, sdlc, component);
+        String prefixedName = getPrefixedNameForMetadata(name, context);
+
+        MetadataParameters metadataParameters = null;
+        try {
+            metadataParameters = jCredStash.getMetadata(table, prefixedName, context);
+            logger.info("User "+ user + " retrieved contents of " + prefixedName);
+        } catch (RuntimeException e) {    // MetadataParameters not found
+            logger.info("MetadataParameters " + prefixedName + " not found. ["+e.toString()+"] ");
+
+            if(retryForApplication == null || retryForApplication == true) {
+                // If component was specified
+                if (context.containsKey(Constants.FID_CONTEXT_COMPONENT)) {
+                    context.remove(Constants.FID_CONTEXT_COMPONENT);
+                    prefixedName = getPrefixedNameForMetadata(name, context);
+                    logger.info("Retrieving " + prefixedName + ": ");
+
+                    // Attempt to get FID_CONTEXT_APPLICATION-specific credential
+                    try {
+                        metadataParameters = jCredStash.getMetadata(table, prefixedName, context);
+                        logger.info("User " + user + " retrieved contents of " + prefixedName);
+                    } catch (RuntimeException ex) {
+                        logger.error("MetadataParameters " + prefixedName + " not found. ");
+                        logger.error(ex.toString());
+                    }
+                } else {
+                    logger.error(e.toString());
+                }
+            }
+        }
+        return metadataParameters;
+    }
+
+    /**
+     *
+     * @param name                      Name of the metadata
+     * @param application   Nullable    FID_CONTEXT_APPLICATION Name
+     * @param sdlc          Nullable    FID_CONTEXT_SDLC (dev/qa/prod)
+     * @param component     Nullable    Component name
+     * @param sourceType                Source type
+     * @param source                    Source name
+     * @param table         Nullable    Table where credential is stored; defaults to 'credential-store'
+     * @param user          Nullable    User that created Credential; defaults to IAM user
+     * @param kmsKey        Nullable    Name of the KMS key used for wrapping; defaults to 'alias/credstash'
+     *
+     * @return Version                   Padded version of credential created in String format
+     * @throws Exception - if the credential cannot be stored
+     */
+    protected String putMetadata(String name, String application, String sdlc, String component, String sourceType,
+                                 String source, String table, String user, String kmsKey) throws Exception {
+        if (table == null || table.length() == 0)
+            table = Constants.DEFAULT_TABLE;
+
+        if(user == null ) {
+            user = getUser();
+        }
+
+        HashMap<String, String> context = createContextMap(application, sdlc, component);
+        String prefixedName = getPrefixedNameForMetadata(name, context);
+
+        String versionString;
+        int nextVersion = jCredStash.getHighestVersion(prefixedName, table) + 1;
+        versionString = String.format("%019d", nextVersion);
+
+        jCredStash.putMetadata(table, prefixedName, versionString, sourceType, source, user, kmsKey, context);
+
+        logger.info("Version " + versionString + " of " + prefixedName + " stored in " + table + " by User " + user);
+
+        return versionString;
+    }
+
+    /**
+     *
+     * @param name                      Base name of the credential to delete
+     * @param application   Nullable    FID_CONTEXT_APPLICATION name (not case-sensitive)
+     * @param sdlc          Nullable    FID_CONTEXT_SDLC (dev/qa/prod) (not case-sensitive)
+     * @param component     Nullable    Name of the associated component (not case-sensitive)
+     * @param table         Nullable    Table where credential is stored; defaults to "credential-store"
+     * @param user          Nullable    Name of the user that deleted component
+     *
+     * @throws Exception - if the credential cannot be deleted
+     */
+    protected void deleteMetadata(String name, String application,  String sdlc,  String component, String table,
+                                    String user) throws Exception {
+
+        if (table == null || table.length() == 0)
+            table = Constants.DEFAULT_TABLE;
+
+        if (user == null || user.length() == 0)
+            user = getUser();
+
+        HashMap<String, String> context = createContextMap(application, sdlc, component);
+        String prefixedName = getPrefixedNameForMetadata(name, context);
+
+        try {
+            jCredStash.deleteSecret(table, prefixedName);
+            logger.info("User "+ user + " deleted metadata " + prefixedName);
+        } catch (RuntimeException e) { // Credential not found
+            logger.info("MetadataParameters with name: " + prefixedName + " not found. [" + e.toString() + "] ");
             throw new RuntimeException(e);
         }
     }

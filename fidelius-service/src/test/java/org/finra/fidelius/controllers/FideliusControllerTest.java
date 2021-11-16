@@ -49,6 +49,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -214,7 +215,7 @@ public class FideliusControllerTest {
         fakeHistory.add(new HistoryEntry(4, "Anakin Skywalker", "2018-04-04T12:51:37.803Z"));
         fakeHistory.add(new HistoryEntry(5, "Obi Wan Kenobi", "2018-04-04T12:51:37.803Z"));
 
-        when(credentialsService.getCredentialHistory(any(), any(), any(), any(), any(), any(), any())).thenReturn(fakeHistory);
+        when(credentialsService.getCredentialHistory(any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(fakeHistory);
         mockMvc.perform(getCredentialHistoryRequest)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0, 2, 4].updatedBy", is(Arrays.asList(new String[]{"Obi Wan Kenobi", "Obi Wan Kenobi", "Obi Wan Kenobi"}))))
@@ -235,7 +236,7 @@ public class FideliusControllerTest {
     @Test
     @WithMockUser
     public void getCredentialHistoryShouldReturnTimeoutCodeIfCredentialsServiceTimesOut() throws Exception {
-        when(credentialsService.getCredentialHistory(any(), any(), any(), any(), any(), any(), any())).thenThrow(new FideliusException("Throttling rate exceeded!", HttpStatus.REQUEST_TIMEOUT));
+        when(credentialsService.getCredentialHistory(any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenThrow(new FideliusException("Throttling rate exceeded!", HttpStatus.REQUEST_TIMEOUT));
         mockMvc.perform(getCredentialHistoryRequest)
                 .andExpect(status().isRequestTimeout())
                 .andExpect(jsonPath("message", is("Throttling rate exceeded!")));
@@ -253,7 +254,7 @@ public class FideliusControllerTest {
     @Test
     @WithMockUser
     public void getCredentialHistoryShouldReturn500CodeIfCredentialsServiceThrowsOtherExceptions() throws Exception {
-        when(credentialsService.getCredentialHistory(any(), any(), any(), any(), any(), any(), any())).thenThrow(new FideliusException("Internal Error", HttpStatus.INTERNAL_SERVER_ERROR));
+        when(credentialsService.getCredentialHistory(any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenThrow(new FideliusException("Internal Error", HttpStatus.INTERNAL_SERVER_ERROR));
         mockMvc.perform(getCredentialHistoryRequest)
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("message", is("Internal Error")));
@@ -270,7 +271,7 @@ public class FideliusControllerTest {
     @Test
     @WithMockUser
     public void getCredentialHistoryShouldReturn404CodeIfCredentialsServiceReturnsNothing() throws Exception {
-        when(credentialsService.getCredentialHistory(any(), any(), any(), any(), any(), any(), any())).thenReturn(new ArrayList<>());
+        when(credentialsService.getCredentialHistory(any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(new ArrayList<>());
         mockMvc.perform(getCredentialHistoryRequest)
                 .andExpect(status().isNotFound());
     }

@@ -156,7 +156,7 @@ public class CredentialsServiceTest {
 
         when(dynamoDBService.scanDynamoDB(any(), eq(DBCredential.class), any())).thenReturn(fakeData);
         credentialsService.getCredentialHistory("table", "dev", "us-east-1", "APP",
-                "dev", "TestComponent", "testKey");
+                "dev", "TestComponent", "testKey", false);
     }
 
     @Test
@@ -467,7 +467,7 @@ public class CredentialsServiceTest {
         HistoryEntry expectedEntry = new HistoryEntry(1, "Jon Snow", "2018-04-04T12:51:37.803Z");
         expectedHistory.add(expectedEntry);
 
-        assertTrue(credentialsService.getCredentialHistory("table", "account", "region", "APP", "dev", "comp", "key")
+        assertTrue(credentialsService.getCredentialHistory("table", "account", "region", "APP", "dev", "comp", "key", false)
                 .equals(expectedHistory));
     }
 

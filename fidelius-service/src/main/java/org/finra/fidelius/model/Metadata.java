@@ -17,20 +17,15 @@
 
 package org.finra.fidelius.model;
 
-import org.finra.fidelius.model.validators.IsValidActiveDirectoryPassword;
 import org.hibernate.validator.constraints.NotBlank;
 import org.jvnet.hk2.annotations.Optional;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Comparator;
-import java.util.Date;
 
-@IsValidActiveDirectoryPassword
-public class Credential implements Comparable<Credential>{
+public class Metadata implements Comparable<Credential>{
 
     @Optional
     private String lastUpdatedBy;
@@ -44,15 +39,17 @@ public class Credential implements Comparable<Credential>{
     @Pattern(regexp = "[^\\s]+")
     private String longKey;
 
-    private Boolean isActiveDirectory;
-
-    private String sourceType;
-
-    private String source;
-
     @NotBlank
     @NotNull
     private String shortKey;
+
+    @NotBlank
+    @NotNull
+    private String sourceType;
+
+    @NotBlank
+    @NotNull
+    private String source;
 
     @NotBlank
     @NotNull
@@ -70,14 +67,10 @@ public class Credential implements Comparable<Credential>{
     @NotNull
     private String application;
 
-    @NotBlank
-    @NotNull
-    private String secret;
+    public Metadata(){ }
 
-    public Credential(){ }
-
-    public Credential(String shortKey, String longKey, String account, String region, String application, String environment,
-                      String component, String lastUpdatedBy, String lastUpdatedDate) {
+    public Metadata(String shortKey, String longKey, String account, String region, String application, String environment,
+                    String component, String lastUpdatedBy, String lastUpdatedDate) {
         this.shortKey = shortKey;
         this.longKey = longKey;
         this.account = account;
@@ -94,64 +87,25 @@ public class Credential implements Comparable<Credential>{
             }
     }
 
-    public Credential(String shortKey, String longKey, String account, String region, String application, String environment,
-                      String component, String lastUpdatedBy, String lastUpdatedDate, String source, String sourceType) {
+
+    public Metadata(String shortKey, String longKey, String account, String region, String application, String environment,
+                    String sourceType, String source, String component, String lastUpdatedBy, String lastUpdatedDate) {
         this.shortKey = shortKey;
         this.longKey = longKey;
         this.account = account;
         this.region = region;
         this.application = application;
         this.environment = environment;
-        this.component = component;
-        this.lastUpdatedBy = lastUpdatedBy;
-        this.source = source;
         this.sourceType = sourceType;
-        if(lastUpdatedDate != null)
-            try {
-                this.lastUpdatedDate = ZonedDateTime.parse(lastUpdatedDate);
-            } catch(DateTimeParseException exception) {
-
-            }
-    }
-
-    public Credential(String shortKey, String longKey, String account, String region, String application, String environment,
-                      String component, String lastUpdatedBy, String lastUpdatedDate, String secret) {
-        this.shortKey = shortKey;
-        this.longKey = longKey;
-        this.account = account;
-        this.region = region;
-        this.application = application;
-        this.environment = environment;
-        this.component = component;
-        this.lastUpdatedBy = lastUpdatedBy;
-        if(lastUpdatedDate != null)
-            try {
-                this.lastUpdatedDate = ZonedDateTime.parse(lastUpdatedDate);
-            } catch(DateTimeParseException exception) {
-
-            }
-        this.secret = secret;
-    }
-
-    public Credential(String shortKey, String longKey, String account, String region, String application, String environment,
-                      String component, String lastUpdatedBy, String lastUpdatedDate, String secret, String source, String sourceType) {
-        this.shortKey = shortKey;
-        this.longKey = longKey;
-        this.account = account;
-        this.region = region;
-        this.application = application;
-        this.environment = environment;
-        this.component = component;
-        this.lastUpdatedBy = lastUpdatedBy;
         this.source = source;
-        this.sourceType = sourceType;
+        this.component = component;
+        this.lastUpdatedBy = lastUpdatedBy;
         if(lastUpdatedDate != null)
             try {
                 this.lastUpdatedDate = ZonedDateTime.parse(lastUpdatedDate);
             } catch(DateTimeParseException exception) {
 
             }
-        this.secret = secret;
     }
 
     public String getShortKey() {
@@ -210,6 +164,14 @@ public class Credential implements Comparable<Credential>{
         this.lastUpdatedDate = ZonedDateTime.parse(lastUpdatedDate);
     }
 
+    public String getApplication() {
+        return application;
+    }
+
+    public void setApplication(String application) {
+        this.application = application;
+    }
+
     public String getSourceType() {
         return sourceType;
     }
@@ -226,36 +188,12 @@ public class Credential implements Comparable<Credential>{
         this.source = source;
     }
 
-    public String getApplication() {
-        return application;
-    }
-
-    public void setApplication(String application) {
-        this.application = application;
-    }
-
-    public String getSecret() {
-        return secret;
-    }
-
-    public void setSecret(String secret) {
-        this.secret = secret;
-    }
-
     public String getRegion() {
         return region;
     }
 
     public void setRegion(String region) {
         this.region = region;
-    }
-
-    public Boolean getIsActiveDirectory() {
-        return isActiveDirectory;
-    }
-
-    public void setIsActiveDirectory(Boolean activeDirectory) {
-        isActiveDirectory = activeDirectory;
     }
 
     @Override
@@ -268,7 +206,7 @@ public class Credential implements Comparable<Credential>{
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Credential that = (Credential) o;
+        Metadata that = (Metadata) o;
 
         if (!shortKey.equals(that.shortKey)) return false;
         if (longKey != null ? !longKey.equals(that.longKey): that.longKey != null) return false;
@@ -279,8 +217,8 @@ public class Credential implements Comparable<Credential>{
         if (component != null ? !component.equals(that.component) : that.component != null) return false;
         if (!lastUpdatedBy.equals(that.lastUpdatedBy)) return false;
         if (lastUpdatedDate != null || that.lastUpdatedDate != null)
-             return lastUpdatedDate.equals(that.lastUpdatedDate);
-         return false;
+            return lastUpdatedDate.equals(that.lastUpdatedDate);
+        return false;
     }
 
 
@@ -306,13 +244,11 @@ public class Credential implements Comparable<Credential>{
                 ", lastUpdatedDate=" + lastUpdatedDate +
                 ", component='" + component + '\'' +
                 ", longKey='" + longKey + '\'' +
-                ", isActiveDirectory=" + isActiveDirectory +
                 ", shortKey='" + shortKey + '\'' +
                 ", account='" + account + '\'' +
                 ", region='" + region + '\'' +
                 ", environment='" + environment + '\'' +
                 ", membership='" + application + '\'' +
-                ", secret='" + secret + '\'' +
                 '}';
     }
 }

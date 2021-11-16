@@ -22,6 +22,7 @@ import org.finra.fidelius.exceptions.FideliusException;
 import org.finra.fidelius.model.ActiveDirectory;
 import org.finra.fidelius.model.Credential;
 import org.finra.fidelius.model.HistoryEntry;
+import org.finra.fidelius.model.Metadata;
 import org.finra.fidelius.model.account.Account;
 import org.finra.fidelius.services.CredentialsService;
 import org.finra.fidelius.services.account.AccountsService;
@@ -96,12 +97,30 @@ class FideliusController {
                                                                    @RequestParam("shortKey") String key) {
         List<HistoryEntry> credHistory = new ArrayList<>();
         try {
-            credHistory = credentialsService.getCredentialHistory(tableName, account, region, app, environment, component, key);
+            credHistory = credentialsService.getCredentialHistory(tableName, account, region, app, environment, component, key, false);
         } catch (FideliusException fe) {
             return new ResponseEntity<>(fe, fe.getError());
         }
         return new ResponseEntity<>(credHistory, credHistory.isEmpty() ? HttpStatus.NOT_FOUND : HttpStatus.OK);
     }
+
+    /*
+    @RequestMapping(value = "/credentials/metadata", method = RequestMethod.GET)
+    public ResponseEntity getMetadataHistory(@RequestParam("account") String account,
+                                               @RequestParam("region") String region,
+                                               @RequestParam("application") String app,
+                                               @RequestParam("environment") String environment,
+                                               @RequestParam(value = "component", required = false) String component,
+                                               @RequestParam("shortKey") String key) {
+        List<HistoryEntry> matadataHistory = new ArrayList<>();
+        try {
+            matadataHistory = credentialsService.getCredentialHistory(tableName, account, region, app, environment, component, key, true);
+        } catch (FideliusException fe) {
+            return new ResponseEntity<>(fe, fe.getError());
+        }
+        return new ResponseEntity<>(matadataHistory, matadataHistory.isEmpty() ? HttpStatus.NOT_FOUND : HttpStatus.OK);
+    }
+    */
 
     @ResponseBody
     @GetMapping(value="/credentials/secret")
@@ -153,8 +172,10 @@ class FideliusController {
                                                        @RequestParam("application") String application,
                                                        @RequestParam("environment") String environment,
                                                        @RequestParam(value = "component", required = false) String component,
+                                                       @RequestParam(value = "source", required = false) String source,
+                                                       @RequestParam(value = "sourceType", required = false) String sourceType,
                                                        @RequestParam("shortKey") String shortKey) {
-        Credential credentialToDelete = new Credential(shortKey, null, account, region, application, environment, component, null, null);
+        Credential credentialToDelete = new Credential(shortKey, null, account, region, application, environment, component, null, null, source, sourceType);
 
         final Credential credentialSecret = credentialsService.deleteCredential(credentialToDelete);
 
@@ -162,6 +183,68 @@ class FideliusController {
             return new ResponseEntity<>(credentialSecret, HttpStatus.ACCEPTED);
 
         return new ResponseEntity<>("Credential not deleted", HttpStatus.NOT_FOUND);
+    }
+
+    @ResponseBody
+    @GetMapping(value="/credentials/metadata")
+    public ResponseEntity getMetadata(@RequestParam("account") String account,
+                                    @RequestParam("region") String region,
+                                    @RequestParam("application") String application,
+                                    @RequestParam("environment") String environment,
+                                    @RequestParam(value = "component", required = false) String component,
+                                    @RequestParam("shortKey") String shortKey) {
+        final Metadata metadataGet = credentialsService.getMetadata(account, region, application, environment, component, shortKey);
+
+        if (metadataGet != null)
+            return new ResponseEntity<>(metadataGet, HttpStatus.OK);
+
+        return new ResponseEntity<>("Metadata not found", HttpStatus.NOT_FOUND);
+    }
+
+    @ResponseBody
+    @PostMapping(value="/credentials/metadata")
+    public ResponseEntity createMetadata(@Valid @RequestBody Metadata metadata) {
+        final Metadata metadataToAdd;
+
+        try {
+            metadataToAdd = credentialsService.createMetadata(metadata);
+        } catch (FideliusException fe) {
+            return new ResponseEntity<>(fe, fe.getError());
+        }
+
+        if (metadataToAdd != null)
+            return new ResponseEntity<>(metadata, HttpStatus.CREATED);
+
+        return new ResponseEntity<>("Metadata is not created", HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseBody
+    @PutMapping(value="/credentials/metadata")
+    public ResponseEntity updateMetadata(@Valid @RequestBody Metadata metadata) {
+        final Metadata metadataToUpdate = credentialsService.putMetadata(metadata);
+
+        if (metadataToUpdate != null)
+            return new ResponseEntity<>(metadataToUpdate, HttpStatus.CREATED);
+
+        return new ResponseEntity<>("Metadata is not updated", HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseBody
+    @DeleteMapping(value="/credentials/metadata")
+    public ResponseEntity deleteMetadata(@RequestParam("account") String account,
+                                           @RequestParam("region") String region,
+                                           @RequestParam("application") String application,
+                                           @RequestParam("environment") String environment,
+                                           @RequestParam(value = "component", required = false) String component,
+                                           @RequestParam("shortKey") String shortKey) {
+        Metadata metadataToDelete = new Metadata(shortKey, null, account, region, application, environment, component, null, null);
+
+        final Metadata metadataSecret = credentialsService.deleteMetadata(metadataToDelete);
+
+        if (metadataSecret != null)
+            return new ResponseEntity<>(metadataSecret, HttpStatus.ACCEPTED);
+
+        return new ResponseEntity<>("Metadata is not deleted", HttpStatus.NOT_FOUND);
     }
 
     @ResponseBody

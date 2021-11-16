@@ -24,9 +24,11 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.kms.AWSKMSClient;
 import com.amazonaws.services.securitytoken.model.AWSSecurityTokenServiceException;
+import org.finra.fidelius.MetadataParameters;
 import org.finra.fidelius.exceptions.FideliusException;
 import org.finra.fidelius.model.Credential;
 import org.finra.fidelius.model.HistoryEntry;
+import org.finra.fidelius.model.Metadata;
 import org.finra.fidelius.model.aws.AWSEnvironment;
 import org.finra.fidelius.model.db.DBCredential;
 import org.finra.fidelius.services.auth.FideliusRoleService;
@@ -190,12 +192,16 @@ public class CredentialsService {
     }
 
     @PreAuthorize("@fideliusRoleService.isAuthorized(#application, #account, \"LIST_CREDENTIALS\")")
-    public List<HistoryEntry> getCredentialHistory(String tableName, String account, String region, String application, String environment, String component, String key) throws FideliusException {
+    public List<HistoryEntry> getCredentialHistory(String tableName, String account, String region, String application,
+                                                   String environment, String component, String key, boolean isMetadata) throws FideliusException {
         List<HistoryEntry> results = new ArrayList<>();
         DynamoDBMapper mapper = dynamoDBService.createMapper(account, region, tableName);
         setFideliusEnvironment(account, region);
 
         StringBuilder fullKeyBuilder = new StringBuilder();
+        if(isMetadata) {
+            fullKeyBuilder.append("META#");
+        }
         fullKeyBuilder.append(String.format("%s", application.toUpperCase()));
         if (component != null && !component.equals("null")) {
             fullKeyBuilder.append(String.format(".%s", component));
@@ -214,14 +220,14 @@ public class CredentialsService {
                 .withKeyConditionExpression("#tempname = :key")
                 .withExpressionAttributeValues(eav);
 
-        logger.info(String.format("Retrieving history of credential %s using account %s and region %s", fullKeyBuilder, account, region));
+        logger.info(String.format("Retrieving history of credential/metadata %s using account %s and region %s", fullKeyBuilder, account, region));
         List<DBCredential> queryResults = dynamoDBService.queryDynamoDB(queryExpression, DBCredential.class, mapper);
 
         for (DBCredential dbCred : queryResults) {
             results.add(new HistoryEntry(new Integer(dbCred.getVersion()), splitRoleARN(dbCred.getUpdatedBy()), dbCred.getUpdatedDate()));
         }
 
-        logger.info(String.format("Found %d entries for credential %s.", results.size(), fullKeyBuilder));
+        logger.info(String.format("Found %d entries for credential/metadata %s.", results.size(), fullKeyBuilder));
         return results;
     }
 
@@ -268,8 +274,17 @@ public class CredentialsService {
         String user = fideliusRoleService.getUserProfile().getUserId();
 
         try {
-            String version = fideliusService.putCredential(credential.getShortKey(), credential.getSecret(),
-                    credential.getApplication(), credential.getEnvironment(), credential.getComponent(), tableName, user, kmsKey);
+            if((credential.getSource() != null || credential.getSource().equals("null")) &&
+                    (credential.getSourceType() != null && credential.getSourceType().equals("null"))) {
+                fideliusService.putCredentialWithMetadata(credential.getShortKey(), credential.getSecret(),
+                        credential.getApplication(), credential.getEnvironment(), credential.getComponent(),
+                        credential.getSource(), credential.getSourceType(), tableName, user, kmsKey);
+
+            } else {
+                fideliusService.putCredential(credential.getShortKey(), credential.getSecret(),
+                        credential.getApplication(), credential.getEnvironment(), credential.getComponent(), tableName, user, kmsKey);
+
+            }
             credential.setLastUpdatedBy(user);
             credential.setSecret(null);
         } catch (Exception e) {
@@ -292,7 +307,7 @@ public class CredentialsService {
         // Check if the credential to be created already has a history
         List<HistoryEntry> existingCredentials = getCredentialHistory(tableName,
                 credential.getAccount(), credential.getRegion(), credential.getApplication(), credential.getEnvironment(),
-                credential.getComponent(), credential.getShortKey());
+                credential.getComponent(), credential.getShortKey(), false);
         if (!existingCredentials.isEmpty()) {
             throw new FideliusException("Credential already exists!", HttpStatus.BAD_REQUEST);
         }
@@ -316,8 +331,15 @@ public class CredentialsService {
             if (credential.getComponent() == null || credential.getComponent().equals("null")) {
                 credential.setComponent(null);
             }
-            fideliusService.deleteCredential(credential.getShortKey(), credential.getApplication(),
-                    credential.getEnvironment(), credential.getComponent(), tableName, user);
+
+            if((credential.getSource() != null || credential.getSource().equals("null")) &&
+                    (credential.getSourceType() != null && credential.getSourceType().equals("null"))) {
+                fideliusService.deleteCredentialWithMetadata(credential.getShortKey(), credential.getApplication(),
+                        credential.getEnvironment(), credential.getComponent(), tableName, user);
+            } else {
+                fideliusService.deleteCredential(credential.getShortKey(), credential.getApplication(),
+                        credential.getEnvironment(), credential.getComponent(), tableName, user);
+            }
         } catch (Exception e) {
             this.logger.info("Credential not deleted " + e.toString());
             return null;
@@ -325,6 +347,109 @@ public class CredentialsService {
 
         return credential;
     }
+
+    /**
+     * Get latest metadata from specified credential
+     *
+     * @param account     AWS Account alias used to look for account information
+     * @param region      AWS Region associated with AWS Account
+     * @param application Key representing membership section of key
+     * @param environment Key representing the environment in which the credential is associated with
+     * @param component   Optional component associated with credential
+     * @param shortKey    Short key or name associated with credential
+     * @return Secret
+     */
+    @PreAuthorize("@fideliusRoleService.isAuthorized(#application, #account)")
+    public Metadata getMetadata(String account, String region, String application, String environment,
+                                String component, String shortKey) {
+        setFideliusEnvironment(account, region);
+        String user = fideliusRoleService.getUserProfile().getUserId();
+
+        try {
+            if (component != null && (component.isEmpty() || component.equals("null"))) {
+                component = null;
+            }
+            MetadataParameters metadata = fideliusService.getMetadata(shortKey, application, environment, component,
+                    tableName, user);
+
+            return new Metadata(shortKey,null, account, region, application, environment,
+                    metadata.getSourceType(), metadata.getSource(), component,null,null);
+        } catch (Exception e) {
+            this.logger.error("Metadata not found " + e.toString());
+            return null;
+        }
+    }
+
+    /**
+     * Deletes an existing metadata.
+     *
+     * @param metadata metadata object
+     * @return Credential deleted
+     */
+    @PreAuthorize("@fideliusRoleService.isAuthorizedToDelete(#metadata.getApplication(), #metadata.getAccount())")
+    public Metadata deleteMetadata(Metadata metadata) {
+        setFideliusEnvironment(metadata.getAccount(), metadata.getRegion());
+        String user = fideliusRoleService.getUserProfile().getUserId();
+
+        try {
+            if (metadata.getComponent() == null || metadata.getComponent().equals("null")) {
+                metadata.setComponent(null);
+            }
+            fideliusService.deleteMetadata(metadata.getShortKey(), metadata.getApplication(),
+                    metadata.getEnvironment(), metadata.getComponent(), tableName, user);
+        } catch (Exception e) {
+            this.logger.info("Metadata not deleted " + e.toString());
+            return null;
+        }
+
+        return metadata;
+    }
+
+    /**
+     * Add new metdata or Update an existing metadata
+     *
+     * @param metadata Credential to be created
+     * @return Credential created
+     */
+    @PreAuthorize("@fideliusRoleService.isAuthorized(#metadata.application, #metadata.account)")
+    public Metadata putMetadata(Metadata metadata) {
+        setFideliusEnvironment(metadata.getAccount(), metadata.getRegion());
+        String user = fideliusRoleService.getUserProfile().getUserId();
+
+        try {
+            String version = fideliusService.putMetadata(metadata.getShortKey(), metadata.getApplication(),
+                    metadata.getEnvironment(), metadata.getComponent(), metadata.getSourceType(),
+                    metadata.getSource(), tableName, user, kmsKey);
+            metadata.setLastUpdatedBy(user);
+        } catch (Exception e) {
+            this.logger.info("Metadata not created " + e.toString());
+            return null;
+        }
+
+        return metadata;
+    }
+
+    /**
+     * Wrapper for putMetdata used for creating new Metdata
+     *
+     * @param metadata Metadata to be created
+     * @return Metadata created
+     */
+    @PreAuthorize("@fideliusRoleService.isAuthorized(#metadata.application, #metadata.account)")
+    public Metadata createMetadata(Metadata metadata) {
+
+        // Check if the credential to be created already has a history
+        List<HistoryEntry> existingCredentials = getCredentialHistory(tableName,
+                metadata.getAccount(), metadata.getRegion(), metadata.getApplication(), metadata.getEnvironment(),
+                metadata.getComponent(), metadata.getShortKey(), true);
+        if (!existingCredentials.isEmpty()) {
+            throw new FideliusException("Metadata already exists!", HttpStatus.BAD_REQUEST);
+        }
+
+        // Add the new credential
+        return putMetadata(metadata);
+    }
+
 
     private String splitRoleARN(String roleARN) {
         if (roleARN == null) return null;
@@ -350,4 +475,5 @@ public class CredentialsService {
 
         return credentials;
     }
+
 }
