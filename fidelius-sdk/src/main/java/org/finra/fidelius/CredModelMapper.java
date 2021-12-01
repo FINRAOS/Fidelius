@@ -26,7 +26,7 @@ import java.util.Map;
 public class CredModelMapper {
 
     private enum DynamoAttributes{
-        name, version, key, contents, hmac, updatedBy, updatedOn, sdlc, component
+        name, version, key, contents, hmac, updatedBy, updatedOn, sdlc, component, source, sourceType
     }
 
     public static Map<String,AttributeValue> toDynamo(EncryptedCredential encryptedCredential){

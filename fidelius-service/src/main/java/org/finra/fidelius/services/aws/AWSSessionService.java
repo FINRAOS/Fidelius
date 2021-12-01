@@ -25,6 +25,8 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.kms.AWSKMSClient;
 import com.amazonaws.services.kms.AWSKMSClientBuilder;
+import com.amazonaws.services.rds.AmazonRDSClient;
+import com.amazonaws.services.rds.AmazonRDSClientBuilder;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClient;
 import com.amazonaws.services.securitytoken.model.AssumeRoleRequest;
 import com.amazonaws.services.securitytoken.model.AssumeRoleResult;
@@ -134,4 +136,16 @@ public class AWSSessionService {
 
         return awsKmsClient;
     }
+
+    public AmazonRDSClient getRdsClient(AWSEnvironment environment){
+        BasicSessionCredentials credentials = credentialCache.getUnchecked(environment);
+
+        return (AmazonRDSClient) AmazonRDSClientBuilder
+                .standard()
+                .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                .withRegion(environment.getRegion())
+                .build();
+    }
+
 }
+
