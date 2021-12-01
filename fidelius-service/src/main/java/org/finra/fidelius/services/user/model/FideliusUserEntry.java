@@ -19,7 +19,6 @@ package org.finra.fidelius.services.user.model;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
-import jdk.nashorn.internal.ir.ObjectNode;
 
 public class FideliusUserEntry {
     private String userId;

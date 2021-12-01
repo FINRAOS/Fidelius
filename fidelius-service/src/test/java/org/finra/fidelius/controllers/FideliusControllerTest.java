@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.finra.fidelius.exceptions.FideliusException;
 import org.finra.fidelius.model.Credential;
 import org.finra.fidelius.model.HistoryEntry;
+import org.finra.fidelius.model.Metadata;
 import org.finra.fidelius.model.account.Account;
 import org.finra.fidelius.services.CredentialsService;
 import org.finra.fidelius.services.MembershipService;
@@ -49,6 +50,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -79,7 +81,18 @@ public class FideliusControllerTest {
     private Credential credential = new Credential("shortKey", null, "APP","dev","us-east-3", "environment",
             null, null, null);
 
+    private Metadata metadata = new Metadata("shortKey", null, "APP","dev","us-east-3", "environment",
+            "sourceType", "source", null, null, null);
+
     private MockHttpServletRequestBuilder getCredentialSecretRequest = get("/credentials/secret")
+            .param("account", "dev")
+            .param("region", "us-east-1")
+            .param("application", "membership")
+            .param("environment", "environment")
+            .param("component", "component")
+            .param("shortKey", "shortKey");
+
+    private MockHttpServletRequestBuilder getMetadataRequest = get("/credentials/metadata")
             .param("account", "dev")
             .param("region", "us-east-1")
             .param("application", "membership")
@@ -93,6 +106,14 @@ public class FideliusControllerTest {
     private MockHttpServletRequestBuilder getAccountsRequest = get("/accounts");
 
     private MockHttpServletRequestBuilder deleteSecretRequest = delete("/credentials/secret")
+            .param("account", "dev")
+            .param("region", "us-east-1")
+            .param("application", "membership")
+            .param("environment", "environment")
+            .param("component", "component")
+            .param("shortKey", "shortKey");
+
+    private MockHttpServletRequestBuilder deleteMetadataRequest = delete("/credentials/metadata")
             .param("account", "dev")
             .param("region", "us-east-1")
             .param("application", "membership")
@@ -114,6 +135,20 @@ public class FideliusControllerTest {
                     "  \"isActiveDirectory\": false\n" +
                     "}");
 
+    private MockHttpServletRequestBuilder createMetadataRequest = post("/credentials/metadata")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\n" +
+                    "  \"account\": \"dev\",\n" +
+                    "  \"application\": \"pet\",\n" +
+                    "  \"membership\": \"us-east-1\",\n" +
+                    "  \"environment\": \"dev\",\n" +
+                    "  \"region\": \"us-east-1\",\n" +
+                    "  \"secret\": \"secret\",\n" +
+                    "  \"sourceType\": \"sourceType\",\n" +
+                    "  \"source\": \"source\",\n" +
+                    "  \"shortKey\": \"shortKey\",\n" +
+                    "  \"isActiveDirectory\": false\n" +
+                    "}");
 
     private MockHttpServletRequestBuilder updateCredentialRequest = put("/credentials/secret")
             .contentType(MediaType.APPLICATION_JSON)
@@ -214,7 +249,7 @@ public class FideliusControllerTest {
         fakeHistory.add(new HistoryEntry(4, "Anakin Skywalker", "2018-04-04T12:51:37.803Z"));
         fakeHistory.add(new HistoryEntry(5, "Obi Wan Kenobi", "2018-04-04T12:51:37.803Z"));
 
-        when(credentialsService.getCredentialHistory(any(), any(), any(), any(), any(), any(), any())).thenReturn(fakeHistory);
+        when(credentialsService.getCredentialHistory(any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(fakeHistory);
         mockMvc.perform(getCredentialHistoryRequest)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0, 2, 4].updatedBy", is(Arrays.asList(new String[]{"Obi Wan Kenobi", "Obi Wan Kenobi", "Obi Wan Kenobi"}))))
@@ -235,7 +270,7 @@ public class FideliusControllerTest {
     @Test
     @WithMockUser
     public void getCredentialHistoryShouldReturnTimeoutCodeIfCredentialsServiceTimesOut() throws Exception {
-        when(credentialsService.getCredentialHistory(any(), any(), any(), any(), any(), any(), any())).thenThrow(new FideliusException("Throttling rate exceeded!", HttpStatus.REQUEST_TIMEOUT));
+        when(credentialsService.getCredentialHistory(any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenThrow(new FideliusException("Throttling rate exceeded!", HttpStatus.REQUEST_TIMEOUT));
         mockMvc.perform(getCredentialHistoryRequest)
                 .andExpect(status().isRequestTimeout())
                 .andExpect(jsonPath("message", is("Throttling rate exceeded!")));
@@ -253,7 +288,7 @@ public class FideliusControllerTest {
     @Test
     @WithMockUser
     public void getCredentialHistoryShouldReturn500CodeIfCredentialsServiceThrowsOtherExceptions() throws Exception {
-        when(credentialsService.getCredentialHistory(any(), any(), any(), any(), any(), any(), any())).thenThrow(new FideliusException("Internal Error", HttpStatus.INTERNAL_SERVER_ERROR));
+        when(credentialsService.getCredentialHistory(any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenThrow(new FideliusException("Internal Error", HttpStatus.INTERNAL_SERVER_ERROR));
         mockMvc.perform(getCredentialHistoryRequest)
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("message", is("Internal Error")));
@@ -270,7 +305,7 @@ public class FideliusControllerTest {
     @Test
     @WithMockUser
     public void getCredentialHistoryShouldReturn404CodeIfCredentialsServiceReturnsNothing() throws Exception {
-        when(credentialsService.getCredentialHistory(any(), any(), any(), any(), any(), any(), any())).thenReturn(new ArrayList<>());
+        when(credentialsService.getCredentialHistory(any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(new ArrayList<>());
         mockMvc.perform(getCredentialHistoryRequest)
                 .andExpect(status().isNotFound());
     }
@@ -291,6 +326,20 @@ public class FideliusControllerTest {
 
     @Test
     @WithMockUser
+    public void getMetadataShouldReturnMetadata() throws Exception {
+        Metadata response = new Metadata("shortKey",null,"Dev", "us-east-1", "application","dev","sourceType", "source", "component", null, null);
+
+        when(credentialsService.getMetadata(anyString(), anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn(response);
+
+        mockMvc.perform(getMetadataRequest)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("account", is("Dev")))
+                .andExpect(jsonPath("sourceType", is("sourceType")))
+                .andExpect(jsonPath("source", is("source")));
+    }
+
+    @Test
+    @WithMockUser
     public void getSecretShouldReturn400ErrorWhenCredentialNotFound() throws Exception {
         when(credentialsService.getCredentialSecret(anyString(), anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn(new Credential());
 
@@ -299,10 +348,27 @@ public class FideliusControllerTest {
     }
 
     @Test
+    @WithMockUser
+    public void getMetadataShouldReturn400ErrorWhenMetadataNotFound() throws Exception {
+        when(credentialsService.getMetadata(anyString(), anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn(new Metadata());
+
+        mockMvc.perform(getMetadataRequest)
+                .andExpect(status().is4xxClientError());
+    }
+
+    @Test
     public void getSecretShouldReturn401ErrorWhenUserNotIncluded() throws Exception {
         when(credentialsService.getCredentialSecret(anyString(), anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn(new Credential());
 
         mockMvc.perform(getCredentialSecretRequest)
+                .andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    public void getMetadataShouldReturn401ErrorWhenUserNotIncluded() throws Exception {
+        when(credentialsService.getMetadata(anyString(), anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn(new Metadata());
+
+        mockMvc.perform(getMetadataRequest)
                 .andExpect(status().is4xxClientError());
     }
 
@@ -317,6 +383,15 @@ public class FideliusControllerTest {
 
     @Test
     @WithMockUser
+    public void createMetadata() throws Exception {
+        when(credentialsService.createMetadata(any(Metadata.class))).thenReturn(this.metadata);
+
+        mockMvc.perform(createMetadataRequest)
+                .andExpect(status().is2xxSuccessful());
+    }
+
+    @Test
+    @WithMockUser
     public void createCredentialDoesNotGetCreated() throws Exception {
         when(credentialsService.putCredential(any(Credential.class))).thenReturn(null);
 
@@ -325,10 +400,27 @@ public class FideliusControllerTest {
     }
 
     @Test
+    @WithMockUser
+    public void createMetadataDoesNotGetCreated() throws Exception {
+        when(credentialsService.putMetadata(any(Metadata.class))).thenReturn(null);
+
+        mockMvc.perform(createMetadataRequest)
+                .andExpect(status().is4xxClientError());
+    }
+
+    @Test
     public void createCredentialReturns401WhenNoUser() throws Exception {
         when(credentialsService.putCredential(any(Credential.class))).thenReturn(null);
 
         mockMvc.perform(createCredentialRequest)
+                .andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    public void createMetadataReturns401WhenNoUser() throws Exception {
+        when(credentialsService.putMetadata(any(Metadata.class))).thenReturn(null);
+
+        mockMvc.perform(createMetadataRequest)
                 .andExpect(status().is4xxClientError());
     }
 
@@ -369,6 +461,15 @@ public class FideliusControllerTest {
 
     @Test
     @WithMockUser
+    public void deleteMetadata() throws Exception {
+        when(credentialsService.deleteMetadata(any(Metadata.class))).thenReturn(this.metadata);
+
+        mockMvc.perform(deleteMetadataRequest)
+                .andExpect(status().is2xxSuccessful());
+    }
+
+    @Test
+    @WithMockUser
     public void deleteCredentialShouldReturn400ErrorWhenCredentialNotFound() throws Exception {
         when(credentialsService.deleteCredential(credential)).thenReturn(new Credential());
 
@@ -377,10 +478,28 @@ public class FideliusControllerTest {
     }
 
     @Test
+    @WithMockUser
+    public void deleteMetadataShouldReturn400ErrorWhenMetadataNotFound() throws Exception {
+        when(credentialsService.deleteMetadata(metadata)).thenReturn(new Metadata());
+
+        mockMvc.perform(deleteMetadataRequest)
+                .andExpect(status().is4xxClientError());
+    }
+
+
+    @Test
     public void deleteCredentialShouldReturn401ErrorWhenUserNotFound() throws Exception {
         when(credentialsService.deleteCredential(credential)).thenReturn(new Credential());
 
         mockMvc.perform(deleteSecretRequest)
+                .andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    public void deleteMetadataShouldReturn401ErrorWhenUserNotFound() throws Exception {
+        when(credentialsService.deleteMetadata(metadata)).thenReturn(new Metadata());
+
+        mockMvc.perform(deleteMetadataRequest)
                 .andExpect(status().is4xxClientError());
     }
 

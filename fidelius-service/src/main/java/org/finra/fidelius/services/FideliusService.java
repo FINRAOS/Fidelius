@@ -22,6 +22,7 @@ import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.kms.AWSKMSClient;
 import org.finra.fidelius.FideliusClient;
+import org.finra.fidelius.MetadataParameters;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -53,6 +54,11 @@ public class FideliusService extends FideliusClient {
        return super.putCredential(name, contents, ags, sdlc, component, table, user, kmsKey);
     }
 
+    public String putCredentialWithMetadata(String name, String contents, String ags, String sdlc, String component, String source,
+                                String sourceType, String table, String user, String kmsKey) throws Exception {
+        return super.putCredentialWithMetadata(name, contents, ags, sdlc, component, source, sourceType, table, user, kmsKey);
+    }
+
     public void deleteCredential(String name, String ags,  String sdlc,  String component, String table,
                                  String user) throws Exception {
         try {
@@ -61,4 +67,34 @@ public class FideliusService extends FideliusClient {
             throw new Exception(e);
         }
     }
+
+    public void deleteCredentialWithMetadata(String name, String ags,  String sdlc,  String component, String table,
+                                 String user) throws Exception {
+        try {
+            super.deleteCredentialWithMetadata(name, ags, sdlc, component, table, user);
+        } catch (Exception e) {
+            throw new Exception(e);
+        }
+    }
+
+    public MetadataParameters getMetadata(String name, String ags, String sdlc, String component,
+                                          String table, String user) throws Exception {
+        return super.getMetadata(name, ags, sdlc, component, table, user, false);
+    }
+
+    public String putMetadata(String name, String ags, String sdlc, String component, String sourceType,
+                              String source, String table, String user, String kmsKey) throws Exception {
+        return super.putMetadata(name, ags, sdlc, component, sourceType, source, table, user, kmsKey);
+    }
+
+    public void deleteMetadata(String name, String ags,  String sdlc,  String component, String table,
+                                 String user) throws Exception {
+        try {
+            super.deleteMetadata(name, ags, sdlc, component, table, user);
+        } catch (Exception e) {
+            throw new Exception(e);
+        }
+    }
+
+
 }

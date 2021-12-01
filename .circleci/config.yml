@@ -222,7 +222,7 @@ jobs:
       - store_test_results:
           path: fidelius-sdk/target/surefire-reports
       - store_artifacts:
-          path: fidelius-sdk/target/fidelius-sdk-1.0.1-SNAPSHOT.jar
+          path: fidelius-sdk/target/fidelius-sdk-2.0.0-SNAPSHOT.jar
   deploy_sdk:
     working_directory: ~/repo
     docker:
@@ -235,7 +235,7 @@ jobs:
          keys:
            - fidelius-sdk-{{ checksum "fidelius-sdk/pom.xml" }}
          paths:
-           - fidelius-sdk/target/fidelius-sdk-1.0.1-SNAPSHOT.jar
+           - fidelius-sdk/target/fidelius-sdk-2.0.0-SNAPSHOT.jar
       - restore_cache:
          keys:
            - fidelius-service-{{ .Branch }}
@@ -246,7 +246,7 @@ jobs:
       - store_test_results:
           path: fidelius-sdk/target/surefire-reports
       - store_artifacts:
-          path: fidelius-sdk/target/fidelius-sdk-1.0.1-SNAPSHOT.jar
+          path: fidelius-sdk/target/fidelius-sdk-2.0.0-SNAPSHOT.jar
       - run:
           name: Import GPG key
           command: |
