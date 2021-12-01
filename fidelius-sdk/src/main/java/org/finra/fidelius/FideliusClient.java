@@ -529,7 +529,7 @@ public class FideliusClient {
             metadataParameters = jCredStash.getMetadata(table, prefixedName, context);
             logger.info("User "+ user + " retrieved contents of " + prefixedName);
         } catch (RuntimeException e) {    // MetadataParameters not found
-            logger.info("MetadataParameters " + prefixedName + " not found. ["+e.toString()+"] ");
+            logger.info("Metadata " + prefixedName + " not found. ["+e.toString()+"] ");
 
             if(retryForApplication == null || retryForApplication == true) {
                 // If component was specified
@@ -543,7 +543,7 @@ public class FideliusClient {
                         metadataParameters = jCredStash.getMetadata(table, prefixedName, context);
                         logger.info("User " + user + " retrieved contents of " + prefixedName);
                     } catch (RuntimeException ex) {
-                        logger.error("MetadataParameters " + prefixedName + " not found. ");
+                        logger.error("Metadata " + prefixedName + " not found. ");
                         logger.error(ex.toString());
                     }
                 } else {
@@ -619,7 +619,7 @@ public class FideliusClient {
             jCredStash.deleteSecret(table, prefixedName);
             logger.info("User "+ user + " deleted metadata " + prefixedName);
         } catch (RuntimeException e) { // Credential not found
-            logger.info("MetadataParameters with name: " + prefixedName + " not found. [" + e.toString() + "] ");
+            logger.info("Metadata with name: " + prefixedName + " not found. [" + e.toString() + "] ");
             throw new RuntimeException(e);
         }
     }

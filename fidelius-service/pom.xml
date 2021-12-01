@@ -93,10 +93,15 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk15on</artifactId>
+			<version>1.68</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.finra.fidelius</groupId>
 			<artifactId>fidelius-sdk</artifactId>
-			<version>1.1.0</version>
-			<!--TODO: Remove this once sdk is published-->
+			<version>2.0.0-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>

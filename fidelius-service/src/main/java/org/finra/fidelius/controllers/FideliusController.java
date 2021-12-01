@@ -77,8 +77,7 @@ class FideliusController {
     public ResponseEntity getCredential(@PathVariable("key") String longKey,
                                         @RequestParam("account") String account,
                                         @RequestParam("region") String region,
-                                        @RequestParam("application") String application
-    ){
+                                        @RequestParam("application") String application) {
 
         final Credential credential = credentialsService.getCredential(account, region, application, longKey);
 
@@ -103,24 +102,6 @@ class FideliusController {
         }
         return new ResponseEntity<>(credHistory, credHistory.isEmpty() ? HttpStatus.NOT_FOUND : HttpStatus.OK);
     }
-
-    /*
-    @RequestMapping(value = "/credentials/metadata", method = RequestMethod.GET)
-    public ResponseEntity getMetadataHistory(@RequestParam("account") String account,
-                                               @RequestParam("region") String region,
-                                               @RequestParam("application") String app,
-                                               @RequestParam("environment") String environment,
-                                               @RequestParam(value = "component", required = false) String component,
-                                               @RequestParam("shortKey") String key) {
-        List<HistoryEntry> matadataHistory = new ArrayList<>();
-        try {
-            matadataHistory = credentialsService.getCredentialHistory(tableName, account, region, app, environment, component, key, true);
-        } catch (FideliusException fe) {
-            return new ResponseEntity<>(fe, fe.getError());
-        }
-        return new ResponseEntity<>(matadataHistory, matadataHistory.isEmpty() ? HttpStatus.NOT_FOUND : HttpStatus.OK);
-    }
-    */
 
     @ResponseBody
     @GetMapping(value="/credentials/secret")
@@ -186,6 +167,19 @@ class FideliusController {
     }
 
     @ResponseBody
+    @GetMapping(value="/sources")
+    public ResponseEntity getSourceNames(@RequestParam("account") String account,
+                                      @RequestParam("region") String region,
+                                      @RequestParam("sourceType") String sourceType) throws Exception {
+        final List<String> metadataInfo = credentialsService.getMetadataInfo(account, region, sourceType);
+
+        if (metadataInfo != null)
+            return new ResponseEntity<>(metadataInfo, HttpStatus.OK);
+
+        return new ResponseEntity<>("Unable to describe source names", HttpStatus.NOT_FOUND);
+    }
+
+    @ResponseBody
     @GetMapping(value="/credentials/metadata")
     public ResponseEntity getMetadata(@RequestParam("account") String account,
                                     @RequestParam("region") String region,
@@ -195,7 +189,7 @@ class FideliusController {
                                     @RequestParam("shortKey") String shortKey) {
         final Metadata metadataGet = credentialsService.getMetadata(account, region, application, environment, component, shortKey);
 
-        if (metadataGet != null)
+        if (metadataGet.getSourceType() != null && metadataGet.getSource() != null)
             return new ResponseEntity<>(metadataGet, HttpStatus.OK);
 
         return new ResponseEntity<>("Metadata not found", HttpStatus.NOT_FOUND);

@@ -23,6 +23,11 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.kms.AWSKMSClient;
+import com.amazonaws.services.rds.AmazonRDSClient;
+import com.amazonaws.services.rds.model.DBCluster;
+import com.amazonaws.services.rds.model.DBInstance;
+import com.amazonaws.services.rds.model.DescribeDBClustersResult;
+import com.amazonaws.services.rds.model.DescribeDBInstancesResult;
 import com.amazonaws.services.securitytoken.model.AWSSecurityTokenServiceException;
 import org.finra.fidelius.MetadataParameters;
 import org.finra.fidelius.exceptions.FideliusException;
@@ -70,6 +75,10 @@ public class CredentialsService {
     @Value("${fidelius.kmsKey}")
     private String kmsKey;
 
+
+    private final static String RDS = "rds";
+    private final static String AURORA = "aurora";
+
     private Logger logger = LoggerFactory.getLogger(CredentialsService.class);
 
     /**
@@ -94,6 +103,29 @@ public class CredentialsService {
         }
         AWSKMSClient awskmsClient = awsSessionService.getKmsClient(awsEnvironment);
         fideliusService.setFideliusClient(dynamoDBClient, awskmsClient);
+    }
+
+    /**
+     * Sets RDS Client for given AWS Account and AWS Region
+     *
+     * @param account AWS account
+     * @param region  AWS Region
+     */
+    protected AmazonRDSClient setRDSClient(String account, String region) {
+        AWSEnvironment awsEnvironment = new AWSEnvironment(account, region);
+        AmazonRDSClient amazonRDSClient;
+        try {
+            amazonRDSClient = awsSessionService.getRdsClient(awsEnvironment);
+        } catch (AWSSecurityTokenServiceException ex) {
+            String message = String.format("Not authorized to access rds on account: %s in region: %s", account, region);
+            logger.error(message, ex);
+            throw new FideliusException(message, HttpStatus.FORBIDDEN);
+        } catch (RuntimeException re) {
+            String message = re.getMessage();
+            logger.error(message, re);
+            throw new FideliusException(message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return amazonRDSClient;
     }
 
     @PreAuthorize("@fideliusRoleService.isAuthorized(#application, #account, \"LIST_CREDENTIALS\")")
@@ -274,8 +306,7 @@ public class CredentialsService {
         String user = fideliusRoleService.getUserProfile().getUserId();
 
         try {
-            if((credential.getSource() != null || credential.getSource().equals("null")) &&
-                    (credential.getSourceType() != null && credential.getSourceType().equals("null"))) {
+            if(credential.getSource() != null && credential.getSourceType() != null) {
                 fideliusService.putCredentialWithMetadata(credential.getShortKey(), credential.getSecret(),
                         credential.getApplication(), credential.getEnvironment(), credential.getComponent(),
                         credential.getSource(), credential.getSourceType(), tableName, user, kmsKey);
@@ -332,8 +363,7 @@ public class CredentialsService {
                 credential.setComponent(null);
             }
 
-            if((credential.getSource() != null || credential.getSource().equals("null")) &&
-                    (credential.getSourceType() != null && credential.getSourceType().equals("null"))) {
+            if(credential.getSource() != null && credential.getSourceType() != null ) {
                 fideliusService.deleteCredentialWithMetadata(credential.getShortKey(), credential.getApplication(),
                         credential.getEnvironment(), credential.getComponent(), tableName, user);
             } else {
@@ -372,8 +402,13 @@ public class CredentialsService {
             MetadataParameters metadata = fideliusService.getMetadata(shortKey, application, environment, component,
                     tableName, user);
 
-            return new Metadata(shortKey,null, account, region, application, environment,
-                    metadata.getSourceType(), metadata.getSource(), component,null,null);
+            if(metadata == null) {
+                return new Metadata(shortKey,null, account, region, application, environment,
+                        null, null, component,null,null);
+            } else {
+                return new Metadata(shortKey, null, account, region, application, environment,
+                        metadata.getSourceType(), metadata.getSource(), component, null, null);
+            }
         } catch (Exception e) {
             this.logger.error("Metadata not found " + e.toString());
             return null;
@@ -474,6 +509,51 @@ public class CredentialsService {
         }
 
         return credentials;
+    }
+
+    private List<String> getAllRDS(String account, String region) throws FideliusException {
+
+        logger.info(String.format("Getting all RDS for account %s and region %s.", account, region));
+        List<String> results = new ArrayList<>();
+
+        AmazonRDSClient amazonRDSClient = setRDSClient(account, region);
+
+        DescribeDBInstancesResult response = amazonRDSClient.describeDBInstances();
+        List<DBInstance> dbList = response.getDBInstances();
+
+        for(DBInstance db: dbList) {
+            results.add(db.getDBInstanceIdentifier());
+        }
+
+        return results;
+    }
+
+    private List<String> getAllAuroraRegionalCluster(String account, String region) throws FideliusException {
+
+        logger.info(String.format("Getting all Aurora clusters for account %s and region %s.", account, region));
+        List<String> results = new ArrayList<>();
+
+        AmazonRDSClient amazonRDSClient = setRDSClient(account, region);
+
+        DescribeDBClustersResult response = amazonRDSClient.describeDBClusters();
+        List<DBCluster> dbClusterList = response.getDBClusters();
+
+        for(DBCluster cluster: dbClusterList) {
+            results.add(cluster.getDBClusterIdentifier());
+        }
+
+        return results;
+    }
+
+    public List<String> getMetadataInfo(String account, String region, String sourceType) throws Exception {
+        switch (sourceType) {
+            case RDS:
+                return getAllRDS(account, region);
+            case AURORA:
+                return getAllAuroraRegionalCluster(account, region);
+            default:
+                throw new Exception("Please pass supported values for sourceType");
+        }
     }
 
 }

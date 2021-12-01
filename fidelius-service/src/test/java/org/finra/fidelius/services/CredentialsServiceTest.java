@@ -24,6 +24,8 @@ import org.finra.fidelius.authfilter.parser.FideliusUserProfile;
 import org.finra.fidelius.exceptions.FideliusException;
 import org.finra.fidelius.model.Credential;
 import org.finra.fidelius.model.HistoryEntry;
+import org.finra.fidelius.model.Metadata;
+import org.finra.fidelius.model.MetadataTest;
 import org.finra.fidelius.model.aws.AWSEnvironment;
 import org.finra.fidelius.model.db.DBCredential;
 import org.finra.fidelius.services.auth.FideliusRoleService;
@@ -522,6 +524,25 @@ public class CredentialsServiceTest {
     }
 
     @Test
+    public void putMetadataDoesNotGetCreated() throws Exception {
+        Metadata metadata = new Metadata();
+        metadata.setAccount("dev");
+        metadata.setRegion("us-east-1");
+        metadata.setApplication("membership");
+        metadata.setEnvironment("environment");
+        metadata.setComponent("testComponent");
+        metadata.setShortKey("shortKey");
+        metadata.setSourceType("sourceType");
+        metadata.setSource("source");
+
+        doThrow(new Exception("Error Created Credential.")).when(fideliusService).putMetadata(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+
+        Metadata actual = credentialsService.putMetadata(metadata);
+
+        assertNull(actual);
+    }
+
+    @Test
     public void putCredential() throws Exception {
         Credential credential = new Credential();
         credential.setAccount("dev");
@@ -537,6 +558,25 @@ public class CredentialsServiceTest {
         Credential actual = credentialsService.putCredential(credential);
 
         assertEquals(credential, actual);
+    }
+
+    @Test
+    public void putMetadata() throws Exception {
+        Metadata metadata = new Metadata();
+        metadata.setAccount("dev");
+        metadata.setRegion("us-east-1");
+        metadata.setApplication("membership");
+        metadata.setEnvironment("environment");
+        metadata.setComponent("testComponent");
+        metadata.setShortKey("shortKey");
+        metadata.setSourceType("sourceType");
+        metadata.setSource("source");
+
+        Mockito.doReturn("000000000000000001").when(fideliusService).putMetadata(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+
+        Metadata actual = credentialsService.putMetadata(metadata);
+
+        assertEquals(metadata, actual);
     }
 
     @Test(expected = FideliusException.class)
@@ -596,6 +636,40 @@ public class CredentialsServiceTest {
         Credential actual = credentialsService.deleteCredential(credential);
 
         assertEquals(credential, actual);
+    }
+
+    @Test
+    public void deleteMetadataDoesNotDelete() throws Exception {
+        Metadata metadata = new Metadata();
+        metadata.setAccount("dev");
+        metadata.setRegion("us-east-1");
+        metadata.setApplication("membership");
+        metadata.setEnvironment("environment");
+        metadata.setComponent("testComponent");
+        metadata.setShortKey("shortKey");
+
+        doThrow(new Exception("Metadata not found")).when(fideliusService).deleteMetadata(anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+
+        Metadata actual = credentialsService.deleteMetadata(metadata);
+
+        assertNull(actual);
+    }
+
+    @Test
+    public void deleteMetadata() throws Exception {
+        Metadata metadata = new Metadata();
+        metadata.setAccount("dev");
+        metadata.setRegion("us-east-1");
+        metadata.setApplication("membership");
+        metadata.setEnvironment("environment");
+        metadata.setComponent("testComponent");
+        metadata.setShortKey("shortKey");
+
+        doNothing().when(fideliusService).deleteMetadata(anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+
+        Metadata actual = credentialsService.deleteMetadata(metadata);
+
+        assertEquals(metadata, actual);
     }
 
     @Test
