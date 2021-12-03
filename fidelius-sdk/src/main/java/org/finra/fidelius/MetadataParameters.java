@@ -114,28 +114,6 @@ public class MetadataParameters {
                 '}';
     }
 
-    /*
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        MetadataParameters that = (MetadataParameters) o;
-
-        if (!sourceType.equals(that.sourceType)) return false;
-        if (!source.equals(that.source)) return false;
-        if (!version.equals(that.version)) return false;
-        if (!fullName.equals(that.fullName)) return false;
-        if (updateBy != null ? !updateBy.equals(that.updateBy) : that.updateBy != null) return false;
-        if (updatedOn != null ? !updatedOn.equals(that.updatedOn) : that.updatedOn != null) return false;
-        if (component != null ? !component.equals(that.component) : that.component != null) return false;
-        if (sdlc != null ? !sdlc.equals(that.sdlc) : that.sdlc != null) return false;
-        if (!Arrays.equals(dataKeyBytes, that.dataKeyBytes)) return false;
-        if (!Arrays.equals(credentialBytes, that.credentialBytes)) return false;
-        return Arrays.equals(hmacBytes, that.hmacBytes);
-    }
-    */
-
     @Override
     public int hashCode() {
         int result = sourceType.hashCode();
