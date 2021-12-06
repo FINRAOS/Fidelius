@@ -1,6 +1,6 @@
 {
 	"note": "Mock API for Fidelius",
-	"mockDirectory": "",
+	"mockDirectory": "C:\\Users\\k29815\\github\\Fidelius\\fidelius-ui/src/mock-api/data/",
 	"staticDirectory": "./data/",
 	"staticPath": "./data/",
 	"quiet": false,

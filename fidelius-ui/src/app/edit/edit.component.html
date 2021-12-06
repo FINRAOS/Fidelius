@@ -32,73 +32,122 @@
     <div *ngIf="!isLoading && !hasError">
       <form #editForm="ngForm" >
         <div class="edit-credential-form pad push" layout-align="center start">
-          <mat-form-field flex>
-            <input matInput
-                  [placeholder]="APPLICATION_LIST_LABEL_NAME"
-                   #applicationElement
-                   #applicationControl="ngModel"
-                   [(ngModel)]="credential.application"
-                   name="ags"
-                   disabled
-                   required>
-          </mat-form-field>
-          <mat-form-field flex>
-            <input matInput placeholder="Account"
-                   #accountElement
-                   #accountControl="ngModel"
-                   [(ngModel)]="credential.account"
-                   name="account"
-                   disabled
-                   required>
-          </mat-form-field>
-          <mat-form-field flex>
-            <input matInput placeholder="Environment"
-                   #environmentElement
-                   #environmentControl="ngModel"
-                   type="text"
-                   [(ngModel)]="credential.environment"
-                   name="environment"
-                   disabled
-                   required>
-            <mat-hint align="end">
-              <span [hidden]="environmentControl.pristine || !environmentControl.errors?.required" class="tc-red-600">Required</span>
-            </mat-hint>
-          </mat-form-field>
-          <mat-form-field flex>
-            <input matInput placeholder="Component"
-                   #credentialElement
-                   #credentialControl="ngModel"
-                   type="text"
-                   [value]="credential.component"
-                   [(ngModel)]="credential.component"
-                   disabled
-                   name="credential">
-          </mat-form-field>
-          <mat-form-field flex>
-            <input matInput placeholder="Key"
-                   #keyElement
-                   #keyControl="ngModel"
-                   type="text"
-                   [(ngModel)]="credential.shortKey"
-                   name="key"
-                   disabled
-                   required>
-            <mat-hint align="end">
-              <span [hidden]="keyControl.pristine || !keyControl.errors?.required" class="tc-red-600">Required</span>
-            </mat-hint>
-          </mat-form-field>
-          <mat-form-field>
-           <span [hidden]="!credential.shortKey">
-            <textarea matInput
-                   placeholder="Full Qualified Name"
-                   #longKeyElement
-                   name="longKey"
-                   [value]="getLongKey()"
-                   readonly
-                   disabled>
-            </textarea>
-            </span>
-          </mat-form-field>
+          <div flex fxLayout="row wrap" fxLayoutAlign="space-between center">
+            <mat-form-field fxFlex="45">
+              <input matInput
+                    [placeholder]="APPLICATION_LIST_LABEL_NAME"
+                    #applicationElement
+                    #applicationControl="ngModel"
+                    [(ngModel)]="credential.application"
+                    name="ags"
+                    disabled
+                    required>
+            </mat-form-field>
+          
+          
+            <mat-form-field fxFlex="45">
+              <input matInput placeholder="Account"
+                    #accountElement
+                    #accountControl="ngModel"
+                    [(ngModel)]="credential.account"
+                    name="account"
+                    disabled
+                    required>
+            </mat-form-field>
+          
+          
+            <mat-form-field fxFlex="45">
+              <input matInput placeholder="Environment"
+                    #environmentElement
+                    #environmentControl="ngModel"
+                    type="text"
+                    [(ngModel)]="credential.environment"
+                    name="environment"
+                    disabled
+                    required>
+              <mat-hint align="end">
+                <span [hidden]="environmentControl.pristine || !environmentControl.errors?.required" class="tc-red-600">Required</span>
+              </mat-hint>
+            </mat-form-field>
+          
+          
+            <mat-form-field fxFlex="45">
+              <input matInput placeholder="Component"
+                    #credentialElement
+                    #credentialControl="ngModel"
+                    type="text"
+                    [value]="credential.component"
+                    [(ngModel)]="credential.component"
+                    disabled
+                    name="credential">
+            </mat-form-field>
+          
+          
+            <mat-form-field fxFlex="45">
+              <input matInput placeholder="Key"
+                    #keyElement
+                    #keyControl="ngModel"
+                    type="text"
+                    [(ngModel)]="credential.shortKey"
+                    name="key"
+                    disabled
+                    required>
+              <mat-hint align="end">
+                <span [hidden]="keyControl.pristine || !keyControl.errors?.required" class="tc-red-600">Required</span>
+              </mat-hint>
+            </mat-form-field>
+          
+          
+            <mat-form-field fxFlex="45">
+              <span [hidden]="!credential.shortKey">
+                <textarea matInput
+                      placeholder="Full Qualified Name"
+                      #longKeyElement
+                      name="longKey"
+                      [value]="getLongKey()"
+                      readonly
+                      disabled>
+                </textarea>
+                </span>
+              </mat-form-field>
+          </div>
+          <mat-card>
+            <span class="label-color hint-text">To enable secret rotation, Source Type and Source Name must be set.</span>
+            <div flex fxLayout="row" fxLayoutAlign="space-between center" style="padding-top:4%">
+                <mat-form-field fxFlex="45">
+                  <mat-label>Source Type</mat-label>
+                  <mat-select   placeholder="Source Type"
+                                name="sourceType"
+                                [disableRipple]="disableAnimations"
+                                (selectionChange)="sourceNameAuto()"
+                                [(ngModel)]="metadata.sourceType">
+                    <mat-option *ngFor="let type of sourceTypes" 
+                                [value]="type"
+                                ngDefaultControl>
+                                {{type}}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <!-- https://www.codegrepper.com/code-examples/javascript/mat+input+with+dropdown -->
+                <mat-form-field fxFlex="45">
+                  <input matInput
+                        #sourceNameElement
+                        #sourceNameControl="ngModel"
+                        name="sourceName"
+                        (keyup)="filterSourceName($event)"
+                        [(ngModel)]="metadata.source"
+                        placeholder="Source Name"
+                        [matAutocomplete]="auto"
+                        >
+                    <mat-autocomplete #auto="matAutocomplete">
+                      <mat-option *ngFor="let sourceName of filteredSourceNames" [value]="sourceName">
+                        {{sourceName}}
+                      </mat-option>
+                    </mat-autocomplete>
+                </mat-form-field>
+            </div>
+          </mat-card>
+          <mat-card>
           <div class="push-bottom-sm">
             <p class="tc-grey-600 push-xs secret-type-radio-label">Secret Type</p>
           </div>
@@ -145,6 +194,7 @@
                       required
             ></textarea>
           </mat-form-field>
+          </mat-card>
         </div>
       </form>
     <fidelius-loading [condition]="sendingForm" message="Updating..."></fidelius-loading>

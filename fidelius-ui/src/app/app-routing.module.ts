@@ -22,6 +22,7 @@ import { MainComponent } from './main/main.component';
 import { AddComponent } from './add/add.component';
 import { IntroComponent } from './intro/intro.component';
 import { EditComponent } from './edit/edit.component';
+import { RotateComponent } from './rotate/rotate.component';
 import { CredentialInfoComponent } from './credential-info/credential-info.component';
 
 const routes: Routes = [
@@ -31,6 +32,7 @@ const routes: Routes = [
     children: [
       { path: 'add', component: AddComponent },
       { path: 'edit', component: EditComponent },
+      { path: 'rotate', component: RotateComponent },
       { path: 'view', component: CredentialInfoComponent },
     ]
   },

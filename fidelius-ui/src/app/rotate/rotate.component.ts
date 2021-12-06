@@ -27,14 +27,15 @@ import {
 import { MainComponent } from '../main/main.component';
 import { BrowserService } from '../../services/browser.service';
 import { APPLICATION_LIST_LABEL_NAME } from '../../config/permissions';
+import { Meta } from '@angular/platform-browser';
 
 @Component({
-  selector: 'fidelius-edit',
-  templateUrl: './edit.component.html',
-  styleUrls: ['./edit.component.scss'],
+  selector: 'fidelius-rotate',
+  templateUrl: './rotate.component.html',
+  styleUrls: ['./rotate.component.scss'],
   providers: [],
 })
-export class EditComponent implements OnInit{
+export class RotateComponent implements OnInit{
   credential: Credential = new Credential();
   hideSecret: boolean = true;
   sendingForm: boolean = false;
@@ -42,17 +43,16 @@ export class EditComponent implements OnInit{
   passwordPattern: string = '.*';
   activeDirectory: IActiveDirectory;
   secretTypes: string[] = ['Password', 'Active Directory', 'Other'];
-  sourceNames: string[] = [];
-  filteredSourceNames: string[] = [];
   secretType: string;
   isIEOrEdge: boolean;
-  existingMetadata: boolean = false;
   isLoading: boolean = true;
   hasError: boolean = false;
   metadata: Metadata = new Metadata();
+  existingMetadata: boolean = false;
 
-  sourceTypes: string[] = ["-", "Aurora", "RDS", "Service Account"];
-
+  sourceTypes: string[] = ["Aurora", "RDS", "Service Account"];
+  sourceNames: string[] = [];
+  filteredSourceNames: string[] = [];
   @ViewChild(NgForm) editForm: NgForm;
   APPLICATION_LIST_LABEL_NAME: string = APPLICATION_LIST_LABEL_NAME;
 
@@ -65,7 +65,6 @@ export class EditComponent implements OnInit{
   }
 
   ngOnInit(): void {
-    this.getActiveDirectoryPasswordPattern();
     this.credential.environment = this._parentComponent.selectedCredential.environment;
     this.credential.component = this._parentComponent.selectedCredential.component;
     this.credential.shortKey = this._parentComponent.selectedCredential.shortKey;
@@ -74,6 +73,7 @@ export class EditComponent implements OnInit{
     this.credential.application = this._parentComponent.selected.application;
     this.credential.region = this._parentComponent.selected.region;
     this.isIEOrEdge = this._browserService.checkIfIEOrEdge();
+    
     this.loadCredential();
     this.getMetadata();
   }
@@ -110,26 +110,6 @@ export class EditComponent implements OnInit{
         this._changeDetectorRef.detectChanges();
     });
   }
-
-  getActiveDirectoryPasswordPattern(): void {
-    this._credentialService.getActiveDirectoryPasswordValidation().subscribe( (activeDirectory: IActiveDirectory) => {
-      this.activeDirectory = activeDirectory;
-    });
-  }
-
-  setPasswordPattern(): void {
-    if (this.secretType === 'Active Directory') {
-      this.credential.isActiveDirectory = true;
-      this.passwordPattern = this.activeDirectory.validActiveDirectoryRegularExpression;
-      this.editForm.controls['secret'].reset();
-    } else {
-      this.credential.isActiveDirectory = false;
-      this.passwordPattern = this.defaultPasswordPattern;
-      this.editForm.controls['secret'].reset();
-    }
-    this._changeDetectorRef.detectChanges();
-  }
-
   getLongKey(): string {
     let longKey: string = undefined;
     if ( this.credential.shortKey && this.credential.component) {
@@ -145,44 +125,50 @@ export class EditComponent implements OnInit{
     return longKey;
   }
 
-  isInputField(): boolean {
-    return this.secretType === 'Password' || this.secretType === 'Active Directory';
-  }
-
-  validateSecret(): void {
-    let form: AbstractControl = this.editForm.controls['secret'];
-    if (!form.touched) {
-      form.markAsTouched();
-    }
-  }
+  
 
   closeSideNav(refresh: boolean): void {
     this._parentComponent.closeSideNavAndRefresh(refresh);
   }
 
-  updateCredential(): void {
+  rotateCredential(): void {
     this.sendingForm = true;
+    
     this.credential.lastUpdatedDate = new Date().toISOString();
-    this.metadata.lastUpdatedDate = new Date().toISOString();
-    this._credentialService.updateMetadata(this.metadata).subscribe( (metadata: Metadata) => {
-      this._credentialService.updateCredential(this.credential).subscribe( (credential: Credential) => {
-        let message: string = 'Credential ' + credential.longKey + ' updated';
-        this._snackBarService.open(message,  '', { duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: "snackbar-success" });
-        this.closeSideNav(true);
-      }, (error: any) => {
+    if(this.existingMetadata){
+      this.rotate();
+    }
+    else{
+      this.metadata.lastUpdatedDate = this.credential.lastUpdatedDate;
+      this._credentialService.updateMetadata(this.metadata).subscribe((response: any) => {
+        this.rotate();
+      } ,(error: any) => {
         this.sendingForm = false;
+        let message: string = 'Metadata' + this.credential.longKey + 'failed to update: ' + error;
+        this._snackBarService.open(message,  'DISMISS', { horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: "snackbar-error" });
         this._alertService.openAlert(error);
       });
-    }, (error: any) => {
-      console.log(error);
-      this.sendingForm = false;
-      this._alertService.openAlert(error);
-    });;
+    }
+    
     
   }
 
+  rotate(): void {
+    this._credentialService.rotateCredential(this.credential).subscribe( (credential: Credential) => {
+      let message: string = 'Credential ' + this.credential.longKey + ' rotated';
+      this._snackBarService.open(message,  '', { duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: "snackbar-success" });
+      this.sendingForm = false;
+      this.closeSideNav(true);
+    }, (error: any) => {
+      this.sendingForm = false;
+      let message: string = 'Credential' + this.credential.longKey + 'failed to rotate: ' + error;
+      this._snackBarService.open(message,  'DISMISS', { horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: "snackbar-error" });
+      this._alertService.openAlert(error);
+    });
+  }
+
   sourceNameAuto(): void {
-    if(this.metadata.sourceType !== undefined){
+    if(!this.existingMetadata && this.metadata.sourceType !== undefined){
       this._credentialService.getSourceNames(this.credential.account, this.credential.region, this.metadata.sourceType).subscribe((sourceNames: string[])=>{
         this.sourceNames = sourceNames;
         this.filteredSourceNames = sourceNames;
@@ -193,7 +179,7 @@ export class EditComponent implements OnInit{
 
   filterSourceName(event: any):void{
     const input = event.target.value;
-    this.filteredSourceNames = this.sourceNames.filter(source => source.includes(input));    
+    this.filteredSourceNames = this.sourceNames.filter(source => source.includes(input));
     this._changeDetectorRef.detectChanges();
   }
 
