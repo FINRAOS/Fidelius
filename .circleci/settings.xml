@@ -21,6 +21,7 @@
             <gpg.passphrase>${NEXUS_RM_GPG_NEW}</gpg.passphrase>
         </properties>
     </profile>
+
     <profile>
         <id>sonatype-staging</id>
         <repositories>
