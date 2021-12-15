@@ -26,6 +26,7 @@ import { ClipboardService } from 'ngx-clipboard';
 import { MatSnackBar } from '@angular/material';
 import { APPLICATION_LIST_LABEL_NAME } from '../../config/permissions';
 import { MainComponent } from '../main/main.component';
+import { BrowserService } from '../../services/browser.service';
 
 
 
@@ -45,6 +46,7 @@ export class ShowComponent implements OnInit {
   copyingSecret: boolean = false;
   loadedSecret: boolean = false;
   loadingSecret: boolean = false;
+  isIEOrEdge: boolean;
   showError: boolean = true;
   history: IHistory;
   metadata: Metadata;
@@ -62,6 +64,7 @@ constructor( private _credentialService: CredentialService,
                private _alertService: AlertService,
                private _parentComponent: MainComponent,
                private _changeDetectorRef: ChangeDetectorRef,
+               private _browserService: BrowserService,
                ) {
   }
 
@@ -70,6 +73,7 @@ constructor( private _credentialService: CredentialService,
     this.credential.application = this.selected.application;
     this.credential.secret = this.secretPlaceholderText;
     this.credential.region = this.selected.region;
+    this.isIEOrEdge = this._browserService.checkIfIEOrEdge();
     this.getHistory();
     this.getMetadata();
     this._changeDetectorRef.detectChanges();
