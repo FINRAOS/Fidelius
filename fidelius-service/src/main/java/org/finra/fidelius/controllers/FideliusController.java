@@ -189,10 +189,7 @@ class FideliusController {
                                     @RequestParam("shortKey") String shortKey) {
         final Metadata metadataGet = credentialsService.getMetadata(account, region, application, environment, component, shortKey);
 
-        if (metadataGet.getSourceType() != null && metadataGet.getSource() != null)
-            return new ResponseEntity<>(metadataGet, HttpStatus.OK);
-
-        return new ResponseEntity<>("Metadata not found", HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(metadataGet, HttpStatus.OK);
     }
 
     @ResponseBody

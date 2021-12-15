@@ -349,11 +349,11 @@ public class FideliusControllerTest {
 
     @Test
     @WithMockUser
-    public void getMetadataShouldReturn400ErrorWhenMetadataNotFound() throws Exception {
+    public void getMetadataWhenMetadataNotFound() throws Exception {
         when(credentialsService.getMetadata(anyString(), anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn(new Metadata());
 
         mockMvc.perform(getMetadataRequest)
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isOk());
     }
   
     @Test
