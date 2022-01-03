@@ -153,8 +153,8 @@ export class Metadata implements IMetadata {
   component: string  = undefined;
   longKey: string  = undefined;
   shortKey: string  = undefined;
-  sourceType: string  = undefined;
-  source: string  = undefined;
+  sourceType: string  = "";
+  source: string  = "";
   account: string  = undefined;
   region: string  = undefined;
   environment: string  = undefined;

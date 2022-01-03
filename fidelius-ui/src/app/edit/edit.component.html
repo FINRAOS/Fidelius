@@ -119,7 +119,7 @@
                   <mat-select   placeholder="Source Type"
                                 name="sourceType"
                                 [disableRipple]="disableAnimations"
-                                (selectionChange)="sourceNameAuto()"
+                                (selectionChange)="formSourceNameAuto()"
                                 [(ngModel)]="metadata.sourceType">
                     <mat-option *ngFor="let type of sourceTypes" 
                                 [value]="type"
@@ -135,6 +135,7 @@
                         #sourceNameControl="ngModel"
                         name="sourceName"
                         (keyup)="filterSourceName($event)"
+                        (ngModelChange)="sourceChange()"
                         [(ngModel)]="metadata.source"
                         placeholder="Source Name"
                         [matAutocomplete]="auto"
@@ -157,7 +158,7 @@
                              layout="column"
                              #secretRadioElement
                              name="secretTypeRadio"
-                             required
+                             required=false
                              (change)="setPasswordPattern()">
               <mat-radio-button *ngFor="let type of secretTypes"
                                 class="pad-xs"
@@ -208,7 +209,7 @@
       </button>
       <button mat-raised-button
               color="accent"
-              [disabled]="!editForm.valid || sendingForm"
+              [disabled]="!editForm.valid || sendingForm || (!editSecret && !editMetadata)"
               (click)="updateCredential()">
         Update
       </button>

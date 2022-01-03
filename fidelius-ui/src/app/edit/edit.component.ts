@@ -27,6 +27,7 @@ import {
 import { MainComponent } from '../main/main.component';
 import { BrowserService } from '../../services/browser.service';
 import { APPLICATION_LIST_LABEL_NAME } from '../../config/permissions';
+import { concat } from 'rxjs/observable/concat';
 
 @Component({
   selector: 'fidelius-edit',
@@ -50,6 +51,8 @@ export class EditComponent implements OnInit{
   isLoading: boolean = true;
   hasError: boolean = false;
   metadata: Metadata = new Metadata();
+  editSecret: boolean = false;
+  editMetadata: boolean = false;
 
   sourceTypes: string[] = ["-", "Aurora", "RDS", "Service Account"];
 
@@ -103,6 +106,7 @@ export class EditComponent implements OnInit{
       }
       else{
         this.existingMetadata = true;
+        this.sourceNameAuto();
       }  
       this._changeDetectorRef.detectChanges();
     }, (error: any) => {
@@ -118,6 +122,7 @@ export class EditComponent implements OnInit{
   }
 
   setPasswordPattern(): void {
+    this.editSecret = true;
     if (this.secretType === 'Active Directory') {
       this.credential.isActiveDirectory = true;
       this.passwordPattern = this.activeDirectory.validActiveDirectoryRegularExpression;
@@ -164,20 +169,40 @@ export class EditComponent implements OnInit{
     this.sendingForm = true;
     this.credential.lastUpdatedDate = new Date().toISOString();
     this.metadata.lastUpdatedDate = new Date().toISOString();
-    this._credentialService.updateMetadata(this.metadata).subscribe( (metadata: Metadata) => {
-      this._credentialService.updateCredential(this.credential).subscribe( (credential: Credential) => {
-        let message: string = 'Credential ' + credential.longKey + ' updated';
+    if(this.editSecret && this.editMetadata){
+      concat(
+        this._credentialService.updateMetadata(this.metadata),
+        this._credentialService.updateCredential(this.credential)
+      ).subscribe( (result: any) => {
+        let message: string = 'Credential ' + this.credential.longKey + ' updated';
         this._snackBarService.open(message,  '', { duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: "snackbar-success" });
         this.closeSideNav(true);
       }, (error: any) => {
         this.sendingForm = false;
         this._alertService.openAlert(error);
       });
-    }, (error: any) => {
-      console.log(error);
-      this.sendingForm = false;
-      this._alertService.openAlert(error);
-    });;
+    }
+    else if(this.editSecret){
+      this._credentialService.updateCredential(this.credential).subscribe( (credential: Credential) => {
+        let message: string = 'Credential ' + this.credential.longKey + ' updated';
+        this._snackBarService.open(message,  '', { duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: "snackbar-success" });
+        this.closeSideNav(true);
+      }, (error: any) => {
+        this.sendingForm = false;
+        this._alertService.openAlert(error);
+      });
+    }
+    else{
+      this._credentialService.updateMetadata(this.metadata).subscribe( (metadata: Metadata) => {
+        let message: string = 'Credential Metadata ' + this.credential.longKey + ' updated';
+        this._snackBarService.open(message,  '', { duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: "snackbar-success" });
+        this.closeSideNav(true);
+      }, (error: any) => {
+        this.sendingForm = false;
+        this._alertService.openAlert(error);
+      });
+    }
+    
     
   }
 
@@ -187,8 +212,17 @@ export class EditComponent implements OnInit{
         this.sourceNames = sourceNames;
         this.filteredSourceNames = sourceNames;
         this._changeDetectorRef.detectChanges();
+      }, (error: any) => {
+        this.sourceNames = [];
+        this.filteredSourceNames = [];
+        this._changeDetectorRef.detectChanges();
+
       });
     }
+  }
+  formSourceNameAuto(): void{
+    this.editMetadata = true;
+    this.sourceNameAuto();
   }
 
   filterSourceName(event: any):void{
@@ -196,5 +230,7 @@ export class EditComponent implements OnInit{
     this.filteredSourceNames = this.sourceNames.filter(source => source.includes(input));    
     this._changeDetectorRef.detectChanges();
   }
-
+  sourceChange():void{
+    this.editMetadata = true;
+  }
 }

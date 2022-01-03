@@ -49,7 +49,7 @@ export class ShowComponent implements OnInit {
   isIEOrEdge: boolean;
   showError: boolean = true;
   history: IHistory;
-  metadata: Metadata;
+  metadata: Metadata = new Metadata();
   sourceType: string = "-"
   sourceName: string = "-"
   secretPlaceholderText: string = 'loadingSecret.................';
@@ -144,6 +144,7 @@ constructor( private _credentialService: CredentialService,
   getMetadata():void {
     this._credentialService.getMetadata(this.credential).subscribe( (metadata: Metadata) => {
       this.metadata = metadata;
+      console.log(metadata);
       this._changeDetectorRef.detectChanges();
     }, (error: any) => {
       this.metadata = null;
