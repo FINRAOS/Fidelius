@@ -105,10 +105,8 @@
           <mat-label>Source Type</mat-label>
           <mat-select   placeholder="Source Type"
                         name="sourceType"
-                        [disableRipple]="disableAnimations"
                         (selectionChange)="sourceNameAuto()"
-                        [(ngModel)]="metadata.sourceType"
-                        [required] = "!existingMetadata">
+                        [(ngModel)]="metadata.sourceType">
             <mat-option *ngFor="let type of sourceTypes" 
                         [value]="type"
                         ngDefaultControl>
