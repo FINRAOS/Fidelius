@@ -22,7 +22,7 @@ import { AbstractControl, NgForm } from '@angular/forms';
 import { MatSnackBar } from '@angular/material';
 import { AlertService } from '../../services/alert.service';
 import {
-  Credential, CredentialService, IActiveDirectory, IMetadata, Metadata
+  Credential, CredentialService, IActiveDirectory, IMetadata, Metadata, RotationDTO
 } from '../../services/credential.service';
 import { MainComponent } from '../main/main.component';
 import { BrowserService } from '../../services/browser.service';
@@ -154,16 +154,24 @@ export class RotateComponent implements OnInit{
   }
 
   rotate(): void {
-    this._credentialService.rotateCredential(this.credential).subscribe( (credential: Credential) => {
+    let rotationDTO: RotationDTO = new RotationDTO();
+    rotationDTO.account = this.credential.account;
+    rotationDTO.sourceType = this.metadata.sourceType;
+    rotationDTO.source = this.metadata.source;
+    rotationDTO.shortKey = this.credential.shortKey;
+    rotationDTO.application = this.credential.application;
+    rotationDTO.environment = this.credential.environment;
+    rotationDTO.component = this.credential.component;
+    rotationDTO.region = this.credential.region;
+    this._credentialService.rotateCredential(rotationDTO).subscribe(()=> {
       let message: string = 'Credential ' + this.credential.longKey + ' rotated';
       this._snackBarService.open(message,  '', { duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: "snackbar-success" });
       this.sendingForm = false;
       this.closeSideNav(true);
     }, (error: any) => {
       this.sendingForm = false;
-      let message: string = 'Credential' + this.credential.longKey + 'failed to rotate: ' + error;
+      let message: string = 'Credential ' + this.credential.longKey + ' failed to rotate: ' + error.status + " " + error.statusText;
       this._snackBarService.open(message,  'DISMISS', { horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: "snackbar-error" });
-      this._alertService.openAlert(error);
     });
   }
 

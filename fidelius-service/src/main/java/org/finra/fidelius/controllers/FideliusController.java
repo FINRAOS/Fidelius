@@ -35,6 +35,7 @@ import javax.inject.Inject;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 class FideliusController {
@@ -167,6 +168,35 @@ class FideliusController {
     }
 
     @ResponseBody
+    @PostMapping(value="/credentials/rotate")
+    public ResponseEntity rotateSecret(@RequestBody Map<String, String> request){
+       System.out.println(request.toString());
+        String account = request.get("account");
+       String sourceType = request.get("sourceType");
+       String sourceName = request.get("source");
+       String shortKey = request.get("shortKey");
+       String component = request.get("component");
+       String region = request.get("region");
+       String application = request.get("application");
+       String environment= request.get("environment");
+
+       String lambdaStatus = credentialsService.rotateCredential(account, sourceType, sourceName, region, application, environment, component, shortKey);
+
+       switch (lambdaStatus){
+           case "200":
+               return new ResponseEntity<String>(HttpStatus.OK);
+           case "401":
+               return new ResponseEntity<>("Unauthorized to Rotate", HttpStatus.UNAUTHORIZED);
+           case "403":
+               return new ResponseEntity<>("Improper Membership", HttpStatus.FORBIDDEN);
+           case "404":
+               return new ResponseEntity<>("Resource Does Not Exist", HttpStatus.NOT_FOUND);
+           default:
+               return new ResponseEntity<>("Internal Server Error", HttpStatus.INTERNAL_SERVER_ERROR);
+       }
+    }
+
+    @ResponseBody
     @GetMapping(value="/sources")
     public ResponseEntity getSourceNames(@RequestParam("account") String account,
                                       @RequestParam("region") String region,
@@ -189,10 +219,7 @@ class FideliusController {
                                     @RequestParam("shortKey") String shortKey) {
         final Metadata metadataGet = credentialsService.getMetadata(account, region, application, environment, component, shortKey);
 
-        if (metadataGet.getSourceType() != null && metadataGet.getSource() != null)
-            return new ResponseEntity<>(metadataGet, HttpStatus.OK);
-
-        return new ResponseEntity<>("Metadata not found", HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(metadataGet, HttpStatus.OK);
     }
 
     @ResponseBody

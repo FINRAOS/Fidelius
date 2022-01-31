@@ -20,7 +20,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { Credential, CredentialService, Selected, IHistory, Metadata } from '../../services/credential.service';
+import { Credential, CredentialService, Selected, IHistory, Metadata, RotationDTO } from '../../services/credential.service';
 import { AlertService } from '../../services/alert.service';
 import { ClipboardService } from 'ngx-clipboard';
 import { MatSnackBar } from '@angular/material';
@@ -144,7 +144,6 @@ constructor( private _credentialService: CredentialService,
   getMetadata():void {
     this._credentialService.getMetadata(this.credential).subscribe( (metadata: Metadata) => {
       this.metadata = metadata;
-      console.log(metadata);
       this._changeDetectorRef.detectChanges();
     }, (error: any) => {
       this.metadata = null;
@@ -164,18 +163,26 @@ constructor( private _credentialService: CredentialService,
 
   rotateCredential(): void {
     this.rotating = true;
-    
+    let rotationDTO: RotationDTO = new RotationDTO();
+    rotationDTO.account = this.credential.account;
+    rotationDTO.sourceType = this.metadata.sourceType;
+    rotationDTO.source = this.metadata.source;
+    rotationDTO.shortKey = this.credential.shortKey;
+    rotationDTO.application = this.credential.application;
+    rotationDTO.environment = this.credential.environment;
+    rotationDTO.component = this.credential.component;
+    rotationDTO.region = this.credential.region;
     this.credential.lastUpdatedDate = new Date().toISOString();
-    this._credentialService.rotateCredential(this.credential).subscribe( (credential: Credential) => {
+    this._credentialService.rotateCredential(rotationDTO).subscribe( (data: any) => {
       this.rotating = false;
       let message: string = 'Credential ' + this.credential.longKey + ' rotated';
       this._snackBarService.open(message,  '', {  horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: ["snackbar-success"], duration: 3000 });
+      this._changeDetectorRef.detectChanges();
     }, (error: any) => {
       console.log(error)
       this.rotating = false;
-      let message: string = 'Credential' + this.credential.longKey + 'failed to rotate: ' + error;
+      let message: string = 'Credential ' + this.credential.longKey + ' failed to rotate: ' + error.status + " " + error.statusText;      
       this._snackBarService.open(message,  'DISMISS', { horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: ["snackbar-error"] });
-      this._alertService.openAlert(error);
       this._changeDetectorRef.detectChanges();
     });
   }

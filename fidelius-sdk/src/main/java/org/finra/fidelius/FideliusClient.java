@@ -17,6 +17,7 @@
 
 package org.finra.fidelius;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,24 +32,30 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.ec2.model.*;
+import com.amazonaws.services.lambda.AWSLambda;
+import com.amazonaws.services.lambda.AWSLambdaClientBuilder;
+import com.amazonaws.services.lambda.model.*;
 import com.amazonaws.services.kms.AWSKMS;
 import com.amazonaws.services.kms.AWSKMSClientBuilder;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
 import com.amazonaws.util.EC2MetadataUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
 public class FideliusClient {
     private static final Logger logger = LoggerFactory.getLogger(FideliusClient.class);
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     protected EnvConfig envConfig;
     protected JCredStash jCredStash;
     protected AWSSecurityTokenService awsSecurityTokenService;
 
     private final AmazonEC2 client;
+    private final AWSLambda lambda;
 
     public FideliusClient() {
         this(null, new DefaultAWSCredentialsProviderChain());
@@ -90,14 +97,19 @@ public class FideliusClient {
                 .withCredentials(provider)
                 .withClientConfiguration(kmsEc2ClientConfiguration);
 
+        AWSLambdaClientBuilder lambdaClientBuilder = AWSLambdaClientBuilder.standard()
+                .withClientConfiguration(clientConf)
+                .withCredentials(provider);
+
         if(region != null){
             Regions regionEnum = Regions.fromName(region);
             ddbBuilder.withRegion(regionEnum);
             kmsBuilder.withRegion(regionEnum);
             stsBuilder.withRegion(regionEnum);
             clientBuilder.withRegion(regionEnum);
+            lambdaClientBuilder.withRegion(regionEnum);
         }
-
+        lambda = lambdaClientBuilder.build();
         client = clientBuilder.build();
         awsSecurityTokenService = stsBuilder.build();
         jCredStash = new JCredStash(ddbBuilder.build(), kmsBuilder.build(), awsSecurityTokenService);
@@ -432,6 +444,56 @@ public class FideliusClient {
         String version = putCredential(name, contents, application, sdlc, component, table, user, kmsKey);
         putMetadata(name, application, sdlc, component, sourceType, source, table, user, kmsKey);
         return version;
+    }
+
+    /**
+     *
+     * @param name                      Name of the credential
+     * @param application               FID_CONTEXT_APPLICATION Name
+     * @param sdlc                      FID_CONTEXT_SDLC (dev/qa/prod)
+     * @param component     Nullable    Component name
+     * @param sourceType                Source type
+     * @param source                    Source name
+     * @param lambdaName    Nullable    lambda for the rotation; defaults to 'CREDSTSH-amg-password-rotation'
+     * @param user          Nullable    User that created Credential; defaults to IAM user
+     *
+     * @return Status Code                   Returns status code of the lambda
+     * @throws Exception                       if something goes wrong
+     */
+    public String rotateCredential(String name, String application, String sdlc, String component, String sourceType,
+                                 String source, String lambdaName, String account, String user) throws Exception {
+        if (lambdaName == null || lambdaName.length() == 0)
+            lambdaName = Constants.DEFAULT_LAMBDA;
+
+        if(user == null ) {
+            user = getUser();
+        }
+
+        logger.info("Credential Rotation of " + name + " triggered by User " + user);
+        Map<String, String> payload = new HashMap<>();
+        payload.put("accountId", account);
+        payload.put("sourceType", sourceType);
+        payload.put("sourceName", source);
+        payload.put("secret",name);
+        payload.put("ags",application);
+        payload.put("env",sdlc);
+        payload.put("component",component);
+        logger.info(OBJECT_MAPPER.writeValueAsString(payload));
+
+        try {
+            InvokeRequest invokeRequest = new InvokeRequest().withFunctionName(lambdaName).withPayload(OBJECT_MAPPER.writeValueAsString(payload));
+
+            InvokeResult invokeResult = lambda.invoke(invokeRequest);
+            String invokeResultString = new String( invokeResult.getPayload().array());
+            Map lambdaResult = OBJECT_MAPPER.readValue(invokeResultString, Map.class);
+            String statusCode = lambdaResult.get("statusCode").toString();
+            logger.info("Rotation Lambda Returned with a status code of " + statusCode);
+            return statusCode;
+
+        } catch (Exception e) {
+            logger.error(e.toString());
+            return "500";
+        }
     }
 
     /**

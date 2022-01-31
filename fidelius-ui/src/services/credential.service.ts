@@ -59,8 +59,8 @@ export class CredentialService {
       '&shortKey=' + credential.shortKey);
   }
 
-  rotateCredential(credential: Credential): Observable<any> {
-     return this._http.post<any>(this.URL + '/credentials/rotate', credential);
+  rotateCredential(rotationDTO: RotationDTO): Observable<any> {
+     return this._http.post<any>(this.URL + '/credentials/rotate', rotationDTO);
   }
 
   getSourceNames(account: string, region: string, sourceType: string){
@@ -200,3 +200,16 @@ export interface IMetadata {
   environment: string;
   application: string;
 }
+
+export class RotationDTO {
+account: string;
+sourceType: string;
+source: string;
+shortKey: string;
+application: string;
+environment: string;
+component: string;
+region: string;
+}
+
+

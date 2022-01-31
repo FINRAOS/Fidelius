@@ -34,3 +34,7 @@ hs_err_pid*
 /demo-services/fidelius-setup/target/
 /demo-services/fidelius-setup/fidelius-service.iml/
 /demo-services/fidelius-setup/.idea/
+fidelius-ui/package-lock.json
+fidelius-ui/src/mock-api/config.json
+fidelius-ui/proxy.conf.json
+fidelius-ui/src/mock-api/config.json
