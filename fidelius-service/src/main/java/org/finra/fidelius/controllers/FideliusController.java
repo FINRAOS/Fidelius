@@ -170,8 +170,7 @@ class FideliusController {
     @ResponseBody
     @PostMapping(value="/credentials/rotate")
     public ResponseEntity rotateSecret(@RequestBody Map<String, String> request){
-       System.out.println(request.toString());
-        String account = request.get("account");
+       String account = request.get("account");
        String sourceType = request.get("sourceType");
        String sourceName = request.get("source");
        String shortKey = request.get("shortKey");
