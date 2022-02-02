@@ -478,18 +478,11 @@ public class FideliusClient {
         payload.put("ags",application);
         payload.put("env",sdlc);
         payload.put("component",component);
-        logger.info(OBJECT_MAPPER.writeValueAsString(payload));
-
         try {
             InvokeRequest invokeRequest = new InvokeRequest().withFunctionName(lambdaName).withPayload(OBJECT_MAPPER.writeValueAsString(payload));
-
             InvokeResult invokeResult = lambda.invoke(invokeRequest);
-            String invokeResultString = new String( invokeResult.getPayload().array());
-            Map lambdaResult = OBJECT_MAPPER.readValue(invokeResultString, Map.class);
-            String statusCode = lambdaResult.get("statusCode").toString();
-            logger.info("Rotation Lambda Returned with a status code of " + statusCode);
+            String statusCode = invokeResult.getStatusCode().toString();
             return statusCode;
-
         } catch (Exception e) {
             logger.error(e.toString());
             return "500";
