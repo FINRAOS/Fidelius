@@ -366,7 +366,7 @@ public class CredentialsService {
      * @param environment Key representing the environment in which the credential is associated with
      * @return Secret
      */
-    //@PreAuthorize("@fideliusRoleService.isAuthorized(#application, #account)")
+    @PreAuthorize("@fideliusRoleService.isAuthorized(#application, #account)")
     public String rotateCredential(String account, String sourceType, String source, String region, String application, String environment,
                                        String component, String shortKey) {
         setFideliusEnvironment(account, region);
