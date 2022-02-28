@@ -36,6 +36,7 @@ import org.finra.fidelius.model.HistoryEntry;
 import org.finra.fidelius.model.Metadata;
 import org.finra.fidelius.model.aws.AWSEnvironment;
 import org.finra.fidelius.model.db.DBCredential;
+import org.finra.fidelius.services.account.AccountsService;
 import org.finra.fidelius.services.auth.FideliusRoleService;
 import org.finra.fidelius.services.aws.AWSSessionService;
 import org.finra.fidelius.services.aws.DynamoDBService;
@@ -57,6 +58,9 @@ public class CredentialsService {
     @Value("${fidelius.dynamoTable}")
     private String tableName;
 
+    @Value("${fidelius.rotationLambda}")
+    private String rotationLambda;
+
     @Inject
     protected FideliusService fideliusService;
 
@@ -65,6 +69,9 @@ public class CredentialsService {
 
     @Inject
     private AWSSessionService awsSessionService;
+
+    @Inject
+    private AccountsService accountsService;
 
     @Inject
     private DynamoDBService dynamoDBService;
@@ -345,6 +352,39 @@ public class CredentialsService {
 
         // Add the new credential
         return putCredential(credential);
+    }
+    /**
+     * Get calls the rotation endpoint for a credential
+     *
+     * @param account     AWS Account alias used to look for account information
+     * @param sourceType  Source type of the credential
+     * @param source      Source of the credential
+     * @param shortKey    Short key or name associated with credential
+     * @param component   Optional component associated with credential
+     * @param region      AWS Region associated with AWS Account
+     * @param application Key representing membership section of key
+     * @param environment Key representing the environment in which the credential is associated with
+     * @return Secret
+     */
+    @PreAuthorize("@fideliusRoleService.isAuthorized(#application, #account)")
+    public String rotateCredential(String account, String sourceType, String source, String region, String application, String environment,
+                                       String component, String shortKey) {
+        setFideliusEnvironment(account, region);
+        String user = fideliusRoleService.getUserProfile().getUserId();
+
+        try {
+            if(source != null && sourceType != null) {
+                return fideliusService.rotateCredential(shortKey, application, environment, component, sourceType, source,
+                        accountsService.getAccountByAlias(account).getAccountId(), rotationLambda, user);
+            } else {
+                this.logger.info("Credential not rotated Source or SourceType is null");
+                return "500";
+            }
+        } catch (Exception e) {
+            this.logger.info("Credential not rotated " + e.toString());
+            return "500";
+        }
+
     }
 
     /**

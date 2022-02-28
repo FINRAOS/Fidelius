@@ -355,7 +355,7 @@ public class FideliusControllerTest {
         mockMvc.perform(getMetadataRequest)
                 .andExpect(status().isOk());
     }
-  
+
     @Test
     public void getSecretShouldReturn401ErrorWhenUserNotIncluded() throws Exception {
         when(credentialsService.getCredentialSecret(anyString(), anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn(new Credential());

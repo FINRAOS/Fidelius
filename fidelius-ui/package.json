@@ -43,7 +43,7 @@
     "docker-build": "echo Building Angular Application && ng build --prod --env=prod --aot --buildOptimizer && echo Building Docker Image && docker build -t fidelius-ui .",
     "docker-start": "docker run -d -p 80:80 --name fidelius-ui fidelius-ui && echo Docker running on port 80",
     "docker-stop": "docker stop fidelius-ui && docker rm fidelius-ui",
-    "api": "node src/mock-api/setup.js && node_modules/apimocker/bin/apimocker.js -c src/mock-api/config.json"
+    "api": "node src/mock-api/setup.js && apimocker/bin/apimocker.js -c src/mock-api/config.json"
   },
   "private": true,
   "devDependencies": {

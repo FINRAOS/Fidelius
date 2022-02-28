@@ -59,6 +59,33 @@ export class CredentialService {
       '&shortKey=' + credential.shortKey);
   }
 
+  rotateCredential(rotationDTO: RotationDTO): Observable<any> {
+     return this._http.post<any>(this.URL + '/credentials/rotate', rotationDTO);
+  }
+
+  getSourceNames(account: string, region: string, sourceType: string){
+    return this._http.get<any>( this.URL + '/sources?account=' + account +
+      '&region=' + region +
+      '&sourceType=' + sourceType.toLowerCase());
+  }
+
+  createMetadata(metadata: Metadata): Observable<any> {
+    return this._http.post<any>(this.URL + '/credentials/metadata', metadata);
+  }
+
+  updateMetadata(metadata: Metadata){
+    return this._http.put<any>(this.URL + '/credentials/metadata', metadata);
+  }
+
+  deleteMetadata(credential: Credential): Observable<any> {
+    return this._http.delete<any>( this.URL + '/credentials/metadata?application=' + credential.application.toUpperCase() +
+      '&region=' + credential.region +
+      '&environment=' + credential.environment +
+      '&account=' + credential.account +
+      '&component=' + credential.component +
+      '&shortKey=' + credential.shortKey);
+  }
+
   getSecret(credential: Credential): Observable<any> {
     return this._http.get<Credential>(this.URL + '/credentials/secret?application=' + credential.application.toUpperCase() +
       '&region=' + credential.region +
@@ -66,6 +93,15 @@ export class CredentialService {
       '&account=' + credential.account +
       '&component=' + credential.component +
       '&shortKey=' + credential.shortKey);
+  }
+
+  getMetadata(credential: Credential): Observable<any>{
+    return this._http.get<Credential>(this.URL + '/credentials/metadata?application=' + credential.application.toUpperCase() +
+    '&region=' + credential.region +
+    '&environment=' + credential.environment +
+    '&account=' + credential.account +
+    '&component=' + credential.component +
+    '&shortKey=' + credential.shortKey);
   }
 
   getCredentialHistory(credential: Credential): Observable<any> {
@@ -111,6 +147,20 @@ export class Credential implements ICredential {
   isActiveDirectory: boolean = undefined;
 }
 
+export class Metadata implements IMetadata {
+  lastUpdatedBy: string = undefined;
+  lastUpdatedDate: string  = undefined;
+  component: string  = undefined;
+  longKey: string  = undefined;
+  shortKey: string  = undefined;
+  sourceType: string  = "";
+  source: string  = "";
+  account: string  = undefined;
+  region: string  = undefined;
+  environment: string  = undefined;
+  application: string  = undefined;
+}
+
 export class History extends Credential {
   history: IHistory[] = [];
 }
@@ -136,3 +186,30 @@ export class Selected implements ISelected {
   environment: string = '';
   key: string = '';
 }
+
+export interface IMetadata {
+  lastUpdatedBy: string;
+  lastUpdatedDate: string;
+  component: string;
+  longKey: string;
+  shortKey: string;
+  sourceType: string;
+  source: string;
+  account: string;
+  region: string;
+  environment: string;
+  application: string;
+}
+
+export class RotationDTO {
+account: string;
+sourceType: string;
+source: string;
+shortKey: string;
+application: string;
+environment: string;
+component: string;
+region: string;
+}
+
+

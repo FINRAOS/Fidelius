@@ -42,6 +42,7 @@ export class PermissionService {
 export class Permission implements IPermission {
   createCredential: boolean = false;
   updateCredential: boolean = false;
+  rotateCredential: boolean = false;
   viewCredential: boolean = false;
   viewCredentialHistory: boolean = false;
   viewCredentialSecret: boolean = false;
@@ -51,6 +52,7 @@ export class Permission implements IPermission {
 interface IPermission {
   createCredential: boolean;
   updateCredential: boolean;
+  rotateCredential: boolean
   viewCredential: boolean;
   viewCredentialHistory: boolean;
   viewCredentialSecret: boolean;

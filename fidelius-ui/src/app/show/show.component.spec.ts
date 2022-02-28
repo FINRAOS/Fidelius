@@ -20,7 +20,7 @@ import { async, ComponentFixture, inject, TestBed } from '@angular/core/testing'
 import { ShowComponent } from './show.component';
 import { CUSTOM_ELEMENTS_SCHEMA, DebugElement, InjectionToken, NO_ERRORS_SCHEMA } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatDialogModule, MatInputModule, MatSnackBar, MatSnackBarModule } from '@angular/material';
+import { MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatSnackBar, MatSnackBarModule } from '@angular/material';
 import { HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { Credential, CredentialService, Selected } from '../../services/credential.service';
@@ -30,6 +30,8 @@ import { By } from '@angular/platform-browser';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/observable/of';
 import 'rxjs/add/observable/throw';
+import { MainComponent } from '../main/main.component';
+import { BrowserService } from '../../services/browser.service';
 
 describe('ShowComponent', () => {
   let component: ShowComponent;
@@ -40,6 +42,26 @@ describe('ShowComponent', () => {
     getSecret(credential: Credential): any {
       return Observable.of({secret: false});
     }
+    getMetadata(selected: Selected, credential: Credential): any {
+      return Observable.of({
+        "shortKey": "key",
+        "longKey": "APP.prod.key",
+        "environment": "prod",
+        "source": "source",
+        "sourceType": "RDS",
+        "component": undefined,
+        "lastUpdatedBy": "",
+        "lastUpdatedDate": "",
+        "region": ""});
+    }
+    getCredentialHistory(credential: Credential): any {
+      return Observable.of([{
+        "revision": 1,
+        "updatedBy": "name",
+        "updatedDate": "1/1/11, 12:00 PM",
+      }])
+    };
+    
   }
 
   class MockTdDialogService {
@@ -60,13 +82,24 @@ describe('ShowComponent', () => {
     }
   }
 
+  class MockMainComponent{
+  }
+  
+  class MockBrowserService{
+    checkIfIEOrEdge():boolean{
+      return false;
+    }
+  }
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      imports: [FormsModule, ReactiveFormsModule, MatInputModule, HttpClientModule, MatSnackBarModule, MatDialogModule, BrowserAnimationsModule, ClipboardModule],
+      imports: [ FormsModule, ReactiveFormsModule, MatInputModule, MatFormFieldModule, HttpClientModule, MatSnackBarModule, MatProgressSpinnerModule, MatDialogModule, BrowserAnimationsModule, ClipboardModule],
       providers: [ {provide: TdDialogService, useClass: MockTdDialogService },
                    {provide: CredentialService, useClass: MockCredentialService },
-                   {provide: ClipboardService, useClass: MockClipBoardService }],
+                   {provide: ClipboardService, useClass: MockClipBoardService },
+                   {provide: MainComponent, useClass: MockMainComponent},
+                   {provide: BrowserService, useClass: MockBrowserService},
+                  ],
       declarations: [ ShowComponent ],
       schemas: [NO_ERRORS_SCHEMA],
     })

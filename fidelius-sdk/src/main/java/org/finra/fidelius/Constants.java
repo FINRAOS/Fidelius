@@ -31,6 +31,7 @@ public final class Constants {
     public static final String FID_CONTEXT_COMPONENT = getField("FID_CONTEXT_COMPONENT") != null ? getField("FID_CONTEXT_COMPONENT") : "Component";
     public static final String DEFAULT_TABLE=  "credential-store";
     public static final String DEFAULT_KMS_KEY = "alias/credstash";
+    public static final String DEFAULT_LAMBDA = "CREDSTSH-amg-password-rotation";
     public static final String CREDSTASH_ENV_PREFIX = "CRED_";
     public static final String PROXY = "PROXY";
     public static final String PORT= "PORT";
