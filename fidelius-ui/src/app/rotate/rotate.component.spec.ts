@@ -42,7 +42,7 @@ describe('RotateComponent', () => {
   let debugElement: DebugElement;
 
   class MockCredentialService {
-    updateCredential(credential: Credential): any {
+    rotateCredential(credential: Credential): any {
       return Observable.of({secret: false});
     }
 
@@ -164,36 +164,6 @@ describe('RotateComponent', () => {
     expect(credentialService.getCredential).toHaveBeenCalledWith(selected, credential);
   });
 
-  it(`should display 'Edit Secret'`, async() => {
-    let element: DebugElement = debugElement.query(By.css('span'));
-    expect(element.nativeElement.textContent).toEqual('Edit Secret');
-    expect(element.nativeElement.textContent).not.toEqual('Add Credential');
-  });
-
-  it(`should display 'AGS' input disabled `, async() => {
-    let element: DebugElement = debugElement.query(By.css('input[name=application]'));
-    expect(element.attributes.hasOwnProperty('disabled')).toBeTruthy();
-  });
-
-  xit(`should display 'Account' input disabled`, async() => {
-    let element: DebugElement = debugElement.query(By.css('input[name=account]'));
-    expect(element.attributes.hasOwnProperty('disabled')).toBeTruthy();
-  });
-
-  it(`should display 'Full Qualified Name' as readonly`, async() => {
-    let element: DebugElement = debugElement.query(By.css('input[name=longKey]'));
-    expect(element.attributes.hasOwnProperty('readonly')).toBeTruthy();
-  });
-
-  xit(`should display Full Qualified Name if AGS, Component, Account, Key are present`, async() => {
-    component.credential.component = 'notEmpty';
-    component.credential.shortKey = 'notEmptyKey';
-    fixture.detectChanges();
-
-    let element: DebugElement = debugElement.query(By.css('input[name=longKey]'));
-    expect(element.parent.properties.hidden).toBeFalsy();
-  });
-
   it(`should load getCredential `, async() => {
     const credentialService: CredentialService = fixture.debugElement.injector.get(CredentialService);
     spyOn(credentialService, 'getCredential').and.callFake(() => (Observable.of({
@@ -232,73 +202,54 @@ describe('RotateComponent', () => {
     expect(component.hasError).toBeTruthy();
   });
 
-  it(`should hide Full Qualified Name if no component or key`, async() => {
-    let element: DebugElement = debugElement.query(By.css('input[name=longKey]'));
-    expect(element.parent.properties.hidden).toBeTruthy();
-  });
-
-  it(`should have Full Qualified Name equal to AGS.Component.Account.Key`, async() => {
-    let expected: string = 'TESTAGS.component.Prod.testKey';
-    component.credential.component = 'component';
-    component.credential.shortKey = 'testKey';
-    component.credential.environment = 'Prod';
-    fixture.detectChanges();
-
-    let element: DebugElement = debugElement.query(By.css('input[name=longKey]'));
-    expect(element.attributes['ng-reflect-value']).toEqual(expected);
-
-    component.credential.component = 'new';
-    component.credential.shortKey = undefined;
-    fixture.detectChanges();
-    expect(element.attributes['ng-reflect-value']).not.toEqual(expected);
-  });
-
-  xit(`should display secret field as invalid if invalid length'`, async() => {
-    let element: DebugElement = debugElement.query(By.css('input[name=secret]'));
-
-  });
-
-  it(`should display secret input as password field`, async() => {
-    let element: DebugElement = debugElement.query(By.css('input[name=secret]'));
-    expect(element.attributes['ng-reflect-type']).toEqual('password');
-    expect(element.attributes['ng-reflect-type']).not.toEqual('text');
-  });
-
-  it(`should display secret input as text when user clicks view icon`, async() => {
-    let element: DebugElement = debugElement.query(By.css('input[name=secret]'));
-    component.hideSecret = false;
-    fixture.detectChanges();
-    expect(element.attributes['ng-reflect-type']).toEqual('text');
-    expect(element.attributes['ng-reflect-type']).not.toEqual('password');
-  });
-
-  it(`should emit closeSideNav event on close with false`, async() => {
-    const parentComponent: MainComponent = fixture.debugElement.injector.get(MainComponent);
-    spyOn(parentComponent, 'closeSideNavAndRefresh');
-
-    component.closeSideNav(false);
-
-    expect(parentComponent.closeSideNavAndRefresh).toHaveBeenCalledTimes(1);
-    expect(parentComponent.closeSideNavAndRefresh).toHaveBeenCalledWith(false);
-  });
-
-  it(`should call credentialService with updated credential on submit`, async() => {
+  it(`should load getMetadata `, async() => {
     const credentialService: CredentialService = fixture.debugElement.injector.get(CredentialService);
-    spyOn(credentialService, 'updateCredential').and.returnValue(Observable.of({credential: true}));
+    spyOn(credentialService, 'getMetadata').and.callFake(() => (Observable.of({
+      "application": "APP",
+      "shortKey": "newValue",
+      "longKey": "test",
+      "environment": "dev",
+      "component": undefined,
+      "lastUpdatedBy": "",
+      "lastUpdatedDate": "",
+      "sourceType": "RDS",
+      "source" : "test",
+      "region": "east"})));
 
-    component.updateCredential();
+    component.getMetadata();
     fixture.detectChanges();
 
-    expect(credentialService.updateCredential).toHaveBeenCalled();
+
+    expect(credentialService.getMetadata).toHaveBeenCalledTimes(1);
+    expect(component.metadata.source).toEqual("test");
+    expect(component.metadata.sourceType).toEqual("RDS");
+    expect(component.metadata.shortKey).toEqual("newValue");
+    expect(component.metadata.application).toEqual("APP");
+    expect(component.metadata.region).toEqual("east");
+    expect(component.hasError).toBeFalsy();
   });
 
-  it(`should display error if error calling updateCredential() `, async() => {
-    const credentialService: any = fixture.debugElement.injector.get(CredentialService);
+  it(`should handle error on load getMetadata `, async() => {
+    const credentialService: CredentialService = fixture.debugElement.injector.get(CredentialService);
     const alertService: AlertService = fixture.debugElement.injector.get(AlertService);
-    spyOn(credentialService, 'updateCredential').and.callFake( () => (Observable.throw({status: 404})));
+    spyOn(credentialService, 'getMetadata').and.callFake( () => (Observable.throw({status: 404})));
     spyOn(alertService, 'openAlert');
 
-    component.updateCredential();
+    component.getMetadata();
+    fixture.detectChanges();
+
+    expect(credentialService.getMetadata).toHaveBeenCalledTimes(1);
+    expect(alertService.openAlert).toHaveBeenCalledWith({status: 404});
+    expect(component.hasError).toBeTruthy();
+  });
+  
+  it(`should display error if error calling rotateCredential() `, async() => {
+    const credentialService: any = fixture.debugElement.injector.get(CredentialService);
+    const alertService: AlertService = fixture.debugElement.injector.get(AlertService);
+    spyOn(credentialService, 'rotateCredential').and.callFake( () => (Observable.throw({status: 404})));
+    spyOn(alertService, 'openAlert');
+
+    component.rotateCredential();
     fixture.detectChanges();
 
     expect(alertService.openAlert).toHaveBeenCalledTimes(1);
@@ -306,13 +257,13 @@ describe('RotateComponent', () => {
     expect(component.sendingForm).toBeFalsy();
   });
 
-  it(`should open snack bar on success updateCredential() call`, async() => {
+  it(`should open snack bar on success rotateCredential() call`, async() => {
     const credentialService: any = fixture.debugElement.injector.get(CredentialService);
     const snackbarService: any = fixture.debugElement.injector.get(MatSnackBar);
-    spyOn(credentialService, 'updateCredential').and.returnValue(Observable.of({credential: {longKey: true}}));
+    spyOn(credentialService, 'rotateCredential').and.returnValue(Observable.of({credential: {longKey: true}}));
     spyOn(snackbarService, 'open').and.returnValue(Observable.of({credential: true}));
 
-    component.updateCredential();
+    component.rotateCredential();
     fixture.detectChanges();
 
     expect(snackbarService.open).toHaveBeenCalled();
@@ -326,7 +277,7 @@ describe('RotateComponent', () => {
 
   });
 
-  xit(`Should close AddCredential screen after displaying snackbar on form submit`, async() => {
+  xit(`Should close RotateCredential screen after displaying snackbar on form submit`, async() => {
 
   });
 
@@ -342,15 +293,4 @@ describe('RotateComponent', () => {
 
   });
 
-  xit(`should display No Special Characters and 8-24 Character long message on secret input on load`, async() => {
-    // expect(component.addForm.form.).toEqual('true');
-    let element: DebugElement = debugElement.query(By.css('input[name=secret]'));
-
-    element.nativeElement.value = '****';
-    // element.nati
-    // element = component.form.controls['secret'];
-    // fixture.detectChanges();
-    // tick();
-    // expect(element.classes).toEqual('fase');
-  });
 });
