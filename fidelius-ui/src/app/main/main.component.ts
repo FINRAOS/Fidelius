@@ -284,6 +284,10 @@ export class MainComponent implements OnInit, OnDestroy {
         this._router.navigate(['edit']);
         this.isSideNavCloseDisabled = true;
         break;
+      case 'rotate':
+        this._router.navigate(['rotate']);
+        this.isSideNavCloseDisabled = true;
+        break;
       case 'view':
         this._router.navigate(['view', {tab: tab}]);
         this.isSideNavCloseDisabled = false;

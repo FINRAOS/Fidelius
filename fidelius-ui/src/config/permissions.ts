@@ -25,6 +25,7 @@ export const PERMISSIONS: any = {
         'DEV': [
           'createCredential',
           'updateCredential',
+          'rotateCredential',
           'viewCredential',
           'viewCredentialSecret',
           'viewCredentialHistory',
@@ -33,6 +34,7 @@ export const PERMISSIONS: any = {
         'OPS': [
           'createCredential',
           'updateCredential',
+          'rotateCredential',
           'viewCredential',
           'viewCredentialSecret',
           'viewCredentialHistory',
@@ -41,6 +43,7 @@ export const PERMISSIONS: any = {
         'MASTER': [
           'createCredential',
           'updateCredential',
+          'rotateCredential',
           'viewCredential',
           'viewCredentialSecret',
           'viewCredentialHistory',
@@ -53,6 +56,7 @@ export const PERMISSIONS: any = {
         'DEV': [
           'createCredential',
           'updateCredential',
+          'rotateCredential',
           'viewCredential',
           'viewCredentialSecret',
           'viewCredentialHistory',
@@ -61,6 +65,7 @@ export const PERMISSIONS: any = {
         'OPS': [
           'createCredential',
           'updateCredential',
+          'rotateCredential',
           'viewCredential',
           'viewCredentialSecret',
           'viewCredentialHistory',
@@ -69,6 +74,7 @@ export const PERMISSIONS: any = {
         'MASTER': [
           'createCredential',
           'updateCredential',
+          'rotateCredential',
           'viewCredential',
           'viewCredentialSecret',
           'viewCredentialHistory',
@@ -85,6 +91,7 @@ export const PERMISSIONS: any = {
         'OPS': [
           'createCredential',
           'updateCredential',
+          'rotateCredential',
           'viewCredential',
           'viewCredentialSecret',
           'viewCredentialHistory',
@@ -92,6 +99,7 @@ export const PERMISSIONS: any = {
         'MASTER': [
           'createCredential',
           'updateCredential',
+          'rotateCredential',
           'viewCredential',
           'viewCredentialSecret',
           'viewCredentialHistory',
