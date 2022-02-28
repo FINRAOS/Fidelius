@@ -252,7 +252,7 @@ jobs:
           command: |
             GPG_TTY=$(tty)
             export GPG_TTY
-            echo -e "$NEXUS_RM_KEY_NEW" | gpg --batch --import
+            echo -e "$NEXUS_RM_KEY" | gpg --batch --import
       - run:
           name: Deploy Fidelius SDK
           command: |
