@@ -16,18 +16,15 @@
  */
 
 import {
-  ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, HostListener, Input, OnInit, Output,
-  ViewChild,
-  AfterViewInit,
+  ChangeDetectorRef, Component, HostListener, OnInit, ViewChild
 } from '@angular/core';
-import { AbstractControl, FormControl, NgForm } from '@angular/forms';
+import { AbstractControl, NgForm } from '@angular/forms';
 import { MatSnackBar } from '@angular/material';
-import { Credential, CredentialService, IActiveDirectory, Selected, ICredential, Metadata } from '../../services/credential.service';
+import { Credential, CredentialService, IActiveDirectory, Metadata } from '../../services/credential.service';
 import { AlertService } from '../../services/alert.service';
 import { MainComponent } from '../main/main.component';
 import { BrowserService } from '../../services/browser.service';
 import { APPLICATION_LIST_LABEL_NAME } from '../../config/permissions';
-import { THIS_EXPR } from '@angular/compiler/src/output/output_ast';
 
 
 @Component({
