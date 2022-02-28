@@ -20,7 +20,7 @@ import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { RotateComponent } from './rotate.component';
 import { CUSTOM_ELEMENTS_SCHEMA, DebugElement } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatDialogModule, MatInputModule, MatSnackBar, MatSnackBarModule } from '@angular/material';
+import { MatAutocompleteModule, MatDialogModule, MatInputModule, MatSnackBar, MatSnackBarModule, MatFormFieldModule, MatSelectModule } from '@angular/material';
 import {HttpClient, HttpClientModule, HttpErrorResponse} from '@angular/common/http';
 import { TdDialogService } from '@covalent/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -51,6 +51,19 @@ describe('RotateComponent', () => {
         "shortKey": "key",
         "longKey": "APP.prod.key",
         "environment": "prod",
+        "component": undefined,
+        "lastUpdatedBy": "",
+        "lastUpdatedDate": "",
+        "region": ""});
+    }
+
+    getMetadata(selected: Selected, credential: Credential): any {
+      return Observable.of({
+        "shortKey": "key",
+        "longKey": "APP.prod.key",
+        "environment": "prod",
+        "source": "source",
+        "sourceType": "RDS",
         "component": undefined,
         "lastUpdatedBy": "",
         "lastUpdatedDate": "",
@@ -113,7 +126,7 @@ describe('RotateComponent', () => {
     TestBed.configureTestingModule({
       declarations: [ RotateComponent ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
-      imports: [FormsModule, ReactiveFormsModule, MatInputModule, MatSnackBarModule, MatDialogModule, BrowserAnimationsModule, HttpClientModule],
+      imports: [FormsModule, ReactiveFormsModule, MatInputModule, MatSelectModule, MatAutocompleteModule, MatFormFieldModule,  MatSnackBarModule, MatDialogModule, BrowserAnimationsModule, HttpClientModule],
       providers: [ {provide: TdDialogService, useClass: MockTdDialogService },
         {provide: CredentialService, useClass: MockCredentialService },
         {provide: MainComponent, useClass: MockMainComponent },
@@ -213,7 +226,7 @@ describe('RotateComponent', () => {
       "lastUpdatedBy": "",
       "lastUpdatedDate": "",
       "sourceType": "RDS",
-      "source" : "test",
+      "source" : "source",
       "region": "east"})));
 
     component.getMetadata();
@@ -221,7 +234,7 @@ describe('RotateComponent', () => {
 
 
     expect(credentialService.getMetadata).toHaveBeenCalledTimes(1);
-    expect(component.metadata.source).toEqual("test");
+    expect(component.metadata.source).toEqual("source");
     expect(component.metadata.sourceType).toEqual("RDS");
     expect(component.metadata.shortKey).toEqual("newValue");
     expect(component.metadata.application).toEqual("APP");
@@ -245,15 +258,14 @@ describe('RotateComponent', () => {
   
   it(`should display error if error calling rotateCredential() `, async() => {
     const credentialService: any = fixture.debugElement.injector.get(CredentialService);
-    const alertService: AlertService = fixture.debugElement.injector.get(AlertService);
+    const snackbarService: any = fixture.debugElement.injector.get(MatSnackBar);
     spyOn(credentialService, 'rotateCredential').and.callFake( () => (Observable.throw({status: 404})));
-    spyOn(alertService, 'openAlert');
+    spyOn(snackbarService, 'open').and.returnValue(Observable.of({status: 404}));
 
-    component.rotateCredential();
+    component.rotate();
     fixture.detectChanges();
 
-    expect(alertService.openAlert).toHaveBeenCalledTimes(1);
-    expect(alertService.openAlert).toHaveBeenCalledWith({status: 404});
+    expect(snackbarService.open).toHaveBeenCalledTimes(1);
     expect(component.sendingForm).toBeFalsy();
   });
 

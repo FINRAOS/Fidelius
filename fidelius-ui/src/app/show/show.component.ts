@@ -16,8 +16,7 @@
  */
 
 import {
-  ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges,
-  ViewChild
+  ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild
 } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { Credential, CredentialService, Selected, IHistory, Metadata, RotationDTO } from '../../services/credential.service';

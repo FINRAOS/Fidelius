@@ -18,7 +18,7 @@
 import {
   Component, OnInit, ViewChild, HostListener, ChangeDetectorRef,
 } from '@angular/core';
-import { AbstractControl, NgForm } from '@angular/forms';
+import { NgForm } from '@angular/forms';
 import { MatSnackBar } from '@angular/material';
 import { AlertService } from '../../services/alert.service';
 import {
@@ -27,7 +27,6 @@ import {
 import { MainComponent } from '../main/main.component';
 import { BrowserService } from '../../services/browser.service';
 import { APPLICATION_LIST_LABEL_NAME } from '../../config/permissions';
-import { Meta } from '@angular/platform-browser';
 
 @Component({
   selector: 'fidelius-rotate',
@@ -106,6 +105,7 @@ export class RotateComponent implements OnInit{
       }  
       this._changeDetectorRef.detectChanges();
     }, (error: any) => {
+        this.hasError = true;
         this._alertService.openAlert(error);
         this._changeDetectorRef.detectChanges();
     });

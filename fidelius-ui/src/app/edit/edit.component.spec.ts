@@ -20,7 +20,7 @@ import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { EditComponent } from './edit.component';
 import { CUSTOM_ELEMENTS_SCHEMA, DebugElement } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatDialogModule, MatInputModule, MatSnackBar, MatSnackBarModule } from '@angular/material';
+import { MatAutocompleteModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatSnackBar, MatSnackBarModule } from '@angular/material';
 import {HttpClient, HttpClientModule, HttpErrorResponse} from '@angular/common/http';
 import { TdDialogService } from '@covalent/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -55,6 +55,25 @@ describe('EditComponent', () => {
         "lastUpdatedBy": "",
         "lastUpdatedDate": "",
         "region": ""});
+    }
+
+    getMetadata(selected: Selected, credential: Credential): any {
+      return Observable.of({
+        "shortKey": "key",
+        "longKey": "APP.prod.key",
+        "environment": "prod",
+        "source": "source",
+        "sourceType": "RDS",
+        "component": undefined,
+        "lastUpdatedBy": "",
+        "lastUpdatedDate": "",
+        "region": ""});
+    }
+
+    getSourceNames(account: string, region: string, sourceType: string): any {
+      return Observable.of(
+      ["test", "test2"]
+      )
     }
 
     getActiveDirectoryPasswordValidation(): Observable<IActiveDirectory> {
@@ -113,7 +132,7 @@ describe('EditComponent', () => {
     TestBed.configureTestingModule({
       declarations: [ EditComponent ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
-      imports: [FormsModule, ReactiveFormsModule, MatInputModule, MatSnackBarModule, MatDialogModule, BrowserAnimationsModule, HttpClientModule],
+      imports: [FormsModule, ReactiveFormsModule, MatInputModule, MatSelectModule, MatFormFieldModule, MatAutocompleteModule, MatSnackBarModule, MatDialogModule, BrowserAnimationsModule, HttpClientModule],
       providers: [ {provide: TdDialogService, useClass: MockTdDialogService },
         {provide: CredentialService, useClass: MockCredentialService },
         {provide: MainComponent, useClass: MockMainComponent },
