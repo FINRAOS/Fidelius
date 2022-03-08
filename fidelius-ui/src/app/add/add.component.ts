@@ -16,13 +16,11 @@
  */
 
 import {
-  ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, HostListener, Input, OnInit, Output,
-  ViewChild,
-  AfterViewInit,
+  ChangeDetectorRef, Component, HostListener, OnInit, ViewChild
 } from '@angular/core';
-import { AbstractControl, FormControl, NgForm } from '@angular/forms';
+import { AbstractControl, NgForm } from '@angular/forms';
 import { MatSnackBar } from '@angular/material';
-import { Credential, CredentialService, IActiveDirectory, Selected, ICredential } from '../../services/credential.service';
+import { Credential, CredentialService, IActiveDirectory, Metadata } from '../../services/credential.service';
 import { AlertService } from '../../services/alert.service';
 import { MainComponent } from '../main/main.component';
 import { BrowserService } from '../../services/browser.service';
@@ -37,6 +35,7 @@ import { APPLICATION_LIST_LABEL_NAME } from '../../config/permissions';
 })
 export class AddComponent implements OnInit {
   credential: Credential = new Credential();
+  metadata: Metadata = new Metadata();
   hideSecret: boolean = true;
   sendingForm: boolean = false;
   isDuplicateCredential: boolean = false;
@@ -46,6 +45,10 @@ export class AddComponent implements OnInit {
   @ViewChild(NgForm) addForm: NgForm;
   secretTypes: string[] = ['Password', 'Active Directory', 'Other'];
   secretType: string ;
+  sourceTypes: string[] = ["-", "Aurora", "RDS", "Service Account"];
+  sourceNames: string[] = [];
+  filteredSourceNames: string[] = [];
+
   isIEOrEdge: boolean;
   APPLICATION_LIST_LABEL_NAME: string = APPLICATION_LIST_LABEL_NAME;
 
@@ -62,6 +65,11 @@ export class AddComponent implements OnInit {
     this.credential.environment = '';
     this.credential.lastUpdatedDate = new Date().toISOString();
     this.credential.region = this._parentComponent.selected.region;
+    this.metadata.account = this._parentComponent.selected.account.alias;
+    this.metadata.application = this._parentComponent.selected.application;
+    this.metadata.lastUpdatedDate = new Date().toISOString();
+    this.metadata.region = this._parentComponent.selected.region;
+
     this.getActiveDirectoryPasswordPattern();
     this.isIEOrEdge = this._browserService.checkIfIEOrEdge();
   }
@@ -128,15 +136,32 @@ export class AddComponent implements OnInit {
     // Send the new credential
     this.sendingForm = true;
     this._credentialService.createCredential(this.credential).subscribe((credential: Credential) => {
-      this.sendingForm = false;
-      let message: string = 'Credential ' + this.getLongKey() + ' created';
-      this._snackBarService.open(message, '', {
-        duration: 3000,
-        horizontalPosition: 'center',
-        verticalPosition: 'bottom'
+      this.metadata.component = this.credential.component;
+      this.metadata.shortKey = this.credential.shortKey;
+      this.metadata.environment = this.credential.environment;
+      this._credentialService.createMetadata(this.metadata).subscribe((metadata:Metadata)=>{
+        this.sendingForm = false;
+        let message: string = 'Credential ' + this.getLongKey() + ' created';
+        this._snackBarService.open(message, '', {
+          duration: 3000,
+          horizontalPosition: 'center',
+          verticalPosition: 'bottom'
+        });
+        this.closeSideNav(true);
+        this._changeDetectorRef.detectChanges();
+      }, (error: any) => {
+        this.sendingForm = false;
+        let message: string = 'Credential ' + this.getLongKey() + ' created, but Metadata failed to create';
+        this._snackBarService.open(message, '', {
+          duration: 3000,
+          horizontalPosition: 'center',
+          verticalPosition: 'bottom'
+        });
+        this._alertService.openAlert(error);
+        this.closeSideNav(true);
+        this._changeDetectorRef.detectChanges();
       });
-      this.closeSideNav(true);
-      this._changeDetectorRef.detectChanges();
+      
     }, (error: any) => {
       this.sendingForm = false;
       if (error.status === 400 && error.error.message === 'Credential already exists!') {
@@ -148,4 +173,27 @@ export class AddComponent implements OnInit {
       }
     });
   }
+
+  sourceNameAuto(): void {
+    if(this.metadata.sourceType !== undefined){
+      this._credentialService.getSourceNames(this.credential.account, this.credential.region, this.metadata.sourceType).subscribe((sourceNames: string[])=>{
+        this.sourceNames = sourceNames;
+        this.filteredSourceNames = sourceNames;
+        this._changeDetectorRef.detectChanges();
+      }, (error: any) => {
+        this.sourceNames = [];
+        this.filteredSourceNames = [];
+        this._changeDetectorRef.detectChanges();
+
+      });
+    }
+  }
+
+  filterSourceName(event: any):void{
+    const input = event.target.value;
+    this.filteredSourceNames = this.sourceNames.filter(source => source.includes(input));    
+    this._changeDetectorRef.detectChanges();
+  }
+
+
 }

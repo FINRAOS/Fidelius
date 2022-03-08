@@ -101,6 +101,36 @@
         </mat-hint>
         </span>
         </mat-form-field>
+        <mat-form-field>
+          <mat-label>Source Type</mat-label>
+          <mat-select   placeholder="Source Type"
+                        name="sourceType"
+                        (selectionChange)="sourceNameAuto()"
+                        [(ngModel)]="metadata.sourceType">
+            <mat-option *ngFor="let type of sourceTypes" 
+                        [value]="type"
+                        ngDefaultControl>
+                        {{type}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        
+        <mat-form-field>
+          <input matInput
+                #sourceNameElement
+                #sourceNameControl="ngModel"
+                name="sourceName"
+                (keyup)="filterSourceName($event)"
+                [(ngModel)]="metadata.source"
+                placeholder="Source Name"
+                [matAutocomplete]="auto"
+                required>
+            <mat-autocomplete #auto="matAutocomplete">
+              <mat-option *ngFor="let sourceName of filteredSourceNames" [value]="sourceName">
+                {{sourceName}}
+              </mat-option>
+            </mat-autocomplete>
+        </mat-form-field>
         <div class="push-bottom-sm">
           <label class="push-xs push-left-none secret-type-radio-label">Secret Type</label>
         </div>

@@ -25,7 +25,7 @@ import { AppComponent } from './app.component';
 import {
   MatButtonModule, MatListModule, MatCardModule, MatMenuModule, MatInputModule, MatIconModule, MatSelectModule, MatDialogModule, MatSnackBarModule,
   MatToolbarModule, MatTabsModule, MatSidenavModule, MatTooltipModule, MatRadioModule, MatAutocompleteModule, MatTableModule, MatPaginatorModule,
-  MatSortModule, MatProgressBarModule, MatCheckboxModule,
+  MatSortModule, MatProgressBarModule, MatCheckboxModule, MatProgressSpinnerModule,
 } from '@angular/material';
 
 import {
@@ -35,6 +35,7 @@ import { AppRoutingModule, routedComponents } from './app-routing.module';
 import { MainComponent } from './main/main.component';
 import { AddComponent } from './add/add.component';
 import { EditComponent } from './edit/edit.component';
+import { RotateComponent } from './rotate/rotate.component';
 import { ShowComponent } from './show/show.component';
 import { ClipboardModule } from 'ngx-clipboard';
 import { SearchComponent } from './search/search.component';
@@ -85,6 +86,7 @@ import { GroupByPipe } from './pipes/group-by.pipe';
     MatPaginatorModule,
     MatSortModule,
     MatProgressBarModule,
+    MatProgressSpinnerModule,
     /** Covalent Modules */
     CovalentCommonModule,
     CovalentLayoutModule,
@@ -100,6 +102,7 @@ import { GroupByPipe } from './pipes/group-by.pipe';
     MainComponent,
     AddComponent,
     EditComponent,
+    RotateComponent,
     ShowComponent,
     SearchComponent,
     IntroComponent,

@@ -15,12 +15,20 @@
  *
  */
 
-.show-credential-form {
-  display: flex;
-  flex-direction: column;
+.rotate-credential-form {
+
   .mat-form-field, .mat-form-field-infix, .mat-form-field-infix{
     width: 100% !important;
   }
+}
+
+.activeDirectory{
+  white-space: pre;
+}
+
+.secret-radio-group {
+  display: inline-flex;
+  flex-direction: column;
 }
 
 .cred-secret-textarea.mat-input-infix.mat-form-field-infix{
@@ -28,10 +36,6 @@
 }
 
 .cred-secret-textarea {
-  .mat-form-field-flex {
-    position: relative;
-    z-index: 1;
-  }
   .mat-form-field-infix{
     border-top:0px !important;
   }
@@ -39,47 +43,29 @@
     margin-top: -14px;
     margin-bottom: -8px;
     height: 120px;
-    padding: 0.4375em;
+    width: 98%;
   }
+}
+
+.secret-type-radio-label{
+  font-weight: 400;
+  font-size: 14px;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
 }
 
 .copy-view-icons{
   position: absolute;
-  top: -38px;
+  top: -26px;
   right: 0px;
 }
 
-.mat-card{
-  padding: 3%;
-  font-size: 14px;
-  .mat-icon-key{
-    font-size:36px;
-    padding-right: 4%;
-    vertical-align: top;
-  }
-  .mat-button{
-    padding-left: 0;
-  } 
-}
-
-.label-text{
-  font-weight: 500;
+.column-format{
+  display: flex;
+  flex-flow: column;
 }
 
 .last-update{
+  padding-left: 5%;
+  padding-top: 3%;
   align-self: center;
-}
-
-.rotate-button{
-  display: flex;
-  justify-content: space-between;
-}
-
-.edit-button{
-  display: flex;
-  justify-content: space-around;
-  padding-top: 10px;
-  padding-bottom: 10px;
-  padding-left: 20px;
-  padding-right: 20px;
 }

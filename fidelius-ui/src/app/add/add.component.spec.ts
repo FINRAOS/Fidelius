@@ -23,7 +23,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Credential, CredentialService, IActiveDirectory } from '../../services/credential.service';
 import { HttpClientModule, HttpErrorResponse } from '@angular/common/http';
 import { TdDialogService } from '@covalent/core';
-import { MatInputModule, MatSnackBarModule, MatDialogModule, MatSnackBar } from '@angular/material';
+import { MatInputModule, MatSnackBarModule, MatDialogModule, MatSnackBar, MatSelectModule, MatFormFieldModule, MatAutocompleteModule } from '@angular/material';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/observable/of';
@@ -81,7 +81,7 @@ describe('AddComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      imports: [FormsModule, ReactiveFormsModule, MatInputModule, HttpClientModule, MatSnackBarModule, MatDialogModule, BrowserAnimationsModule],
+      imports: [FormsModule, ReactiveFormsModule, MatInputModule, MatSelectModule, MatFormFieldModule, MatAutocompleteModule, HttpClientModule, MatSnackBarModule, MatDialogModule, BrowserAnimationsModule],
       providers: [ TdDialogService,
           {provide: CredentialService, useClass: MockCredentialService },
           {provide: BrowserService, useClass: MockBrowserService },

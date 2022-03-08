@@ -16,15 +16,17 @@
  */
 
 import {
-  ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges,
-  ViewChild
+  ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild
 } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { Credential, CredentialService, Selected } from '../../services/credential.service';
+import { Credential, CredentialService, Selected, IHistory, Metadata, RotationDTO } from '../../services/credential.service';
 import { AlertService } from '../../services/alert.service';
 import { ClipboardService } from 'ngx-clipboard';
 import { MatSnackBar } from '@angular/material';
 import { APPLICATION_LIST_LABEL_NAME } from '../../config/permissions';
+import { MainComponent } from '../main/main.component';
+import { BrowserService } from '../../services/browser.service';
+
 
 
 @Component({
@@ -43,7 +45,14 @@ export class ShowComponent implements OnInit {
   copyingSecret: boolean = false;
   loadedSecret: boolean = false;
   loadingSecret: boolean = false;
+  isIEOrEdge: boolean;
+  showError: boolean = true;
+  history: IHistory;
+  metadata: Metadata = new Metadata();
+  sourceType: string = "-"
+  sourceName: string = "-"
   secretPlaceholderText: string = 'loadingSecret.................';
+  rotating: boolean = false;
   @ViewChild(NgForm) showForm: NgForm;
   APPLICATION_LIST_NAME: string = APPLICATION_LIST_LABEL_NAME;
 
@@ -52,7 +61,9 @@ constructor( private _credentialService: CredentialService,
                private _clipboardService: ClipboardService,
                private _snackBarService: MatSnackBar,
                private _alertService: AlertService,
+               private _parentComponent: MainComponent,
                private _changeDetectorRef: ChangeDetectorRef,
+               private _browserService: BrowserService,
                ) {
   }
 
@@ -61,6 +72,9 @@ constructor( private _credentialService: CredentialService,
     this.credential.application = this.selected.application;
     this.credential.secret = this.secretPlaceholderText;
     this.credential.region = this.selected.region;
+    this.isIEOrEdge = this._browserService.checkIfIEOrEdge();
+    this.getHistory();
+    this.getMetadata();
     this._changeDetectorRef.detectChanges();
   }
 
@@ -113,5 +127,72 @@ constructor( private _credentialService: CredentialService,
       this._alertService.openAlert(error);
       this._changeDetectorRef.detectChanges();
     });
+  }
+
+  getHistory(): void {
+    this._credentialService.getCredentialHistory(this.credential).subscribe( (history: IHistory[]) => {
+      history.sort((a, b) => a.revision < b.revision ? 1 : -1);
+      this.history = history[0];
+      this._changeDetectorRef.detectChanges();
+    }, (error: any) => {
+      this._alertService.openAlert(error);
+      this._changeDetectorRef.detectChanges();
+    });
+  }
+
+  getMetadata():void {
+    this._credentialService.getMetadata(this.credential).subscribe( (metadata: Metadata) => {
+      this.metadata = metadata;
+      this._changeDetectorRef.detectChanges();
+    }, (error: any) => {
+      this.metadata = null;
+      this._changeDetectorRef.detectChanges();
+    });
+  }
+
+  rotateSecret():void{
+    if(this.metadata.source && this.metadata.sourceType ){
+      this.rotateCredential();
+    }
+    else{
+      this._parentComponent.openSideNav(this.credential, "rotate", 0);
+    }
+    
+  }
+
+  rotateCredential(): void {
+    this.rotating = true;
+    let rotationDTO: RotationDTO = new RotationDTO();
+    rotationDTO.account = this.credential.account;
+    rotationDTO.sourceType = this.metadata.sourceType;
+    rotationDTO.source = this.metadata.source;
+    rotationDTO.shortKey = this.credential.shortKey;
+    rotationDTO.application = this.credential.application;
+    rotationDTO.environment = this.credential.environment;
+    rotationDTO.component = this.credential.component;
+    rotationDTO.region = this.credential.region;
+    this.credential.lastUpdatedDate = new Date().toISOString();
+    this._credentialService.rotateCredential(rotationDTO).subscribe( (data: any) => {
+      this.rotating = false;
+      let message: string = 'Credential ' + this.credential.longKey + ' rotated';
+      this._snackBarService.open(message,  '', {  horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: ["snackbar-success"], duration: 3000 });
+      this._changeDetectorRef.detectChanges();
+    }, (error: any) => {
+      console.log(error)
+      this.rotating = false;
+      let message: string = 'Credential ' + this.credential.longKey + ' failed to rotate: ' + error.status + " " + error.statusText;      
+      this._snackBarService.open(message,  'DISMISS', { horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: ["snackbar-error"] });
+      this._changeDetectorRef.detectChanges();
+    });
+  }
+
+
+  editSecret():void{
+    this._parentComponent.openSideNav(this.credential, "edit", 0);
+
+  }
+
+  dismissError():void{
+    this.showError = false;
   }
 }

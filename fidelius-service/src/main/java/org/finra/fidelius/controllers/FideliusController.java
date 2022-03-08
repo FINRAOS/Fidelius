@@ -35,6 +35,7 @@ import javax.inject.Inject;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 class FideliusController {
@@ -164,6 +165,35 @@ class FideliusController {
             return new ResponseEntity<>(credentialSecret, HttpStatus.ACCEPTED);
 
         return new ResponseEntity<>("Credential not deleted", HttpStatus.NOT_FOUND);
+    }
+
+    @ResponseBody
+    @PostMapping(value="/credentials/rotate")
+    public ResponseEntity rotateSecret(@RequestBody Map<String, String> request){
+       String account = request.get("account");
+       String sourceType = request.get("sourceType");
+       String sourceName = request.get("source");
+       String shortKey = request.get("shortKey");
+       String component = request.get("component");
+       String region = request.get("region");
+       String application = request.get("application");
+       String environment= request.get("environment");
+
+       String lambdaStatus = credentialsService.rotateCredential(account, sourceType, sourceName, region, application, environment, component, shortKey);
+       switch (lambdaStatus){
+           case "200":
+               return new ResponseEntity<String>(HttpStatus.OK);
+           case "401":
+               return new ResponseEntity<>("Unauthorized to Rotate", HttpStatus.UNAUTHORIZED);
+           case "403":
+               return new ResponseEntity<>("Improper Membership", HttpStatus.FORBIDDEN);
+           case "404":
+               return new ResponseEntity<>("Resource Does Not Exist", HttpStatus.NOT_FOUND);
+           case "500":
+               return new ResponseEntity<>("Internal Server Error", HttpStatus.INTERNAL_SERVER_ERROR);
+           default:
+               return new ResponseEntity<>("Error " + lambdaStatus, HttpStatus.INTERNAL_SERVER_ERROR);
+       }
     }
 
     @ResponseBody
