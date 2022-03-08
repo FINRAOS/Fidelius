@@ -18,7 +18,7 @@
         <id>gpg</id>
         <properties>
             <gpg.executable>gpg</gpg.executable>
-            <gpg.passphrase>${NEXUS_RM_GPG}</gpg.passphrase>
+            <gpg.passphrase>${NEXUS_RM_GPG_NEW}</gpg.passphrase>
         </properties>
     </profile>
 
