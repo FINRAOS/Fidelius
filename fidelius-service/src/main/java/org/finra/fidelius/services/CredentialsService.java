@@ -29,26 +29,42 @@ import com.amazonaws.services.rds.model.DBInstance;
 import com.amazonaws.services.rds.model.DescribeDBClustersResult;
 import com.amazonaws.services.rds.model.DescribeDBInstancesResult;
 import com.amazonaws.services.securitytoken.model.AWSSecurityTokenServiceException;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import org.dmfs.httpessentials.client.HttpRequestExecutor;
+import org.dmfs.httpessentials.httpurlconnection.HttpUrlConnectionExecutor;
+import org.dmfs.oauth2.client.*;
+import org.dmfs.oauth2.client.grants.ClientCredentialsGrant;
+import org.dmfs.oauth2.client.scope.BasicScope;
+import org.dmfs.rfc3986.encoding.Precoded;
+import org.dmfs.rfc3986.uris.LazyUri;
+import org.dmfs.rfc5545.Duration;
 import org.finra.fidelius.MetadataParameters;
 import org.finra.fidelius.exceptions.FideliusException;
 import org.finra.fidelius.model.Credential;
 import org.finra.fidelius.model.HistoryEntry;
 import org.finra.fidelius.model.Metadata;
+import org.finra.fidelius.model.rotate.RotateRequest;
 import org.finra.fidelius.model.aws.AWSEnvironment;
 import org.finra.fidelius.model.db.DBCredential;
 import org.finra.fidelius.services.account.AccountsService;
 import org.finra.fidelius.services.auth.FideliusRoleService;
 import org.finra.fidelius.services.aws.AWSSessionService;
 import org.finra.fidelius.services.aws.DynamoDBService;
+import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import javax.inject.Inject;
+import java.net.URI;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -57,9 +73,6 @@ public class CredentialsService {
 
     @Value("${fidelius.dynamoTable}")
     private String tableName;
-
-    @Value("${fidelius.rotationLambda}")
-    private String rotationLambda;
 
     @Inject
     protected FideliusService fideliusService;
@@ -82,11 +95,39 @@ public class CredentialsService {
     @Value("${fidelius.kmsKey}")
     private String kmsKey;
 
+    @Value("${fidelius.rotate.url}")
+    private String rotateUrl;
+
+    @Value("${fidelius.rotate.uri}")
+    private String rotateUri;
+
+    @Value("${fidelius.auth.oauth.tokenUrl}")
+    private String tokenUrl;
+
+    @Value("${fidelius.auth.oauth.tokenUri}")
+    private String tokenUri;
+
+    @Value("${fidelius.auth.oauth.clientId}")
+    private String clientId;
+
+    @Value("${fidelius.auth.oauth.clientSecret}")
+    private String clientSecret;
 
     private final static String RDS = "rds";
     private final static String AURORA = "aurora";
 
     private Logger logger = LoggerFactory.getLogger(CredentialsService.class);
+    private RestTemplate restTemplate;
+
+    private LoadingCache<String, Optional<String>> userOAuth2TokenCache = CacheBuilder.newBuilder()
+            .maximumSize(1000L)
+            .concurrencyLevel(10)
+            .expireAfterWrite(60L, TimeUnit.MINUTES)
+            .build(new CacheLoader<String, Optional<String>>() {
+                public Optional<String> load(String user) throws Exception {
+                    return Optional.ofNullable(getOAuth2Header(clientId, clientSecret));
+                }
+            });
 
     /**
      * Sets Fidelius environment for given AWS Account and AWS Region
@@ -370,12 +411,45 @@ public class CredentialsService {
     public String rotateCredential(String account, String sourceType, String source, String region, String application, String environment,
                                        String component, String shortKey) {
         setFideliusEnvironment(account, region);
+        restTemplate = new RestTemplate();
         String user = fideliusRoleService.getUserProfile().getUserId();
+        String accountId = fideliusRoleService.fetchAwsAccountId(account);
+        String oAuth2Header = "";
+        if(rotateUrl == null || rotateUri == null || rotateUrl.isEmpty() || rotateUri.isEmpty()) {
+            this.logger.error("Password rotation URL or URI not provided. Please ensure that fidelius.rotate.url and fidelius.rotate.uri are set.");
+            return "500";
+        }
+        if(oAuthTokenEndpointProvided()) {
+            oAuth2Header = userOAuth2TokenCache.getUnchecked(user).get();
+        }
 
         try {
             if(source != null && sourceType != null) {
-                return fideliusService.rotateCredential(shortKey, application, environment, component, sourceType, source,
-                        accountsService.getAccountByAlias(account).getAccountId(), rotationLambda, user);
+                logger.info("Credential Rotation of " + shortKey + " triggered by User " + user);
+                RotateRequest rotateRequest = new RotateRequest(
+                        accountId,
+                        sourceType,
+                        source,
+                        shortKey,
+                        application,
+                        environment,
+                        component
+                );
+                JSONObject requestBody = rotateRequest.getJsonObject();
+                String rotateFullURL;
+                if(rotateUri != null && !rotateUri.isEmpty()) {
+                    rotateFullURL = rotateUrl + "/" + rotateUri;
+                } else {
+                    rotateFullURL = rotateUrl;
+                }
+                ResponseEntity<JSONObject> response = restTemplate.exchange(
+                        rotateFullURL,
+                        HttpMethod.POST,
+                        buildRequest(requestBody, oAuth2Header),
+                        JSONObject.class
+                );
+                return String.valueOf(response.getStatusCodeValue());
+
             } else {
                 this.logger.info("Credential not rotated Source or SourceType is null");
                 return "500";
@@ -594,6 +668,58 @@ public class CredentialsService {
             default:
                 throw new Exception("Please pass supported values for sourceType");
         }
+    }
+
+    private String getOAuth2Header(String username, String password) {
+        String token = getOAuth2Token(username, password);
+        if(token.isEmpty()) {
+            logger.error("Unable to fetch access token.");
+            return "";
+        }
+        return String.format("Bearer %s", token);
+    }
+
+    private String getOAuth2Token(String username, String password) {
+        if(tokenUrl == null || tokenUri == null || tokenUrl.isEmpty() || tokenUri.isEmpty()) {
+            throw new RuntimeException("Token URL and URI not provided. Skipping OAuth step.");
+        }
+        HttpRequestExecutor executor = new HttpUrlConnectionExecutor();
+        // Create OAuth2 provider
+        OAuth2AuthorizationProvider provider = new BasicOAuth2AuthorizationProvider(
+                URI.create(tokenUrl + "/" + tokenUri),
+                URI.create(tokenUrl + "/" + tokenUri),
+                new Duration(1,0,600)           //Default expiration time if server does not respond
+        );
+        // Create OAuth2 client credentials
+        OAuth2ClientCredentials credentials = new BasicOAuth2ClientCredentials(username, password);
+        //Create OAuth2 client
+        OAuth2Client client = new BasicOAuth2Client(
+                provider,
+                credentials,
+                new LazyUri(new Precoded("http://localhost"))
+        );
+        try {
+            OAuth2AccessToken token = new ClientCredentialsGrant(client, new BasicScope("scope")).accessToken(executor);
+            return token.accessToken().toString();
+        } catch(Exception e) {
+            logger.error("Exception occurred while fetching access token.");
+        }
+        return "";
+    }
+
+    private boolean oAuthTokenEndpointProvided() {
+        return !(tokenUrl == null || tokenUri == null || clientId == null || clientSecret == null
+                || tokenUrl.isEmpty() || tokenUri.isEmpty() || clientId.isEmpty() || clientSecret.isEmpty());
+    }
+
+    private <T> HttpEntity<T> buildRequest(T body, String authHeader) {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.set("Authorization", authHeader);
+        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+        if(body == null) {
+            return new HttpEntity<>(httpHeaders);
+        }
+        return new HttpEntity<>(body, httpHeaders);
     }
 
 }

@@ -41,6 +41,8 @@ Currently Fidelius only supports authorization through LDAP, the application exp
 | fidelius.membership-server-uri                 	| The URI Fidelius can use to call the membership service for OPS/Master memberships 	| string 	|
 | fidelius.dynamoTable                           	| Name of DynamoDB table to be used to store secrets.                                	| string 	|
 | fidelius.kmsKey                                	| KMS key used to encrypt/decrypt secrets.                                           	| string 	|
+| fidelius.rotate.url         	                    | Secret rotation endpoint URL. 	                                                    | string 	|
+| fidelius.rotate.uri         	                    | Secret rotation endpoint URI. 	                                                    | string 	|
 | fidelius.validActiveDirectoryRegularExpression 	| Regular Expression used to validate secrets marked labeled Active Directory.       	| string 	|
 | fidelius.validActiveDirectoryDescription       	| Description of Regular Expression to guide users to enter valid secret             	| string 	|
 
@@ -54,3 +56,15 @@ Currently Fidelius only supports authorization through LDAP, the application exp
 | aws.proxy.host              	| (Optional) The Proxy Host. If you are not behind a proxy you can ignore this              	| string 	|
 | aws.proxy.port              	| (Optional) The Proxy Port. If you are not behind a proxy you can ignore this              	| string 	|
 | fidelius.assumeRole         	| The AWS IAM role that Fidelius will assume to interact with AWS (e.g. Xacnt_APP_Fidelius) 	| string 	|
+
+
+### OAuth 2.0 Config
+
+Note: providing the following configuration will enable OAuth 2.0 for the API call made by the secret rotation endpoint.
+
+ | Property                    	        | Description                                                                               	| Type   	|
+ |------------------------------------- |-------------------------------------------------------------------------------------------	|--------	|
+ | fidelius.auth.oauth.clientId         | The Client ID used when fetching the OAuth 2.0 token.              	                        | string 	|
+ | fidelius.auth.oauth.clientSecret     | The Client Secret used when fetching the OAuth 2.0 token.             	                    | string 	|
+ | fidelius.auth.oauth.tokenUrl         | The Endpoint Fidelius calls to fetch the OAuth 2.0 token.            	                        | string 	|
+ | fidelius.auth.oauth.tokenUri         | The Endpoint URI Fidelius uses to fetch the OAuth 2.0 token.                                	| string 	|

@@ -54,12 +54,6 @@ public class FideliusService extends FideliusClient {
        return super.putCredential(name, contents, ags, sdlc, component, table, user, kmsKey);
     }
 
-    public String rotateCredential(String name, String ags, String sdlc, String component, String sourceType,
-                              String source, String account, String lambda, String user) throws Exception {
-
-        return super.rotateCredential(name, ags, sdlc, component, sourceType, source, lambda, account, user);
-    }
-
     public String putCredentialWithMetadata(String name, String contents, String ags, String sdlc, String component, String source,
                                 String sourceType, String table, String user, String kmsKey) throws Exception {
         return super.putCredentialWithMetadata(name, contents, ags, sdlc, component, source, sourceType, table, user, kmsKey);

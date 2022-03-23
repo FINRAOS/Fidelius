@@ -448,49 +448,6 @@ public class FideliusClient {
 
     /**
      *
-     * @param name                      Name of the credential
-     * @param application               FID_CONTEXT_APPLICATION Name
-     * @param sdlc                      FID_CONTEXT_SDLC (dev/qa/prod)
-     * @param component     Nullable    Component name
-     * @param sourceType                Source type
-     * @param source                    Source name
-     * @param lambdaName    Nullable    lambda for the rotation; defaults to 'CREDSTSH-amg-password-rotation'
-     * @param user          Nullable    User that created Credential; defaults to IAM user
-     *
-     * @return Status Code                   Returns status code of the lambda
-     * @throws Exception                       if something goes wrong
-     */
-    public String rotateCredential(String name, String application, String sdlc, String component, String sourceType,
-                                 String source, String lambdaName, String account, String user) throws Exception {
-        if (lambdaName == null || lambdaName.length() == 0)
-            lambdaName = Constants.DEFAULT_LAMBDA;
-
-        if(user == null ) {
-            user = getUser();
-        }
-
-        logger.info("Credential Rotation of " + name + " triggered by User " + user);
-        Map<String, String> payload = new HashMap<>();
-        payload.put("accountId", account);
-        payload.put("sourceType", sourceType);
-        payload.put("sourceName", source);
-        payload.put("secret",name);
-        payload.put("ags",application);
-        payload.put("env",sdlc);
-        payload.put("component",component);
-        try {
-            InvokeRequest invokeRequest = new InvokeRequest().withFunctionName(lambdaName).withPayload(OBJECT_MAPPER.writeValueAsString(payload));
-            InvokeResult invokeResult = lambda.invoke(invokeRequest);
-            String statusCode = invokeResult.getStatusCode().toString();
-            return statusCode;
-        } catch (Exception e) {
-            logger.error(e.toString());
-            return "500";
-        }
-    }
-
-    /**
-     *
      * @param name                      Base name of the credential to delete
      * @param application   Nullable    FID_CONTEXT_APPLICATION name (not case-sensitive)
      * @param sdlc          Nullable    FID_CONTEXT_SDLC (dev/qa/prod) (not case-sensitive)
