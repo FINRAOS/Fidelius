@@ -95,23 +95,23 @@ public class CredentialsService {
     @Value("${fidelius.kmsKey}")
     private String kmsKey;
 
-    @Value("${fidelius.rotate.url}")
-    private String rotateUrl;
+    @Value("${fidelius.rotate.url:}")
+    private Optional<String> rotateUrl;
 
-    @Value("${fidelius.rotate.uri}")
-    private String rotateUri;
+    @Value("${fidelius.rotate.uri:}")
+    private Optional<String> rotateUri;
 
-    @Value("${fidelius.auth.oauth.tokenUrl}")
-    private String tokenUrl;
+    @Value("${fidelius.auth.oauth.tokenUrl:}")
+    private Optional<String> tokenUrl;
 
-    @Value("${fidelius.auth.oauth.tokenUri}")
-    private String tokenUri;
+    @Value("${fidelius.auth.oauth.tokenUri:}")
+    private Optional<String> tokenUri;
 
-    @Value("${fidelius.auth.oauth.clientId}")
-    private String clientId;
+    @Value("${fidelius.auth.oauth.clientId:}")
+    private Optional<String> clientId;
 
-    @Value("${fidelius.auth.oauth.clientSecret}")
-    private String clientSecret;
+    @Value("${fidelius.auth.oauth.clientSecret:}")
+    private Optional<String> clientSecret;
 
     private final static String RDS = "rds";
     private final static String AURORA = "aurora";
@@ -125,7 +125,7 @@ public class CredentialsService {
             .expireAfterWrite(60L, TimeUnit.MINUTES)
             .build(new CacheLoader<String, Optional<String>>() {
                 public Optional<String> load(String user) throws Exception {
-                    return Optional.ofNullable(getOAuth2Header(clientId, clientSecret));
+                    return Optional.ofNullable(getOAuth2Header(clientId.get(), clientSecret.get()));
                 }
             });
 
@@ -415,8 +415,8 @@ public class CredentialsService {
         String user = fideliusRoleService.getUserProfile().getUserId();
         String accountId = fideliusRoleService.fetchAwsAccountId(account);
         String oAuth2Header = "";
-        if(rotateUrl == null || rotateUri == null || rotateUrl.isEmpty() || rotateUri.isEmpty()) {
-            this.logger.error("Password rotation URL or URI not provided. Please ensure that fidelius.rotate.url and fidelius.rotate.uri are set.");
+        if(!rotateUrl.isPresent() || rotateUrl.get().isEmpty()) {
+            this.logger.error("Password rotation URL not provided. Please ensure that fidelius.rotate.url is set.");
             return "500";
         }
         if(oAuthTokenEndpointProvided()) {
@@ -424,7 +424,7 @@ public class CredentialsService {
         }
 
         try {
-            if(source != null && sourceType != null) {
+            if(source != null && sourceType != null || !rotateUrl.isPresent() || rotateUrl.get().isEmpty()) {
                 logger.info("Credential Rotation of " + shortKey + " triggered by User " + user);
                 RotateRequest rotateRequest = new RotateRequest(
                         accountId,
@@ -437,10 +437,10 @@ public class CredentialsService {
                 );
                 JSONObject requestBody = rotateRequest.getJsonObject();
                 String rotateFullURL;
-                if(rotateUri != null && !rotateUri.isEmpty()) {
-                    rotateFullURL = rotateUrl + "/" + rotateUri;
+                if(rotateUri.isPresent() && !rotateUri.get().isEmpty()) {
+                    rotateFullURL = rotateUrl.get() + "/" + rotateUri.get();
                 } else {
-                    rotateFullURL = rotateUrl;
+                    rotateFullURL = rotateUrl.get();
                 }
                 ResponseEntity<JSONObject> response = restTemplate.exchange(
                         rotateFullURL,
@@ -680,14 +680,14 @@ public class CredentialsService {
     }
 
     private String getOAuth2Token(String username, String password) {
-        if(tokenUrl == null || tokenUri == null || tokenUrl.isEmpty() || tokenUri.isEmpty()) {
+        if(!tokenUrl.isPresent() || !tokenUri.isPresent()) {
             throw new RuntimeException("Token URL and URI not provided. Skipping OAuth step.");
         }
         HttpRequestExecutor executor = new HttpUrlConnectionExecutor();
         // Create OAuth2 provider
         OAuth2AuthorizationProvider provider = new BasicOAuth2AuthorizationProvider(
-                URI.create(tokenUrl + "/" + tokenUri),
-                URI.create(tokenUrl + "/" + tokenUri),
+                URI.create(tokenUrl.get() + "/" + tokenUri.get()),
+                URI.create(tokenUrl.get() + "/" + tokenUri.get()),
                 new Duration(1,0,600)           //Default expiration time if server does not respond
         );
         // Create OAuth2 client credentials
@@ -708,8 +708,7 @@ public class CredentialsService {
     }
 
     private boolean oAuthTokenEndpointProvided() {
-        return !(tokenUrl == null || tokenUri == null || clientId == null || clientSecret == null
-                || tokenUrl.isEmpty() || tokenUri.isEmpty() || clientId.isEmpty() || clientSecret.isEmpty());
+        return tokenUrl.isPresent() && tokenUri.isPresent() && clientId.isPresent() && clientSecret.isPresent();
     }
 
     private <T> HttpEntity<T> buildRequest(T body, String authHeader) {
