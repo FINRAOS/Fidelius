@@ -198,6 +198,11 @@ public class FideliusAuthProperties {
         private String usersBase;
 
         /**
+         * Alternative base where the system will search for users
+         */
+        private String alternativeUsersBase;
+
+        /**
          * The base where to search for test users (could be the same as the users base, but sometimes it could be different)
          */
         private String testUsersBase;
@@ -279,6 +284,15 @@ public class FideliusAuthProperties {
 
         public FideliusLdapProperties setBase(String base) {
             this.base = base;
+            return this;
+        }
+
+        public String getAlternativeUsersBase() {
+            return alternativeUsersBase;
+        }
+
+        public FideliusLdapProperties setAlternativeUsersBase(String alternativeUsersBase) {
+            this.alternativeUsersBase = alternativeUsersBase;
             return this;
         }
 
