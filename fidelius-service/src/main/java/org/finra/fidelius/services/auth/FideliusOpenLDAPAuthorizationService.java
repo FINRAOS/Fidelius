@@ -47,6 +47,7 @@ public class FideliusOpenLDAPAuthorizationService extends FideliusAuthorizationS
     final String ldapUserEmail;
     final String ldapUserName;
     final String ldapUserGroupsBase;
+    final String ldapUserGroupsAlternativeBase;
     final String ldapObjectClass;
 
     public FideliusOpenLDAPAuthorizationService(LdapTemplate ldapTemplate,
@@ -61,6 +62,7 @@ public class FideliusOpenLDAPAuthorizationService extends FideliusAuthorizationS
         this.ldapObjectClass = ldapProperties.getObjectClass();
         this.ldapUserEmail = ldapProperties.getUsersEmailAttribute();
         this.ldapUserName = ldapProperties.getUsersNameAttribute();
+        this.ldapUserGroupsAlternativeBase = ldapProperties.getAlternativeGroupsBase();
         this.ldapUserGroupsBase = ldapProperties.getAwsGroupsBase() != null ? ldapProperties.getAwsGroupsBase() : ldapProperties.getGroupsBase();
 
         logger.info("Initialized FideliusOpenLDAPAuthorizationService with cn=" + this.ldapUserCn + " id=" + ldapUserId

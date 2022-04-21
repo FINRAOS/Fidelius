@@ -178,6 +178,11 @@ public class FideliusAuthProperties {
         private String pattern;
 
         /**
+         * Alternative base where the membership groups are defined. Ignored if not set.
+         */
+        private String alternativeGroupsBase;
+
+        /**
          * The base where all the membership groups are defined
          */
         private String groupsBase;
@@ -266,6 +271,15 @@ public class FideliusAuthProperties {
 
         public FideliusLdapProperties setGroupsBase(String groupsBase) {
             this.groupsBase = groupsBase;
+            return this;
+        }
+
+        public String getAlternativeGroupsBase() {
+            return alternativeGroupsBase;
+        }
+
+        public FideliusLdapProperties setAlternativeGroupsBase(String alternativeGroupsBase) {
+            this.alternativeGroupsBase = alternativeGroupsBase;
             return this;
         }
 
