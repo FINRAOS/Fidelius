@@ -25,6 +25,7 @@ import org.springframework.ldap.query.LdapQueryBuilder;
 import org.springframework.ldap.query.SearchScope;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -51,7 +52,20 @@ public class FideliusActiveDirectoryLDAPAuthorizationService extends FideliusOpe
                     .attributes(ldapUserCn, ldapUserDn)
                     .filter("(member:" + LDAP_MATCHING_RULE_IN_CHAIN + ":=" + userDn + ")");
 
-            return new HashSet<>(ldapTemplate.search(memberOfApplication, getStringAttributesMapper(ldapUserCn)));
+            List<String> userMemberships = ldapTemplate.search(memberOfApplication, getStringAttributesMapper(ldapUserCn));
+
+            //If no memberships are found in the primary location, check the alternative base.
+            if(ldapUserGroupsAlternativeBase != null && !ldapUserGroupsAlternativeBase.isEmpty() && (userMemberships == null || userMemberships.isEmpty())) {
+                LdapQuery memberOfApplicationAlternateLocation = LdapQueryBuilder.query()
+                        .base(ldapUserGroupsAlternativeBase)
+                        .searchScope(SearchScope.SUBTREE)
+                        .attributes(ldapUserCn, ldapUserDn)
+                        .filter("(member:" + LDAP_MATCHING_RULE_IN_CHAIN + ":=" + userDn + ")");
+
+                userMemberships = ldapTemplate.search(memberOfApplicationAlternateLocation, getStringAttributesMapper(ldapUserCn));
+            }
+
+            return new HashSet<>(userMemberships);
         }
     }
 
@@ -66,7 +80,20 @@ public class FideliusActiveDirectoryLDAPAuthorizationService extends FideliusOpe
                     .attributes(ldapUserCn, ldapUserDn)
                     .filter("(member:" + LDAP_MATCHING_RULE_IN_CHAIN + ":=" + userDn + ")");
 
-            return new HashSet<>(ldapTemplate.search(memberOfApplication, getStringAttributesMapper(ldapUserCn)));
+            List<String> userMemberships = ldapTemplate.search(memberOfApplication, getStringAttributesMapper(ldapUserCn));
+
+            //If no memberships are found in the primary location, check the alternative base.
+            if(ldapUserGroupsAlternativeBase != null && !ldapUserGroupsAlternativeBase.isEmpty() && (userMemberships == null || userMemberships.isEmpty())) {
+                LdapQuery memberOfApplicationAlternateLocation = LdapQueryBuilder.query()
+                        .base(ldapProperties.getAlternativeUsersBase())
+                        .searchScope(SearchScope.SUBTREE)
+                        .attributes(ldapUserCn, ldapUserDn)
+                        .filter("(member:" + LDAP_MATCHING_RULE_IN_CHAIN + ":=" + userDn + ")");
+
+                userMemberships = ldapTemplate.search(memberOfApplicationAlternateLocation, getStringAttributesMapper(ldapUserCn));
+            }
+
+            return new HashSet<>(userMemberships);
         }
     }
 
@@ -81,7 +108,20 @@ public class FideliusActiveDirectoryLDAPAuthorizationService extends FideliusOpe
                     .attributes(ldapUserCn, ldapUserDn)
                     .filter("(member:" + LDAP_MATCHING_RULE_IN_CHAIN + ":=" + userDn + ")");
 
-            return new HashSet<>(ldapTemplate.search(memberOfApplication, getStringAttributesMapper(ldapUserCn)));
+            List<String> userMemberships = ldapTemplate.search(memberOfApplication, getStringAttributesMapper(ldapUserCn));
+
+            //If no memberships are found in the primary location, check the alternative base.
+            if(ldapUserGroupsAlternativeBase != null && !ldapUserGroupsAlternativeBase.isEmpty() && (userMemberships == null || userMemberships.isEmpty())) {
+                LdapQuery memberOfApplicationAlternateLocation = LdapQueryBuilder.query()
+                        .base(ldapProperties.getAlternativeUsersBase())
+                        .searchScope(SearchScope.SUBTREE)
+                        .attributes(ldapUserCn, ldapUserDn)
+                        .filter("(member:" + LDAP_MATCHING_RULE_IN_CHAIN + ":=" + userDn + ")");
+
+                userMemberships = ldapTemplate.search(memberOfApplicationAlternateLocation, getStringAttributesMapper(ldapUserCn));
+            }
+
+            return new HashSet<>(userMemberships);
         }
     }
 
