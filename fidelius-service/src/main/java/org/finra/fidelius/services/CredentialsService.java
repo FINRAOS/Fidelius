@@ -59,6 +59,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import javax.inject.Inject;
@@ -442,12 +445,18 @@ public class CredentialsService {
                 } else {
                     rotateFullURL = rotateUrl.get();
                 }
-                ResponseEntity<JSONObject> response = restTemplate.exchange(
-                        rotateFullURL,
-                        HttpMethod.POST,
-                        buildRequest(requestBody, oAuth2Header),
-                        JSONObject.class
-                );
+                ResponseEntity<JSONObject> response;
+                try {
+                    response = restTemplate.exchange(
+                            rotateFullURL,
+                            HttpMethod.POST,
+                            buildRequest(requestBody, oAuth2Header),
+                            JSONObject.class
+                    );
+                } catch(HttpStatusCodeException e) {
+                    this.logger.info("Credential not rotated " + e.toString());
+                    return String.valueOf(e.getRawStatusCode());
+                }
                 return String.valueOf(response.getStatusCodeValue());
 
             } else {
