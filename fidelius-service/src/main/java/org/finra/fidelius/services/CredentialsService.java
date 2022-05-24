@@ -24,10 +24,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.kms.AWSKMSClient;
 import com.amazonaws.services.rds.AmazonRDSClient;
-import com.amazonaws.services.rds.model.DBCluster;
-import com.amazonaws.services.rds.model.DBInstance;
-import com.amazonaws.services.rds.model.DescribeDBClustersResult;
-import com.amazonaws.services.rds.model.DescribeDBInstancesResult;
+import com.amazonaws.services.rds.model.*;
 import com.amazonaws.services.securitytoken.model.AWSSecurityTokenServiceException;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -638,12 +635,20 @@ public class CredentialsService {
         List<String> results = new ArrayList<>();
 
         AmazonRDSClient amazonRDSClient = setRDSClient(account, region);
-
-        DescribeDBInstancesResult response = amazonRDSClient.describeDBInstances();
+        Filter rdsEngineFilter = new Filter().withName("engine").withValues("postgres", "mysql", "oracle-se2", "oracle-ee");
+        DescribeDBInstancesResult response = amazonRDSClient.describeDBInstances(new DescribeDBInstancesRequest().withFilters(rdsEngineFilter));
         List<DBInstance> dbList = response.getDBInstances();
 
         for(DBInstance db: dbList) {
             results.add(db.getDBInstanceIdentifier());
+        }
+
+        while(response.getMarker() != null){
+            response = amazonRDSClient.describeDBInstances(new DescribeDBInstancesRequest().withMarker(response.getMarker()).withFilters(rdsEngineFilter));
+            dbList = response.getDBInstances();
+            for(DBInstance db: dbList) {
+                results.add(db.getDBInstanceIdentifier());
+            }
         }
 
         return results;
@@ -661,6 +666,14 @@ public class CredentialsService {
 
         for(DBCluster cluster: dbClusterList) {
             results.add(cluster.getDBClusterIdentifier());
+        }
+
+        while(response.getMarker() != null){
+            response = amazonRDSClient.describeDBClusters(new DescribeDBClustersRequest().withMarker(response.getMarker()));
+            dbClusterList = response.getDBClusters();
+            for(DBCluster cluster: dbClusterList) {
+                results.add(cluster.getDBClusterIdentifier());
+            }
         }
 
         return results;
