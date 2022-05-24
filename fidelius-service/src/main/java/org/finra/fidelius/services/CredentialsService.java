@@ -635,7 +635,7 @@ public class CredentialsService {
         List<String> results = new ArrayList<>();
 
         AmazonRDSClient amazonRDSClient = setRDSClient(account, region);
-        Filter rdsEngineFilter = new Filter().withName("engine").withValues("postgres", "mysql", "oracle-se2", "oracle-ee");
+        Filter rdsEngineFilter = new Filter().withName("engine").withValues("postgres", "mysql", "oracle-se2", "oracle-ee", "custom-oracle-ee","oracle-ee-cdb", "oracle-se2-cdb");
         DescribeDBInstancesResult response = amazonRDSClient.describeDBInstances(new DescribeDBInstancesRequest().withFilters(rdsEngineFilter));
         List<DBInstance> dbList = response.getDBInstances();
 
