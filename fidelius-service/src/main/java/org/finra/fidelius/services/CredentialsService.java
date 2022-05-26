@@ -480,8 +480,8 @@ public class CredentialsService {
             if (credential.getComponent() == null || credential.getComponent().equals("null")) {
                 credential.setComponent(null);
             }
-
-            if(credential.getSource() != null && credential.getSourceType() != null ) {
+            Metadata metadata = getMetadata(credential.getAccount(), credential.getRegion(), credential.getApplication(), credential.getEnvironment(), credential.getComponent(), credential.getShortKey());
+            if(metadata.getSource() != null && metadata.getSourceType() != null ) {
                 fideliusService.deleteCredentialWithMetadata(credential.getShortKey(), credential.getApplication(),
                         credential.getEnvironment(), credential.getComponent(), tableName, user);
             } else {
@@ -569,6 +569,11 @@ public class CredentialsService {
         setFideliusEnvironment(metadata.getAccount(), metadata.getRegion());
         String user = fideliusRoleService.getUserProfile().getUserId();
 
+        String metadataValidation = isValidMetadata(metadata);
+        if(!metadataValidation.isEmpty()){
+            throw new FideliusException("Metadata source is invalid! " + metadataValidation, HttpStatus.BAD_REQUEST);
+        }
+
         try {
             String version = fideliusService.putMetadata(metadata.getShortKey(), metadata.getApplication(),
                     metadata.getEnvironment(), metadata.getComponent(), metadata.getSourceType(),
@@ -602,7 +607,24 @@ public class CredentialsService {
         // Add the new credential
         return putMetadata(metadata);
     }
-
+    private String isValidMetadata(Metadata metadata){
+        switch (metadata.getSourceType()){
+            case "RDS":
+            case "Aurora":
+                if(!metadata.getSource().startsWith(metadata.getApplication().toLowerCase())){
+                    return metadata.getSourceType() + " sources must start with \"" + metadata.getApplication().toLowerCase() + "\"";
+                }
+                break;
+            case "Service Account":
+                if(!metadata.getSource().startsWith("svc_"+metadata.getApplication().toLowerCase())){
+                    return "Service Account sources must start with \"svc_" + metadata.getApplication().toLowerCase() + "\"";
+                }
+                break;
+            default:
+                return metadata.getSourceType() + " is an unsupported metadata source type.";
+        }
+        return "";
+    }
 
     private String splitRoleARN(String roleARN) {
         if (roleARN == null) return null;
@@ -629,7 +651,7 @@ public class CredentialsService {
         return credentials;
     }
 
-    private List<String> getAllRDS(String account, String region) throws FideliusException {
+    private List<String> getAllRDS(String account, String region, String application) throws FideliusException {
 
         logger.info(String.format("Getting all RDS for account %s and region %s.", account, region));
         List<String> results = new ArrayList<>();
@@ -640,7 +662,19 @@ public class CredentialsService {
         List<DBInstance> dbList = response.getDBInstances();
 
         for(DBInstance db: dbList) {
-            results.add(db.getDBInstanceIdentifier());
+            if(db.getDBInstanceIdentifier().startsWith(application.toLowerCase())){
+                results.add(db.getDBInstanceIdentifier());
+            }
+        }
+
+        while(response.getMarker() != null){
+            response = amazonRDSClient.describeDBInstances(new DescribeDBInstancesRequest().withMarker(response.getMarker()).withFilters(rdsEngineFilter));
+            dbList = response.getDBInstances();
+            for(DBInstance db: dbList) {
+                if(db.getDBInstanceIdentifier().startsWith(application.toLowerCase())){
+                    results.add(db.getDBInstanceIdentifier());
+                }
+            }
         }
 
         while(response.getMarker() != null){
@@ -654,7 +688,7 @@ public class CredentialsService {
         return results;
     }
 
-    private List<String> getAllAuroraRegionalCluster(String account, String region) throws FideliusException {
+    private List<String> getAllAuroraRegionalCluster(String account, String region, String application) throws FideliusException {
 
         logger.info(String.format("Getting all Aurora clusters for account %s and region %s.", account, region));
         List<String> results = new ArrayList<>();
@@ -665,7 +699,19 @@ public class CredentialsService {
         List<DBCluster> dbClusterList = response.getDBClusters();
 
         for(DBCluster cluster: dbClusterList) {
-            results.add(cluster.getDBClusterIdentifier());
+            if(cluster.getDBClusterIdentifier().startsWith(application.toLowerCase())){
+                results.add(cluster.getDBClusterIdentifier());
+            }
+        }
+
+        while(response.getMarker() != null){
+            response = amazonRDSClient.describeDBClusters(new DescribeDBClustersRequest().withMarker(response.getMarker()));
+            dbClusterList = response.getDBClusters();
+            for(DBCluster cluster: dbClusterList) {
+                if(cluster.getDBClusterIdentifier().startsWith(application.toLowerCase())){
+                    results.add(cluster.getDBClusterIdentifier());
+                }
+            }
         }
 
         while(response.getMarker() != null){
@@ -679,12 +725,12 @@ public class CredentialsService {
         return results;
     }
 
-    public List<String> getMetadataInfo(String account, String region, String sourceType) throws Exception {
+    public List<String> getMetadataInfo(String account, String region, String sourceType, String application) throws Exception {
         switch (sourceType) {
             case RDS:
-                return getAllRDS(account, region);
+                return getAllRDS(account, region, application);
             case AURORA:
-                return getAllAuroraRegionalCluster(account, region);
+                return getAllAuroraRegionalCluster(account, region, application);
             default:
                 throw new Exception("Please pass supported values for sourceType");
         }

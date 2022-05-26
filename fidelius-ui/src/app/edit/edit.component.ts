@@ -203,12 +203,11 @@ export class EditComponent implements OnInit{
       });
     }
     
-    
   }
 
   sourceNameAuto(): void {
     if(this.metadata.sourceType !== undefined){
-      this._credentialService.getSourceNames(this.credential.account, this.credential.region, this.metadata.sourceType).subscribe((sourceNames: string[])=>{
+      this._credentialService.getSourceNames(this.credential.account, this.credential.region, this.metadata.sourceType, this.metadata.application).subscribe((sourceNames: string[])=>{
         this.sourceNames = sourceNames;
         this.filteredSourceNames = sourceNames;
         this._changeDetectorRef.detectChanges();
