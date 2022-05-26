@@ -63,10 +63,11 @@ export class CredentialService {
      return this._http.post<any>(this.URL + '/credentials/rotate', rotationDTO);
   }
 
-  getSourceNames(account: string, region: string, sourceType: string){
+  getSourceNames(account: string, region: string, sourceType: string, application: string){
     return this._http.get<any>( this.URL + '/sources?account=' + account +
       '&region=' + region +
-      '&sourceType=' + sourceType.toLowerCase());
+      '&sourceType=' + sourceType.toLowerCase() +
+      '&application=' + application.toLowerCase());
   }
 
   createMetadata(metadata: Metadata): Observable<any> {

@@ -82,7 +82,7 @@ constructor( private _credentialService: CredentialService,
     this.copyingSecret = true;
     this._clipboardService.copyFromContent(this.credential.secret);
     let message: string = 'Copied to clipboard';
-    this._snackBarService.open(message, '',  { duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom' });
+    this._snackBarService.open(message, '',  { duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: "snackbar-success" });
     this.copyingSecret = !this.copyingSecret;
   }
 
