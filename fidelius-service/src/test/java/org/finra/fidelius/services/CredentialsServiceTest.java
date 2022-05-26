@@ -532,8 +532,8 @@ public class CredentialsServiceTest {
         metadata.setEnvironment("environment");
         metadata.setComponent("testComponent");
         metadata.setShortKey("shortKey");
-        metadata.setSourceType("sourceType");
-        metadata.setSource("source");
+        metadata.setSourceType("RDS");
+        metadata.setSource("membership");
 
         doThrow(new Exception("Error Created Credential.")).when(fideliusService).putMetadata(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
 
@@ -554,7 +554,6 @@ public class CredentialsServiceTest {
         credential.setSecret("secretPassword");
 
         Mockito.doReturn("000000000000000001").when(fideliusService).putCredential(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
-
         Credential actual = credentialsService.putCredential(credential);
 
         assertEquals(credential, actual);
@@ -569,8 +568,8 @@ public class CredentialsServiceTest {
         metadata.setEnvironment("environment");
         metadata.setComponent("testComponent");
         metadata.setShortKey("shortKey");
-        metadata.setSourceType("sourceType");
-        metadata.setSource("source");
+        metadata.setSourceType("RDS");
+        metadata.setSource("membership");
 
         Mockito.doReturn("000000000000000001").when(fideliusService).putMetadata(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
 
@@ -632,7 +631,6 @@ public class CredentialsServiceTest {
         credential.setShortKey("shortKey");
 
         doNothing().when(fideliusService).deleteCredential(anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
-
         Credential actual = credentialsService.deleteCredential(credential);
 
         assertEquals(credential, actual);
