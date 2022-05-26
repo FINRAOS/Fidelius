@@ -677,6 +677,14 @@ public class CredentialsService {
             }
         }
 
+        while(response.getMarker() != null){
+            response = amazonRDSClient.describeDBInstances(new DescribeDBInstancesRequest().withMarker(response.getMarker()).withFilters(rdsEngineFilter));
+            dbList = response.getDBInstances();
+            for(DBInstance db: dbList) {
+                results.add(db.getDBInstanceIdentifier());
+            }
+        }
+
         return results;
     }
 
@@ -703,6 +711,14 @@ public class CredentialsService {
                 if(cluster.getDBClusterIdentifier().startsWith(application.toLowerCase())){
                     results.add(cluster.getDBClusterIdentifier());
                 }
+            }
+        }
+
+        while(response.getMarker() != null){
+            response = amazonRDSClient.describeDBClusters(new DescribeDBClustersRequest().withMarker(response.getMarker()));
+            dbClusterList = response.getDBClusters();
+            for(DBCluster cluster: dbClusterList) {
+                results.add(cluster.getDBClusterIdentifier());
             }
         }
 
