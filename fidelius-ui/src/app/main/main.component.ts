@@ -241,7 +241,6 @@ export class MainComponent implements OnInit, OnDestroy {
   }
   
   confirmDelete(credential: Credential): void {
-    console.log(credential)
     let config: MatDialogConfig = {
       data: {
         application: this.selected.application,
