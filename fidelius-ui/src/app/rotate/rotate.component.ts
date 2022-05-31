@@ -144,6 +144,7 @@ export class RotateComponent implements OnInit{
         this.rotate();
       } ,(error: any) => {
         this.sendingForm = false;
+        this._changeDetectorRef.detectChanges();
         let message: string = 'Metadata ' + this.credential.longKey + ' failed to update: ' + error["error"]["message"];
         this._snackBarService.open(message,  'DISMISS', { horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: "snackbar-error" });
         this._alertService.openAlert(error);
@@ -170,6 +171,7 @@ export class RotateComponent implements OnInit{
       this.closeSideNav(true);
     }, (error: any) => {
       this.sendingForm = false;
+      this._changeDetectorRef.detectChanges();
       let message: string = 'Credential ' + this.credential.longKey + ' failed to rotate: ' + error.status + " " + error.statusText;
       this._snackBarService.open(message,  'DISMISS', { horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: "snackbar-error" });
     });
