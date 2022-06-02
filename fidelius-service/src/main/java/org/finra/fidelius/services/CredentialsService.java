@@ -619,6 +619,10 @@ public class CredentialsService {
                 if(!metadata.getSource().startsWith("svc_"+metadata.getApplication().toLowerCase())){
                     return "Service Account sources must start with \"svc_" + metadata.getApplication().toLowerCase() + "\"";
                 }
+                String accountSuffix = accountsService.getAccountByAlias(metadata.getAccount()).getSdlc().toLowerCase().substring(0,1);
+                if(!metadata.getSource().endsWith("_"+accountSuffix)){
+                    return "Service Account sources must end with \"_" + accountSuffix + "\" in " + metadata.getAccount();
+                }
                 break;
             default:
                 return metadata.getSourceType() + " is an unsupported metadata source type.";
