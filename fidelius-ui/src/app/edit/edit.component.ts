@@ -179,6 +179,7 @@ export class EditComponent implements OnInit{
         this.closeSideNav(true);
       }, (error: any) => {
         this.sendingForm = false;
+        this._changeDetectorRef.detectChanges();
         this._alertService.openAlert(error);
       });
     }
@@ -189,6 +190,7 @@ export class EditComponent implements OnInit{
         this.closeSideNav(true);
       }, (error: any) => {
         this.sendingForm = false;
+        this._changeDetectorRef.detectChanges();
         this._alertService.openAlert(error);
       });
     }
@@ -199,10 +201,10 @@ export class EditComponent implements OnInit{
         this.closeSideNav(true);
       }, (error: any) => {
         this.sendingForm = false;
+        this._changeDetectorRef.detectChanges();
         this._alertService.openAlert(error);
       });
     }
-    
   }
 
   sourceNameAuto(): void {
