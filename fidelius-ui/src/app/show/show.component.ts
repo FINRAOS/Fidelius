@@ -26,6 +26,7 @@ import { MatSnackBar } from '@angular/material';
 import { APPLICATION_LIST_LABEL_NAME } from '../../config/permissions';
 import { MainComponent } from '../main/main.component';
 import { BrowserService } from '../../services/browser.service';
+import { CredentialInfoComponent } from '../credential-info/credential-info.component';
 
 
 
@@ -62,6 +63,7 @@ constructor( private _credentialService: CredentialService,
                private _snackBarService: MatSnackBar,
                private _alertService: AlertService,
                private _parentComponent: MainComponent,
+               private _credentialInfoComponent: CredentialInfoComponent,
                private _changeDetectorRef: ChangeDetectorRef,
                private _browserService: BrowserService,
                ) {
@@ -176,9 +178,11 @@ constructor( private _credentialService: CredentialService,
       this.rotating = false;
       let message: string = 'Credential ' + this.credential.longKey + ' rotated';
       this._snackBarService.open(message,  '', {  horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: ["snackbar-success"], duration: 3000 });
+      this.loadSecret();
+      this.getHistory();
+      this._credentialInfoComponent.loadHistory();
       this._changeDetectorRef.detectChanges();
     }, (error: any) => {
-      console.log(error)
       this.rotating = false;
       let message: string = 'Credential ' + this.credential.longKey + ' failed to rotate: ' + error.status + " " + error.statusText;      
       this._snackBarService.open(message,  'DISMISS', { horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: ["snackbar-error"] });
