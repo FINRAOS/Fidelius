@@ -42,6 +42,9 @@ export class ShowComponent implements OnInit {
   @Input() selected: Selected = new Selected();
   @Input() credential: Credential = new Credential();
   @Input() canViewSecret: boolean = false;
+  @Input() canUpdateSecret: boolean = false;
+  @Input() canRotateSecret: boolean = false;
+
   hideSecret: boolean = true;
   copyingSecret: boolean = false;
   loadedSecret: boolean = false;
