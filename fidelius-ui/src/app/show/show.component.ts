@@ -150,7 +150,7 @@ constructor( private _credentialService: CredentialService,
       this.metadata = metadata;
       this._changeDetectorRef.detectChanges();
     }, (error: any) => {
-      this.metadata = null;
+      this.metadata = new Metadata();
       this._changeDetectorRef.detectChanges();
     });
   }
