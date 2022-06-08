@@ -257,7 +257,7 @@ export class MainComponent implements OnInit, OnDestroy {
       switch (result.outcome){
         case 'success':
       let message: string = 'Credential ' + credential.longKey + ' deleted';
-      this._snackBarService.open( message, '' , { duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom' });
+      this._snackBarService.open( message, '' , { duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: "snackbar-success" });
       this.searchCredentials(this.selected);
           break;
         case 'error':

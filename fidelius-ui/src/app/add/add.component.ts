@@ -139,29 +139,42 @@ export class AddComponent implements OnInit {
       this.metadata.component = this.credential.component;
       this.metadata.shortKey = this.credential.shortKey;
       this.metadata.environment = this.credential.environment;
-      this._credentialService.createMetadata(this.metadata).subscribe((metadata:Metadata)=>{
+      if(this.metadata.source && this.metadata.sourceType){
+        this._credentialService.createMetadata(this.metadata).subscribe((metadata:Metadata)=>{
+          this.sendingForm = false;
+          let message: string = 'Credential ' + this.getLongKey() + ' created';
+          this._snackBarService.open(message, '', {
+            duration: 3000,
+            horizontalPosition: 'center',
+            verticalPosition: 'bottom',
+            panelClass: "snackbar-success"
+          });
+          this.closeSideNav(true);
+          this._changeDetectorRef.detectChanges();
+        }, (error: any) => {
+          this.sendingForm = false;
+          let message: string = 'Credential ' + this.getLongKey() + ' created, but Metadata failed to create';
+          this._snackBarService.open(message,  'DISMISS', { horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: "snackbar-error" });
+          error["error"]["message"] = "Credential Created, but Metadata failed to create. " + error["error"]["message"] 
+          this._alertService.openAlert(error);
+          this.closeSideNav(true);
+          this._changeDetectorRef.detectChanges();
+        });    
+      }
+      else{
         this.sendingForm = false;
-        let message: string = 'Credential ' + this.getLongKey() + ' created';
+        let message: string = 'Credential ' + this.getLongKey() + ' created without Metadata';
         this._snackBarService.open(message, '', {
           duration: 3000,
           horizontalPosition: 'center',
-          verticalPosition: 'bottom'
+          verticalPosition: 'bottom',
+          panelClass: "snackbar-success"
         });
         this.closeSideNav(true);
         this._changeDetectorRef.detectChanges();
-      }, (error: any) => {
-        this.sendingForm = false;
-        let message: string = 'Credential ' + this.getLongKey() + ' created, but Metadata failed to create';
-        this._snackBarService.open(message, '', {
-          duration: 3000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom'
-        });
-        this._alertService.openAlert(error);
-        this.closeSideNav(true);
-        this._changeDetectorRef.detectChanges();
-      });
-      
+        
+      }
+            
     }, (error: any) => {
       this.sendingForm = false;
       if (error.status === 400 && error.error.message === 'Credential already exists!') {
@@ -176,7 +189,7 @@ export class AddComponent implements OnInit {
 
   sourceNameAuto(): void {
     if(this.metadata.sourceType !== undefined){
-      this._credentialService.getSourceNames(this.credential.account, this.credential.region, this.metadata.sourceType).subscribe((sourceNames: string[])=>{
+      this._credentialService.getSourceNames(this.credential.account, this.credential.region, this.metadata.sourceType, this.metadata.application).subscribe((sourceNames: string[])=>{
         this.sourceNames = sourceNames;
         this.filteredSourceNames = sourceNames;
         this._changeDetectorRef.detectChanges();
