@@ -55,7 +55,7 @@ public class FideliusActiveDirectoryLDAPAuthorizationService extends FideliusOpe
             List<String> userMemberships = ldapTemplate.search(memberOfApplication, getStringAttributesMapper(ldapUserCn));
 
             //If no memberships are found in the primary location, check the alternative base.
-            if(ldapUserGroupsAlternativeBase != null && !ldapUserGroupsAlternativeBase.isEmpty() && (userMemberships == null || userMemberships.isEmpty())) {
+            if(ldapUserGroupsAlternativeBase != null && !ldapUserGroupsAlternativeBase.isEmpty()) {
                 LdapQuery memberOfApplicationAlternateLocation = LdapQueryBuilder.query()
                         .base(ldapUserGroupsAlternativeBase)
                         .searchScope(SearchScope.SUBTREE)
