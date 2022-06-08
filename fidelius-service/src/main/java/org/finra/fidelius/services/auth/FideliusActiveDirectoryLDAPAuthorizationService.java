@@ -41,7 +41,7 @@ public class FideliusActiveDirectoryLDAPAuthorizationService extends FideliusOpe
     }
 
     @Override
-    protected Set<String> loadUserMemberships(String userName) {
+    protected Set<String> loadUserMemberships(String userName, String masterPattern, String opsPattern) {
         {
             Optional<FideliusUserEntry> user = userCache.getUnchecked(userName);
             String userDn = user.get().getDn();
@@ -55,14 +55,21 @@ public class FideliusActiveDirectoryLDAPAuthorizationService extends FideliusOpe
             List<String> userMemberships = ldapTemplate.search(memberOfApplication, getStringAttributesMapper(ldapUserCn));
 
             //If no memberships are found in the primary location, check the alternative base.
-            if(ldapUserGroupsAlternativeBase != null && !ldapUserGroupsAlternativeBase.isEmpty()) {
-                LdapQuery memberOfApplicationAlternateLocation = LdapQueryBuilder.query()
-                        .base(ldapUserGroupsAlternativeBase)
+            if (ldapUserGroupsAlternativeBase != null && !ldapUserGroupsAlternativeBase.isEmpty()) {
+                LdapQuery memberOfApplicationAlternateLocationOps = LdapQueryBuilder.query()
+                        .base("CN=" + opsPattern + "," + ldapUserGroupsAlternativeBase)
                         .searchScope(SearchScope.SUBTREE)
                         .attributes(ldapUserCn, ldapUserDn)
                         .filter("(member:" + LDAP_MATCHING_RULE_IN_CHAIN + ":=" + userDn + ")");
 
-                userMemberships = ldapTemplate.search(memberOfApplicationAlternateLocation, getStringAttributesMapper(ldapUserCn));
+                userMemberships.addAll(ldapTemplate.search(memberOfApplicationAlternateLocationOps, getStringAttributesMapper(ldapUserCn)));
+                LdapQuery memberOfApplicationAlternateLocationMaster = LdapQueryBuilder.query()
+                        .base("CN=" + masterPattern + "," + ldapUserGroupsAlternativeBase)
+                        .searchScope(SearchScope.SUBTREE)
+                        .attributes(ldapUserCn, ldapUserDn)
+                        .filter("(member:" + LDAP_MATCHING_RULE_IN_CHAIN + ":=" + userDn + ")");
+
+                userMemberships.addAll(ldapTemplate.search(memberOfApplicationAlternateLocationMaster, getStringAttributesMapper(ldapUserCn)));
             }
 
             return new HashSet<>(userMemberships);

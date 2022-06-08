@@ -187,7 +187,7 @@ public class FideliusRoleService {
 
     private List<String> loadLdapUserMasterMemberships(){
         List<String> memberships = new ArrayList<>();
-        fideliusAuthorizationService.getMasterMemberships().forEach((membership) -> {
+        fideliusAuthorizationService.getMasterMemberships(masterPattern, opsPattern).forEach((membership) -> {
             Matcher m = masterPattern.matcher(membership);
             if(m.find()) {
                 try {
@@ -203,7 +203,7 @@ public class FideliusRoleService {
 
     private List<String> loadLdapUserOpsMemberships(){
         List<String> memberships = new ArrayList<>();
-        fideliusAuthorizationService.getOpsMemberships().forEach((membership) -> {
+        fideliusAuthorizationService.getOpsMemberships(masterPattern, opsPattern).forEach((membership) -> {
             Matcher m = opsPattern.matcher(membership);
             if(m.find()) {
                 try {
