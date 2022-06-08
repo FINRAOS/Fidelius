@@ -26,6 +26,7 @@ import { MatSnackBar } from '@angular/material';
 import { APPLICATION_LIST_LABEL_NAME } from '../../config/permissions';
 import { MainComponent } from '../main/main.component';
 import { BrowserService } from '../../services/browser.service';
+import { CredentialInfoComponent } from '../credential-info/credential-info.component';
 
 
 
@@ -41,6 +42,9 @@ export class ShowComponent implements OnInit {
   @Input() selected: Selected = new Selected();
   @Input() credential: Credential = new Credential();
   @Input() canViewSecret: boolean = false;
+  @Input() canUpdateSecret: boolean = false;
+  @Input() canRotateSecret: boolean = false;
+
   hideSecret: boolean = true;
   copyingSecret: boolean = false;
   loadedSecret: boolean = false;
@@ -62,6 +66,7 @@ constructor( private _credentialService: CredentialService,
                private _snackBarService: MatSnackBar,
                private _alertService: AlertService,
                private _parentComponent: MainComponent,
+               private _credentialInfoComponent: CredentialInfoComponent,
                private _changeDetectorRef: ChangeDetectorRef,
                private _browserService: BrowserService,
                ) {
@@ -82,7 +87,7 @@ constructor( private _credentialService: CredentialService,
     this.copyingSecret = true;
     this._clipboardService.copyFromContent(this.credential.secret);
     let message: string = 'Copied to clipboard';
-    this._snackBarService.open(message, '',  { duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom' });
+    this._snackBarService.open(message, '',  { duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: "snackbar-success" });
     this.copyingSecret = !this.copyingSecret;
   }
 
@@ -145,7 +150,7 @@ constructor( private _credentialService: CredentialService,
       this.metadata = metadata;
       this._changeDetectorRef.detectChanges();
     }, (error: any) => {
-      this.metadata = null;
+      this.metadata = new Metadata();
       this._changeDetectorRef.detectChanges();
     });
   }
@@ -176,9 +181,11 @@ constructor( private _credentialService: CredentialService,
       this.rotating = false;
       let message: string = 'Credential ' + this.credential.longKey + ' rotated';
       this._snackBarService.open(message,  '', {  horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: ["snackbar-success"], duration: 3000 });
+      this.loadSecret();
+      this.getHistory();
+      this._credentialInfoComponent.loadHistory();
       this._changeDetectorRef.detectChanges();
     }, (error: any) => {
-      console.log(error)
       this.rotating = false;
       let message: string = 'Credential ' + this.credential.longKey + ' failed to rotate: ' + error.status + " " + error.statusText;      
       this._snackBarService.open(message,  'DISMISS', { horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: ["snackbar-error"] });

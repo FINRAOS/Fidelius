@@ -200,8 +200,9 @@ class FideliusController {
     @GetMapping(value="/sources")
     public ResponseEntity getSourceNames(@RequestParam("account") String account,
                                       @RequestParam("region") String region,
-                                      @RequestParam("sourceType") String sourceType) throws Exception {
-        final List<String> metadataInfo = credentialsService.getMetadataInfo(account, region, sourceType);
+                                      @RequestParam("sourceType") String sourceType,
+                                      @RequestParam("application") String application) throws Exception {
+        final List<String> metadataInfo = credentialsService.getMetadataInfo(account, region, sourceType, application);
 
         if (metadataInfo != null)
             return new ResponseEntity<>(metadataInfo, HttpStatus.OK);

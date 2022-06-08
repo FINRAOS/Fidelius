@@ -179,6 +179,7 @@ export class EditComponent implements OnInit{
         this.closeSideNav(true);
       }, (error: any) => {
         this.sendingForm = false;
+        this._changeDetectorRef.detectChanges();
         this._alertService.openAlert(error);
       });
     }
@@ -189,6 +190,7 @@ export class EditComponent implements OnInit{
         this.closeSideNav(true);
       }, (error: any) => {
         this.sendingForm = false;
+        this._changeDetectorRef.detectChanges();
         this._alertService.openAlert(error);
       });
     }
@@ -199,16 +201,15 @@ export class EditComponent implements OnInit{
         this.closeSideNav(true);
       }, (error: any) => {
         this.sendingForm = false;
+        this._changeDetectorRef.detectChanges();
         this._alertService.openAlert(error);
       });
     }
-    
-    
   }
 
   sourceNameAuto(): void {
     if(this.metadata.sourceType !== undefined){
-      this._credentialService.getSourceNames(this.credential.account, this.credential.region, this.metadata.sourceType).subscribe((sourceNames: string[])=>{
+      this._credentialService.getSourceNames(this.credential.account, this.credential.region, this.metadata.sourceType, this.metadata.application).subscribe((sourceNames: string[])=>{
         this.sourceNames = sourceNames;
         this.filteredSourceNames = sourceNames;
         this._changeDetectorRef.detectChanges();

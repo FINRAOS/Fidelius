@@ -23,6 +23,7 @@ import { ActivatedRoute } from '@angular/router';
 import { BrowserService } from '../../services/browser.service';
 import { AlertService } from '../../services/alert.service';
 import { MatTabGroup } from '@angular/material/tabs';
+import { HistoryComponent } from '../history/history.component';
 
 @Component({
   selector: 'fidelius-credential-info',
@@ -40,6 +41,7 @@ export class CredentialInfoComponent implements OnInit {
   isLoading: boolean = true;
   hasError: boolean = false;
   @ViewChild('tabGroup') tabGroup: MatTabGroup;
+  @ViewChild(HistoryComponent) history: HistoryComponent;
 
   constructor(private _parentComponent: MainComponent,
               private _credentialService: CredentialService,
@@ -67,7 +69,6 @@ export class CredentialInfoComponent implements OnInit {
   }
 
   loadCredential(): void {
-
     this._credentialService.getCredential(this.selected, this.credential).subscribe((credential: Credential) => {
       this.credential = credential;
       this.isLoading = false;
@@ -78,6 +79,10 @@ export class CredentialInfoComponent implements OnInit {
       this._alertService.openAlert(error);
       this._changeDetectorRef.detectChanges();
     });
+  }
+
+  loadHistory(): void {
+    this.history.getHistory()
   }
 
   closeSideNav(refresh: boolean): void {

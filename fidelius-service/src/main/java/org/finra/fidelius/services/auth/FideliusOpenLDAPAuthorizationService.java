@@ -47,6 +47,7 @@ public class FideliusOpenLDAPAuthorizationService extends FideliusAuthorizationS
     final String ldapUserEmail;
     final String ldapUserName;
     final String ldapUserGroupsBase;
+    final String ldapUserGroupsAlternativeBase;
     final String ldapObjectClass;
 
     public FideliusOpenLDAPAuthorizationService(LdapTemplate ldapTemplate,
@@ -61,6 +62,7 @@ public class FideliusOpenLDAPAuthorizationService extends FideliusAuthorizationS
         this.ldapObjectClass = ldapProperties.getObjectClass();
         this.ldapUserEmail = ldapProperties.getUsersEmailAttribute();
         this.ldapUserName = ldapProperties.getUsersNameAttribute();
+        this.ldapUserGroupsAlternativeBase = ldapProperties.getAlternativeGroupsBase();
         this.ldapUserGroupsBase = ldapProperties.getAwsGroupsBase() != null ? ldapProperties.getAwsGroupsBase() : ldapProperties.getGroupsBase();
 
         logger.info("Initialized FideliusOpenLDAPAuthorizationService with cn=" + this.ldapUserCn + " id=" + ldapUserId
@@ -120,7 +122,7 @@ public class FideliusOpenLDAPAuthorizationService extends FideliusAuthorizationS
         return null;
     }
 
-    protected FideliusUserEntry loadUser(String userName){
+    protected FideliusUserEntry loadUser(String userName) {
         logger.info("Loading info for " + userName);
         LdapQuery query = LdapQueryBuilder.query()
                 .base(ldapProperties.getUsersBase()).countLimit(1)
@@ -135,6 +137,19 @@ public class FideliusOpenLDAPAuthorizationService extends FideliusAuthorizationS
         if (subjects != null && subjects.size() > 0) {
             return subjects.get(0);
             //check to see if account is test account (only if testUsersBase is provided)
+        } else if(ldapProperties.getAlternativeUsersBase() != null) {
+            query = LdapQueryBuilder.query()
+                    .base(ldapProperties.getAlternativeUsersBase()).countLimit(1)
+                    .searchScope(SearchScope.SUBTREE)
+                    .attributes(ldapUserId, ldapUserDn, ldapUserEmail, ldapUserName)
+                    .where("objectClass")
+                    .is(ldapObjectClass)
+                    .and(ldapUserId)
+                    .is(userName);
+            subjects = ldapTemplate.search(query, getAttributesMapper());
+            if (subjects != null && subjects.size() > 0) {
+                return subjects.get(0);
+            }
         } else if(ldapProperties.getTestUsersBase() != null) {
             query = LdapQueryBuilder.query()
                     .base(ldapProperties.getTestUsersBase()).countLimit(1)

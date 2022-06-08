@@ -23,10 +23,23 @@
           color="accent"
           [disableRipple]="isIEOrEdge"
           (click)="editSecret()"
-    >
+          *ngIf="canUpdateSecret; else disabledUpdateSecret">
       <mat-icon>loop</mat-icon>
       Edit Secret
     </button>
+    <ng-template #disabledUpdateSecret>
+      <div matTooltip="Contact Ops">
+        <button mat-button
+          layout-padding="0px"
+          layout-margin="0px"
+          color="accent"
+          [disableRipple]="isIEOrEdge"
+          disabled>
+            <mat-icon>loop</mat-icon>
+            Edit Secret
+        </button>
+      </div>
+    </ng-template>
     <div class="label-color last-update">
       Last updated 
       <span *ngIf="history; else elseBlock">
@@ -222,15 +235,28 @@
         </div>
         <div class="rotate-button" *ngIf="!rotating">
           <button mat-button
+            layout-padding="0px"
+            layout-margin="0px"
+            color="accent"
+            [disableRipple]="isIEOrEdge"
+            *ngIf="canRotateSecret; else disabledRotateSecret"
+            (click)="rotateSecret()">
+              <mat-icon>loop</mat-icon>
+              Rotate Secret
+          </button>
+          <ng-template #disabledRotateSecret>
+            <div matTooltip="Contact Ops">
+              <button mat-button
                 layout-padding="0px"
                 layout-margin="0px"
                 color="accent"
                 [disableRipple]="isIEOrEdge"
-                (click)="rotateSecret()"
-          >
-            <mat-icon>loop</mat-icon>
-            Rotate Secret
-          </button>
+                disabled>
+                  <mat-icon>loop</mat-icon>
+                  Rotate Secret
+              </button>
+            </div>
+          </ng-template>
           <div class="label-color last-update">
             Last rotated 
             <span *ngIf="metadata; else elseBlock">on {{credential.lastUpdatedDate ? (credential.lastUpdatedDate | date:'short') : 'N/A'}}</span>

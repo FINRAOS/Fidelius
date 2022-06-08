@@ -178,6 +178,11 @@ public class FideliusAuthProperties {
         private String pattern;
 
         /**
+         * Alternative base where the membership groups are defined. Ignored if not set.
+         */
+        private String alternativeGroupsBase;
+
+        /**
          * The base where all the membership groups are defined
          */
         private String groupsBase;
@@ -196,6 +201,11 @@ public class FideliusAuthProperties {
          * The base where the system will search for users
          */
         private String usersBase;
+
+        /**
+         * Alternative base where the system will search for users
+         */
+        private String alternativeUsersBase;
 
         /**
          * The base where to search for test users (could be the same as the users base, but sometimes it could be different)
@@ -264,6 +274,15 @@ public class FideliusAuthProperties {
             return this;
         }
 
+        public String getAlternativeGroupsBase() {
+            return alternativeGroupsBase;
+        }
+
+        public FideliusLdapProperties setAlternativeGroupsBase(String alternativeGroupsBase) {
+            this.alternativeGroupsBase = alternativeGroupsBase;
+            return this;
+        }
+
         public String getAwsGroupsBase() {
             return awsGroupsBase;
         }
@@ -279,6 +298,15 @@ public class FideliusAuthProperties {
 
         public FideliusLdapProperties setBase(String base) {
             this.base = base;
+            return this;
+        }
+
+        public String getAlternativeUsersBase() {
+            return alternativeUsersBase;
+        }
+
+        public FideliusLdapProperties setAlternativeUsersBase(String alternativeUsersBase) {
+            this.alternativeUsersBase = alternativeUsersBase;
             return this;
         }
 

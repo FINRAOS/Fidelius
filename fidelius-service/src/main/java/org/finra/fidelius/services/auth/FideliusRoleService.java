@@ -181,6 +181,10 @@ public class FideliusRoleService {
         return false;
     }
 
+    public String fetchAwsAccountId(String accountAlias) {
+        return accountService.getAccountByAlias(accountAlias).getAccountId();
+    }
+
     private List<String> loadLdapUserMasterMemberships(){
         List<String> memberships = new ArrayList<>();
         fideliusAuthorizationService.getMasterMemberships().forEach((membership) -> {
