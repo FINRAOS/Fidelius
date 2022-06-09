@@ -32,6 +32,7 @@ import 'rxjs/add/observable/of';
 import 'rxjs/add/observable/throw';
 import { MainComponent } from '../main/main.component';
 import { BrowserService } from '../../services/browser.service';
+import { CredentialInfoComponent } from '../credential-info/credential-info.component';
 
 describe('ShowComponent', () => {
   let component: ShowComponent;
@@ -84,6 +85,9 @@ describe('ShowComponent', () => {
 
   class MockMainComponent{
   }
+
+  class MockCredentialInfoComponent{
+  }
   
   class MockBrowserService{
     checkIfIEOrEdge():boolean{
@@ -99,6 +103,7 @@ describe('ShowComponent', () => {
                    {provide: ClipboardService, useClass: MockClipBoardService },
                    {provide: MainComponent, useClass: MockMainComponent},
                    {provide: BrowserService, useClass: MockBrowserService},
+                   {provide: CredentialInfoComponent, useClass: MockCredentialInfoComponent}
                   ],
       declarations: [ ShowComponent ],
       schemas: [NO_ERRORS_SCHEMA],
