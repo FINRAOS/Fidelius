@@ -27,10 +27,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 public abstract class FideliusAuthorizationService {
 
     final Supplier<IFideliusUserProfile> fideliusUserProfileSupplier;
+    private String opsPatternString;
+    private String masterPatternString;
 
     /* User Cache */
     final LoadingCache<String, Optional<FideliusUserEntry>> userCache = CacheBuilder.newBuilder()
@@ -52,7 +55,7 @@ public abstract class FideliusAuthorizationService {
             .build(new CacheLoader<String, Optional<Set<String>>>() {
                 @Override
                 public Optional<Set<String>> load(String userName) throws Exception {
-                    return Optional.ofNullable(loadUserMemberships(userName));
+                    return Optional.ofNullable(loadUserMemberships(userName, masterPatternString, opsPatternString));
                 }
             });
 
@@ -64,7 +67,7 @@ public abstract class FideliusAuthorizationService {
             .build(new CacheLoader<String, Optional<Set<String>>>() {
                 @Override
                 public Optional<Set<String>> load(String userName) throws Exception {
-                    return Optional.ofNullable(loadUserMemberships(userName));
+                    return Optional.ofNullable(loadUserMemberships(userName, masterPatternString, opsPatternString));
                 }
             });
 
@@ -77,7 +80,7 @@ public abstract class FideliusAuthorizationService {
             .build(new CacheLoader<String, Optional<Set<String>>>() {
                 @Override
                 public Optional<Set<String>> load(String userName) throws Exception {
-                    return Optional.ofNullable(loadUserMemberships(userName));
+                    return Optional.ofNullable(loadUserMemberships(userName, masterPatternString, opsPatternString));
                 }
             });
 
@@ -89,11 +92,15 @@ public abstract class FideliusAuthorizationService {
         return userDevMembershipCache.getUnchecked(fideliusUserProfileSupplier.get().getName()).get();
     }
 
-    public Set<String> getOpsMemberships(){
+    public Set<String> getOpsMemberships(Pattern masterPattern, Pattern opsPattern){
+        masterPatternString = masterPattern.pattern();
+        opsPatternString = opsPattern.pattern();
         return userOpsMembershipCache.getUnchecked(fideliusUserProfileSupplier.get().getName()).get();
     }
 
-    public Set<String> getMasterMemberships(){
+    public Set<String> getMasterMemberships(Pattern masterPattern, Pattern opsPattern){
+        masterPatternString = masterPattern.pattern();
+        opsPatternString = opsPattern.pattern();
         return userMasterMembershipCache.getUnchecked(fideliusUserProfileSupplier.get().getName()).get();
     }
 
@@ -103,7 +110,7 @@ public abstract class FideliusAuthorizationService {
 
     abstract FideliusUserEntry loadUser(String userName);
 
-    abstract Set<String> loadUserMemberships(String userName);
+    abstract Set<String> loadUserMemberships(String userName, String masterPattern, String opsPattern);
 
     abstract Set<String> loadOpsMemberships(String userName);
 

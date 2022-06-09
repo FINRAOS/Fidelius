@@ -69,7 +69,7 @@ public class FideliusOpenLDAPAuthorizationService extends FideliusAuthorizationS
                 + " dn=" + ldapUserDn + " email=" + ldapUserEmail + " name=" + ldapUserName);
     }
 
-    protected Set<String> loadUserMemberships(String userName){
+    protected Set<String> loadUserMemberships(String userName, String masterPattern, String opsPattern){
         Pattern cnPattern = Pattern.compile("cn=([- _A-Za-z0-9]+)", Pattern.CASE_INSENSITIVE);
         logger.info("Checking Memberships for " +userName );
         Set<String> memberships = new HashSet<>();
