@@ -27,6 +27,7 @@ import {
 import { MainComponent } from '../main/main.component';
 import { BrowserService } from '../../services/browser.service';
 import { APPLICATION_LIST_LABEL_NAME } from '../../config/permissions';
+import { TdDialogService } from '@covalent/core';
 
 @Component({
   selector: 'fidelius-rotate',
@@ -60,7 +61,8 @@ export class RotateComponent implements OnInit{
               private _snackBarService: MatSnackBar,
               private _changeDetectorRef: ChangeDetectorRef,
               private _parentComponent: MainComponent,
-              private _browserService: BrowserService) {
+              private _browserService: BrowserService,
+              private _dialogService: TdDialogService) {
   }
 
   ngOnInit(): void {
@@ -142,6 +144,7 @@ export class RotateComponent implements OnInit{
       this.metadata.lastUpdatedDate = this.credential.lastUpdatedDate;
       this._credentialService.updateMetadata(this.metadata).subscribe((response: any) => {
         this.rotate();
+        this.existingMetadata = true;
       } ,(error: any) => {
         this.sendingForm = false;
         this._changeDetectorRef.detectChanges();
@@ -153,7 +156,25 @@ export class RotateComponent implements OnInit{
     
     
   }
-
+  confirmRotateSecret(): void{
+    let message: string = 'You are attempting to rotate the secret for "' + this.credential.longKey + '". Please confirm.';
+    this.sendingForm = true  
+    this._dialogService.openConfirm({
+      message: message,
+      title: 'Confirm Secret Rotation',
+      cancelButton: 'Cancel',
+      acceptButton: 'Rotate',
+    }).afterClosed().subscribe((rotate: boolean) => {
+      if (rotate) {
+        this.rotateCredential();
+        this.sendingForm = false;
+      }
+      else{
+        this.sendingForm = false;
+        this._changeDetectorRef.detectChanges();
+      }
+    });
+  }
   rotate(): void {
     let rotationDTO: RotationDTO = new RotationDTO();
     rotationDTO.account = this.credential.account;
