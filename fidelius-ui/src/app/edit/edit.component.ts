@@ -77,6 +77,7 @@ export class EditComponent implements OnInit{
     this.credential.application = this._parentComponent.selected.application;
     this.credential.region = this._parentComponent.selected.region;
     this.isIEOrEdge = this._browserService.checkIfIEOrEdge();
+    this.getSourceTypes();
     this.loadCredential();
     this.getMetadata();
   }
@@ -114,7 +115,12 @@ export class EditComponent implements OnInit{
         this._changeDetectorRef.detectChanges();
     });
   }
-
+  getSourceTypes(){
+    this._credentialService.getSourceTypes().subscribe((types: string[])=> {
+      types.unshift("-");
+      this.sourceTypes = types;
+    });
+  }
   getActiveDirectoryPasswordPattern(): void {
     this._credentialService.getActiveDirectoryPasswordValidation().subscribe( (activeDirectory: IActiveDirectory) => {
       this.activeDirectory = activeDirectory;

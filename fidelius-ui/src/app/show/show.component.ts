@@ -158,7 +158,7 @@ constructor( private _credentialService: CredentialService,
   }
   confirmRotateSecret(): void{
     let message: string = 'You are attempting to rotate the secret for "' + this.credential.longKey + '". Please confirm.';
-    this.rotating = true
+    this.rotating = true  
     this._dialogService.openConfirm({
       message: message,
       title: 'Confirm Secret Rotation',

@@ -74,7 +74,7 @@ export class RotateComponent implements OnInit{
     this.credential.application = this._parentComponent.selected.application;
     this.credential.region = this._parentComponent.selected.region;
     this.isIEOrEdge = this._browserService.checkIfIEOrEdge();
-
+    this.getSourceTypes();
     this.loadCredential();
     this.getMetadata();
   }
@@ -126,8 +126,12 @@ export class RotateComponent implements OnInit{
     }
     return longKey;
   }
-
-
+  getSourceTypes(){
+    this._credentialService.getSourceTypes().subscribe((types: string[])=> {
+      this.sourceTypes = types;
+    });
+  }
+  
 
   closeSideNav(refresh: boolean): void {
     this._parentComponent.closeSideNavAndRefresh(refresh);
@@ -153,12 +157,12 @@ export class RotateComponent implements OnInit{
         this._alertService.openAlert(error);
       });
     }
-
-
+    
+    
   }
   confirmRotateSecret(): void{
     let message: string = 'You are attempting to rotate the secret for "' + this.credential.longKey + '". Please confirm.';
-    this.sendingForm = true
+    this.sendingForm = true  
     this._dialogService.openConfirm({
       message: message,
       title: 'Confirm Secret Rotation',

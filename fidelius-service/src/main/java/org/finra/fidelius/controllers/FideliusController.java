@@ -196,6 +196,11 @@ class FideliusController {
 
         return new ResponseEntity<>("Unable to describe source names", HttpStatus.NOT_FOUND);
     }
+    @ResponseBody
+    @GetMapping(value="/sourceTypes")
+    public ResponseEntity getSourceNames() throws Exception {
+        return new ResponseEntity<>(credentialsService.getSourceTypes(), HttpStatus.OK);
+    }
 
     @ResponseBody
     @GetMapping(value="/credentials/metadata")
