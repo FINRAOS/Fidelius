@@ -21,6 +21,7 @@ import {
 import { NgForm } from '@angular/forms';
 import { Credential, CredentialService, Selected, IHistory, Metadata, RotationDTO } from '../../services/credential.service';
 import { AlertService } from '../../services/alert.service';
+import { TdDialogService } from '@covalent/core';
 import { ClipboardService } from 'ngx-clipboard';
 import { MatSnackBar } from '@angular/material';
 import { APPLICATION_LIST_LABEL_NAME } from '../../config/permissions';
@@ -69,6 +70,7 @@ constructor( private _credentialService: CredentialService,
                private _credentialInfoComponent: CredentialInfoComponent,
                private _changeDetectorRef: ChangeDetectorRef,
                private _browserService: BrowserService,
+               private _dialogService: TdDialogService
                ) {
   }
 
@@ -154,10 +156,28 @@ constructor( private _credentialService: CredentialService,
       this._changeDetectorRef.detectChanges();
     });
   }
-
+  confirmRotateSecret(): void{
+    let message: string = 'You are attempting to rotate the secret for "' + this.credential.longKey + '". Please confirm.';
+    this.rotating = true  
+    this._dialogService.openConfirm({
+      message: message,
+      title: 'Confirm Secret Rotation',
+      cancelButton: 'Cancel',
+      acceptButton: 'Rotate',
+    }).afterClosed().subscribe((rotate: boolean) => {
+      if (rotate) {
+        this.rotateCredential();
+        this.rotating = false;
+      }
+      else{
+        this.rotating = false;
+        this._changeDetectorRef.detectChanges();
+      }
+    });
+  }
   rotateSecret():void{
     if(this.metadata.source && this.metadata.sourceType ){
-      this.rotateCredential();
+      this.confirmRotateSecret();
     }
     else{
       this._parentComponent.openSideNav(this.credential, "rotate", 0);
