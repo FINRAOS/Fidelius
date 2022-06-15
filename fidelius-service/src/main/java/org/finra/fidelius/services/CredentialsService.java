@@ -50,6 +50,8 @@ import org.finra.fidelius.services.auth.FideliusRoleService;
 import org.finra.fidelius.services.aws.AWSSessionService;
 import org.finra.fidelius.services.aws.DynamoDBService;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -406,7 +408,7 @@ public class CredentialsService {
      * @return Secret
      */
     @PreAuthorize("@fideliusRoleService.isAuthorized(#application, #account)")
-    public String rotateCredential(String account, String sourceType, String source, String region, String application, String environment,
+    public ResponseEntity rotateCredential(String account, String sourceType, String source, String region, String application, String environment,
                                        String component, String shortKey) {
         setFideliusEnvironment(account, region);
         restTemplate = new RestTemplate();
@@ -415,7 +417,7 @@ public class CredentialsService {
         String oAuth2Header = "";
         if(!rotateUrl.isPresent() || rotateUrl.get().isEmpty()) {
             this.logger.error("Password rotation URL not provided. Please ensure that fidelius.rotate.url is set.");
-            return "500";
+            return new ResponseEntity<>("Password rotation URL not provided.", HttpStatus.BAD_REQUEST);
         }
         if(oAuthTokenEndpointProvided()) {
             oAuth2Header = userOAuth2TokenCache.getUnchecked(user).get();
@@ -450,17 +452,24 @@ public class CredentialsService {
                     );
                 } catch(HttpStatusCodeException e) {
                     this.logger.info("Credential not rotated " + e.toString());
-                    return String.valueOf(e.getRawStatusCode());
+                    String resultFromResponse;
+                    try{
+                        resultFromResponse = extractErrorMessageFromResponse(e.getResponseBodyAsString());
+                    } catch(Exception exception) {
+                        this.logger.info("Failed to parse result from response object.");
+                        resultFromResponse = e.getStatusText();
+                    }
+                    return new ResponseEntity<>(resultFromResponse, e.getStatusCode());
                 }
-                return String.valueOf(response.getStatusCodeValue());
+                return new ResponseEntity<String>(HttpStatus.OK);
 
             } else {
-                this.logger.info("Credential not rotated Source or SourceType is null");
-                return "500";
+                this.logger.info("Credential not rotated. Source Name or SourceType is null.");
+                return new ResponseEntity<>("Credential not rotated. Source Name or SourceType is null.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
         } catch (Exception e) {
             this.logger.info("Credential not rotated " + e.toString());
-            return "500";
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
@@ -789,6 +798,24 @@ public class CredentialsService {
             return new HttpEntity<>(httpHeaders);
         }
         return new HttpEntity<>(body, httpHeaders);
+    }
+
+    private String extractErrorMessageFromResponse(String responseString) throws ParseException {
+        String responseStringCleaned = responseString.trim();
+        if(responseStringCleaned.endsWith("\"\"")) {
+            responseStringCleaned = responseStringCleaned.substring(0, responseStringCleaned.length()-2);
+        }
+        JSONObject responseJson = convertStringToJSON(responseStringCleaned.trim());
+        String outputString = (String) responseJson.get("output");
+        JSONObject outputJson = convertStringToJSON(outputString);
+        String errorMessage = (String) outputJson.get("errorMessage");
+        logger.info("Error message: " + errorMessage);
+        return errorMessage;
+    }
+
+    private JSONObject convertStringToJSON(String originalString) throws ParseException {
+        JSONParser jsonParser = new JSONParser();
+        return (JSONObject) jsonParser.parse(originalString);
     }
 
 }

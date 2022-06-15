@@ -26,6 +26,8 @@ import org.finra.fidelius.model.Metadata;
 import org.finra.fidelius.model.account.Account;
 import org.finra.fidelius.services.CredentialsService;
 import org.finra.fidelius.services.account.AccountsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +35,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
+import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +57,8 @@ class FideliusController {
 
     @Value("${fidelius.dynamoTable}")
     private String tableName;
+
+    private Logger logger = LoggerFactory.getLogger(FideliusController.class);
 
     @RequestMapping(value = "/heartbeat", method = RequestMethod.GET)
     public ResponseEntity heartbeatEndpoint() {
@@ -179,21 +184,8 @@ class FideliusController {
        String application = request.get("application");
        String environment= request.get("environment");
 
-       String lambdaStatus = credentialsService.rotateCredential(account, sourceType, sourceName, region, application, environment, component, shortKey);
-       switch (lambdaStatus){
-           case "200":
-               return new ResponseEntity<String>(HttpStatus.OK);
-           case "401":
-               return new ResponseEntity<>("Unauthorized to Rotate", HttpStatus.UNAUTHORIZED);
-           case "403":
-               return new ResponseEntity<>("Improper Membership", HttpStatus.FORBIDDEN);
-           case "404":
-               return new ResponseEntity<>("Resource Does Not Exist", HttpStatus.NOT_FOUND);
-           case "500":
-               return new ResponseEntity<>("Internal Server Error", HttpStatus.INTERNAL_SERVER_ERROR);
-           default:
-               return new ResponseEntity<>("Error " + lambdaStatus, HttpStatus.INTERNAL_SERVER_ERROR);
-       }
+       ResponseEntity response = credentialsService.rotateCredential(account, sourceType, sourceName, region, application, environment, component, shortKey);
+       return response;
     }
 
     @ResponseBody
