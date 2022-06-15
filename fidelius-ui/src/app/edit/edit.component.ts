@@ -169,7 +169,7 @@ export class EditComponent implements OnInit{
     this.sendingForm = true;
     this.credential.lastUpdatedDate = new Date().toISOString();
     this.metadata.lastUpdatedDate = new Date().toISOString();
-    if(this.editSecret && this.editMetadata){
+    if(this.editSecret && this.editMetadata && this.metadata.sourceType != "-"){
       concat(
         this._credentialService.updateMetadata(this.metadata),
         this._credentialService.updateCredential(this.credential)
