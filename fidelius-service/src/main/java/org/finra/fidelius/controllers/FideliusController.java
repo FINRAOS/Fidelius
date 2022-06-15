@@ -179,21 +179,8 @@ class FideliusController {
        String application = request.get("application");
        String environment= request.get("environment");
 
-       String lambdaStatus = credentialsService.rotateCredential(account, sourceType, sourceName, region, application, environment, component, shortKey);
-       switch (lambdaStatus){
-           case "200":
-               return new ResponseEntity<String>(HttpStatus.OK);
-           case "401":
-               return new ResponseEntity<>("Unauthorized to Rotate", HttpStatus.UNAUTHORIZED);
-           case "403":
-               return new ResponseEntity<>("Improper Membership", HttpStatus.FORBIDDEN);
-           case "404":
-               return new ResponseEntity<>("Resource Does Not Exist", HttpStatus.NOT_FOUND);
-           case "500":
-               return new ResponseEntity<>("Internal Server Error", HttpStatus.INTERNAL_SERVER_ERROR);
-           default:
-               return new ResponseEntity<>("Error " + lambdaStatus, HttpStatus.INTERNAL_SERVER_ERROR);
-       }
+       ResponseEntity response = credentialsService.rotateCredential(account, sourceType, sourceName, region, application, environment, component, shortKey);
+       return response;
     }
 
     @ResponseBody

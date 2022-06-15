@@ -74,7 +74,7 @@ export class RotateComponent implements OnInit{
     this.credential.application = this._parentComponent.selected.application;
     this.credential.region = this._parentComponent.selected.region;
     this.isIEOrEdge = this._browserService.checkIfIEOrEdge();
-    
+
     this.loadCredential();
     this.getMetadata();
   }
@@ -104,7 +104,7 @@ export class RotateComponent implements OnInit{
       }
       else{
         this.existingMetadata = true;
-      }  
+      }
       this._changeDetectorRef.detectChanges();
     }, (error: any) => {
         this.hasError = true;
@@ -127,7 +127,7 @@ export class RotateComponent implements OnInit{
     return longKey;
   }
 
-  
+
 
   closeSideNav(refresh: boolean): void {
     this._parentComponent.closeSideNavAndRefresh(refresh);
@@ -135,7 +135,7 @@ export class RotateComponent implements OnInit{
 
   rotateCredential(): void {
     this.sendingForm = true;
-    
+
     this.credential.lastUpdatedDate = new Date().toISOString();
     if(this.existingMetadata){
       this.rotate();
@@ -153,12 +153,12 @@ export class RotateComponent implements OnInit{
         this._alertService.openAlert(error);
       });
     }
-    
-    
+
+
   }
   confirmRotateSecret(): void{
     let message: string = 'You are attempting to rotate the secret for "' + this.credential.longKey + '". Please confirm.';
-    this.sendingForm = true  
+    this.sendingForm = true
     this._dialogService.openConfirm({
       message: message,
       title: 'Confirm Secret Rotation',
@@ -193,7 +193,7 @@ export class RotateComponent implements OnInit{
     }, (error: any) => {
       this.sendingForm = false;
       this._changeDetectorRef.detectChanges();
-      let message: string = 'Credential ' + this.credential.longKey + ' failed to rotate: ' + error.status + " " + error.statusText;
+      let message: string = 'Credential ' + this.credential.longKey + ' failed to rotate: ' + error.status + ' - ' + error.error;
       this._snackBarService.open(message,  'DISMISS', { horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: "snackbar-error" });
     });
   }

@@ -158,7 +158,7 @@ constructor( private _credentialService: CredentialService,
   }
   confirmRotateSecret(): void{
     let message: string = 'You are attempting to rotate the secret for "' + this.credential.longKey + '". Please confirm.';
-    this.rotating = true  
+    this.rotating = true
     this._dialogService.openConfirm({
       message: message,
       title: 'Confirm Secret Rotation',
@@ -182,7 +182,7 @@ constructor( private _credentialService: CredentialService,
     else{
       this._parentComponent.openSideNav(this.credential, "rotate", 0);
     }
-    
+
   }
 
   rotateCredential(): void {
@@ -207,7 +207,7 @@ constructor( private _credentialService: CredentialService,
       this._changeDetectorRef.detectChanges();
     }, (error: any) => {
       this.rotating = false;
-      let message: string = 'Credential ' + this.credential.longKey + ' failed to rotate: ' + error.status + " " + error.statusText;      
+      let message: string = 'Credential ' + this.credential.longKey + ' failed to rotate: ' + error.status + ' - ' + error.error;
       this._snackBarService.open(message,  'DISMISS', { horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: ["snackbar-error"] });
       this._changeDetectorRef.detectChanges();
     });
