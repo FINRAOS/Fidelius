@@ -452,14 +452,14 @@ public class CredentialsService {
                     );
                 } catch(HttpStatusCodeException e) {
                     this.logger.info("Credential not rotated " + e.toString());
-                    String resultFromResponse;
+                    String errorMessageFromResponse;
                     try{
-                        resultFromResponse = extractErrorMessageFromResponse(e.getResponseBodyAsString());
+                        errorMessageFromResponse = extractErrorMessageFromResponse(e.getResponseBodyAsString());
                     } catch(Exception exception) {
-                        this.logger.info("Failed to parse result from response object.");
-                        resultFromResponse = e.getStatusText();
+                        this.logger.info("Failed to parse error message from response object.");
+                        errorMessageFromResponse = e.getStatusText();
                     }
-                    return new ResponseEntity<>(resultFromResponse, e.getStatusCode());
+                    return new ResponseEntity<>(errorMessageFromResponse, e.getStatusCode());
                 }
                 return new ResponseEntity<String>(HttpStatus.OK);
 
