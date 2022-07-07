@@ -70,6 +70,10 @@ export class CredentialService {
       '&application=' + application.toLowerCase());
   }
 
+  getSourceTypes(){
+    return this._http.get<any>( this.URL + '/sourceTypes')
+  }
+
   createMetadata(metadata: Metadata): Observable<any> {
     return this._http.post<any>(this.URL + '/credentials/metadata', metadata);
   }

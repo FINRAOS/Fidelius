@@ -95,6 +95,9 @@ public class CredentialsService {
     @Value("${fidelius.kmsKey}")
     private String kmsKey;
 
+    @Value(("${fidelius.sourceTypes}"))
+    private String sourceTypes;
+
     @Value("${fidelius.rotate.url:}")
     private Optional<String> rotateUrl;
 
@@ -617,7 +620,11 @@ public class CredentialsService {
         return putMetadata(metadata);
     }
     private String isValidMetadata(Metadata metadata){
-        switch (metadata.getSourceType()){
+        String sourceType = metadata.getSourceType();
+        if(sourceType.contains("Service Account")){
+            sourceType = "Service Account";
+        }
+        switch (sourceType){
             case "RDS":
             case "Aurora":
                 if(!metadata.getSource().startsWith(metadata.getApplication().toLowerCase())){
@@ -747,6 +754,9 @@ public class CredentialsService {
             default:
                 throw new Exception("Please pass supported values for sourceType");
         }
+    }
+    public List<String> getSourceTypes(){
+        return Arrays.asList(sourceTypes.split(","));
     }
 
     private String getOAuth2Header(String username, String password) {

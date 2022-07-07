@@ -69,7 +69,7 @@ export class AddComponent implements OnInit {
     this.metadata.application = this._parentComponent.selected.application;
     this.metadata.lastUpdatedDate = new Date().toISOString();
     this.metadata.region = this._parentComponent.selected.region;
-
+    this.getSourceTypes();
     this.getActiveDirectoryPasswordPattern();
     this.isIEOrEdge = this._browserService.checkIfIEOrEdge();
   }
@@ -186,7 +186,12 @@ export class AddComponent implements OnInit {
       }
     });
   }
-
+  getSourceTypes(){
+    this._credentialService.getSourceTypes().subscribe((types: string[])=> {
+      types.unshift("-");
+      this.sourceTypes = types;
+    });
+  }
   sourceNameAuto(): void {
     if(this.metadata.sourceType !== undefined){
       this._credentialService.getSourceNames(this.credential.account, this.credential.region, this.metadata.sourceType, this.metadata.application).subscribe((sourceNames: string[])=>{

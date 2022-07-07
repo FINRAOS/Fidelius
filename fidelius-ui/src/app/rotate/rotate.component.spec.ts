@@ -70,6 +70,12 @@ describe('RotateComponent', () => {
         "region": ""});
     }
 
+    getSourceTypes(): any {
+      return Observable.of(
+        ["-", "Aurora", "RDS", "Service Account"]
+      )
+    }
+
     getActiveDirectoryPasswordValidation(): Observable<IActiveDirectory> {
       return Observable.of({
         "validActiveDirectoryRegularExpression": "^[a-zA-Z0-9]{16,}$",

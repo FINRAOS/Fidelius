@@ -41,6 +41,12 @@ describe('AddComponent', () => {
     createCredential(credential: Credential): any {
       return Observable.of({secret: false});
     }
+    
+    getSourceTypes(): any {
+      return Observable.of(
+        ["-", "Aurora", "RDS", "Service Account"]
+      )
+    }
 
     getActiveDirectoryPasswordValidation(): Observable<IActiveDirectory> {
       return Observable.of({
