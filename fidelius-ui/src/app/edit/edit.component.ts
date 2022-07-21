@@ -189,6 +189,31 @@ export class EditComponent implements OnInit{
         this._alertService.openAlert(error);
       });
     }
+    else if(this.editSecret && this.editMetadata && this.metadata.sourceType === "-" ){
+      concat(
+        this._credentialService.deleteMetadata(this.credential),
+        this._credentialService.updateCredential(this.credential)
+      ).subscribe( (result: any) => {
+        let message: string = 'Credential ' + this.credential.longKey + ' updated';
+        this._snackBarService.open(message,  '', { duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: "snackbar-success" });
+        this.closeSideNav(true);
+      }, (error: any) => {
+        this.sendingForm = false;
+        this._changeDetectorRef.detectChanges();
+        this._alertService.openAlert(error);
+      });
+    }
+    else if(this.editMetadata && this.metadata.sourceType === "-"){
+      this._credentialService.deleteMetadata(this.credential).subscribe( () => {
+        let message: string = 'Credential Metadata ' + this.credential.longKey + ' deleted';
+        this._snackBarService.open(message,  '', { duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom', panelClass: "snackbar-success" });
+        this.closeSideNav(true);
+      }, (error: any) => {
+        this.sendingForm = false;
+        this._changeDetectorRef.detectChanges();
+        this._alertService.openAlert(error);
+      });
+    }
     else if(this.editSecret){
       this._credentialService.updateCredential(this.credential).subscribe( (credential: Credential) => {
         let message: string = 'Credential ' + this.credential.longKey + ' updated';
