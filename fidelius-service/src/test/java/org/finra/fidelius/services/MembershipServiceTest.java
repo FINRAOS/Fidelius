@@ -68,9 +68,9 @@ public class MembershipServiceTest {
 
         when(restService.makeCall(any(), any(), any())).thenReturn(response);
 
-        Assert.assertTrue(membershipService.getAllMemberships().contains("APPLICATION1"));
-        Assert.assertTrue(membershipService.getAllMemberships().contains("APPLICATION2"));
-        Assert.assertTrue(membershipService.getAllMemberships().contains("APPLICATION3"));
+        Assert.assertTrue(membershipService.getAllMemberships("testUser").contains("APPLICATION1"));
+        Assert.assertTrue(membershipService.getAllMemberships("testUser").contains("APPLICATION2"));
+        Assert.assertTrue(membershipService.getAllMemberships("testUser").contains("APPLICATION3"));
 
     }
 
@@ -79,7 +79,7 @@ public class MembershipServiceTest {
 
         when(restService.makeCall(any(), any(), any())).thenReturn(new Membership());
 
-        Assert.assertTrue(membershipService.getAllMemberships().size() == 0);
+        Assert.assertTrue(membershipService.getAllMemberships("testUser").size() == 0);
 
     }
 }

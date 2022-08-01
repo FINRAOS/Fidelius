@@ -65,7 +65,7 @@ public class FideliusRoleService {
             .expireAfterWrite(10L, TimeUnit.MINUTES)
             .build(new CacheLoader<String, Optional<List<String>>>() {
                 public Optional<List<String>> load(String userName) throws Exception {
-                    return Optional.ofNullable(loadLdapUserMasterMemberships());
+                    return Optional.ofNullable(loadLdapUserMasterMemberships(userName));
                 }
             });
 
@@ -75,7 +75,7 @@ public class FideliusRoleService {
             .expireAfterWrite(10L, TimeUnit.MINUTES)
             .build(new CacheLoader<String, Optional<List<String>>>() {
                 public Optional<List<String>> load(String userName) throws Exception {
-                    return Optional.ofNullable(loadLdapUserOpsMemberships());
+                    return Optional.ofNullable(loadLdapUserOpsMemberships(userName));
                 }
             });
 
@@ -185,13 +185,13 @@ public class FideliusRoleService {
         return accountService.getAccountByAlias(accountAlias).getAccountId();
     }
 
-    private List<String> loadLdapUserMasterMemberships(){
+    private List<String> loadLdapUserMasterMemberships(String userName){
         List<String> memberships = new ArrayList<>();
         fideliusAuthorizationService.getMasterMemberships(masterPattern, opsPattern).forEach((membership) -> {
             Matcher m = masterPattern.matcher(membership);
             if(m.find()) {
                 try {
-                    memberships.addAll(membershipService.getAllMemberships());
+                    memberships.addAll(membershipService.getAllMemberships(userName));
                 } catch(Exception e) {
                     logger.error("Error getting Master role memberships", e);
                     e.printStackTrace();
@@ -201,13 +201,13 @@ public class FideliusRoleService {
         return memberships;
     }
 
-    private List<String> loadLdapUserOpsMemberships(){
+    private List<String> loadLdapUserOpsMemberships(String userName){
         List<String> memberships = new ArrayList<>();
         fideliusAuthorizationService.getOpsMemberships(masterPattern, opsPattern).forEach((membership) -> {
             Matcher m = opsPattern.matcher(membership);
             if(m.find()) {
                 try {
-                    memberships.addAll(membershipService.getAllMemberships());
+                    memberships.addAll(membershipService.getAllMemberships(userName));
                 } catch(Exception e) {
                     logger.error("Error getting Ops role memberships", e);
                     e.printStackTrace();

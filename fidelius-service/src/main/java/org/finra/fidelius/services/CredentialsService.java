@@ -104,16 +104,16 @@ public class CredentialsService {
     @Value("${fidelius.rotate.uri:}")
     private Optional<String> rotateUri;
 
-    @Value("${fidelius.auth.oauth.tokenUrl:}")
+    @Value("${fidelius.rotate.oauth.tokenUrl:}")
     private Optional<String> tokenUrl;
 
-    @Value("${fidelius.auth.oauth.tokenUri:}")
+    @Value("${fidelius.rotate.oauth.tokenUri:}")
     private Optional<String> tokenUri;
 
-    @Value("${fidelius.auth.oauth.clientId:}")
+    @Value("${fidelius.rotate.oauth.clientId:}")
     private Optional<String> clientId;
 
-    @Value("${fidelius.auth.oauth.clientSecret:}")
+    @Value("${fidelius.rotate.oauth.clientSecret:}")
     private Optional<String> clientSecret;
 
     private final static String RDS = "rds";
