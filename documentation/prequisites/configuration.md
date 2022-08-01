@@ -70,3 +70,7 @@ Note: providing the following configuration will enable OAuth 2.0 for the API ca
  | fidelius.auth.oauth.clientSecret     | The Client Secret used when fetching the OAuth 2.0 token.             	                    | string 	|
  | fidelius.auth.oauth.tokenUrl         | The Endpoint Fidelius calls to fetch the OAuth 2.0 token.            	                        | string 	|
  | fidelius.auth.oauth.tokenUri         | The Endpoint URI Fidelius uses to fetch the OAuth 2.0 token.                                	| string 	|
+ | fidelius.rotate.oauth.clientId       | The Client ID used when fetching the OAuth 2.0 token for the secret rotation endpoint.        | string 	|
+ | fidelius.rotate.oauth.clientSecret   | The Client Secret used when fetching the OAuth 2.0 token for the secret rotation endpoint.    | string 	|
+ | fidelius.rotate.oauth.tokenUrl       | The Endpoint Fidelius calls to fetch the OAuth 2.0 token for the secret rotation endpoint.    | string 	|
+ | fidelius.rotate.oauth.tokenUri       | The Endpoint URI Fidelius uses to fetch the OAuth 2.0 token for the secret rotation endpoint. | string 	|
