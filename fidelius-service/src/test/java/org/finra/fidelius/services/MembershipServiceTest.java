@@ -66,7 +66,7 @@ public class MembershipServiceTest {
 
         Membership response = new Membership(node);
 
-        when(restService.makeCall(any(), any(), any())).thenReturn(response);
+        when(restService.makeCall(any(), any(), any(), any())).thenReturn(response);
 
         Assert.assertTrue(membershipService.getAllMemberships("testUser").contains("APPLICATION1"));
         Assert.assertTrue(membershipService.getAllMemberships("testUser").contains("APPLICATION2"));
@@ -77,7 +77,7 @@ public class MembershipServiceTest {
     @Test
     public void getEmptyMemberships() throws Exception {
 
-        when(restService.makeCall(any(), any(), any())).thenReturn(new Membership());
+        when(restService.makeCall(any(), any(), any(), any())).thenReturn(new Membership());
 
         Assert.assertTrue(membershipService.getAllMemberships("testUser").size() == 0);
 
