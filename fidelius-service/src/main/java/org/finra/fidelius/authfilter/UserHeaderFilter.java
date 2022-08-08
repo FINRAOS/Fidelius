@@ -34,6 +34,8 @@ public class UserHeaderFilter implements Filter {
 
     private UserParser userProfileParser;
 
+    private String contentSecurityPolicy;
+
     private class UserProfileRequestWrapper extends HttpServletRequestWrapper {
 
         private IFideliusUserProfile userProfile;
@@ -53,6 +55,11 @@ public class UserHeaderFilter implements Filter {
         this.userProfileParser = userProfileParser;
     }
 
+    public UserHeaderFilter(UserParser userProfileParser, String contentSecurityPolicy) {
+        this.userProfileParser = userProfileParser;
+        this.contentSecurityPolicy = contentSecurityPolicy;
+    }
+
     public UserHeaderFilter(UserParser... userProfileParsers) {
         this.userProfileParser = new CompositeParser(userProfileParsers);
     }
@@ -67,8 +74,13 @@ public class UserHeaderFilter implements Filter {
                          FilterChain filterChain) throws IOException, ServletException {
         HttpServletRequest httpReq = (HttpServletRequest) req;
         HttpServletResponse httpRes = (HttpServletResponse) res;
-        httpRes.setHeader("Content-Security-Policy",
-                "default-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors *.finra.org");
+        if(contentSecurityPolicy != null && !contentSecurityPolicy.equals("")) {
+            httpRes.setHeader("Content-Security-Policy",
+                    "default-src 'self' 'unsafe-inline' 'unsafe-eval'; " + contentSecurityPolicy);
+        } else {
+            httpRes.setHeader("Content-Security-Policy",
+                    "default-src 'self' 'unsafe-inline' 'unsafe-eval'");
+        }
         httpRes.setHeader("X-XSS-Protection",
                 "1; mode=block");
         httpRes.setHeader("X-Frame-Options",

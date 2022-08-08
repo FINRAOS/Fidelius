@@ -70,6 +70,9 @@ public class AppConfig {
     @Value("${fidelius.aws.proxyPort:}")
     private Optional<Integer> proxyPort;
 
+    @Value("${fidelius.javax.contentSecurityPolicy:}")
+    private Optional<String> contentSecurityPolicy;
+
     private final Logger logger = LoggerFactory.getLogger(AppConfig.class);
 
     private final String userIdHeader;
@@ -133,7 +136,11 @@ public class AppConfig {
     @AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
     public FilterRegistrationBean userProfileFilterRegistration() {
         FilterRegistrationBean userProfileFilterRegistration = new FilterRegistrationBean();
-        userProfileFilterRegistration.setFilter(new UserHeaderFilter(new SSOParser(userIdHeader)));
+        if(contentSecurityPolicy.isPresent() && !contentSecurityPolicy.get().isEmpty()) {
+            userProfileFilterRegistration.setFilter(new UserHeaderFilter(new SSOParser(userIdHeader), contentSecurityPolicy.get()));
+        } else {
+            userProfileFilterRegistration.setFilter(new UserHeaderFilter(new SSOParser(userIdHeader)));
+        }
         userProfileFilterRegistration.setOrder(0);
         return userProfileFilterRegistration;
     }
