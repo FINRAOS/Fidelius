@@ -24,6 +24,7 @@ import org.finra.fidelius.authfilter.parser.UserParser;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.Optional;
@@ -32,6 +33,8 @@ import java.util.Optional;
 public class UserHeaderFilter implements Filter {
 
     private UserParser userProfileParser;
+
+    private String contentSecurityPolicy;
 
     private class UserProfileRequestWrapper extends HttpServletRequestWrapper {
 
@@ -52,6 +55,11 @@ public class UserHeaderFilter implements Filter {
         this.userProfileParser = userProfileParser;
     }
 
+    public UserHeaderFilter(UserParser userProfileParser, String contentSecurityPolicy) {
+        this.userProfileParser = userProfileParser;
+        this.contentSecurityPolicy = contentSecurityPolicy;
+    }
+
     public UserHeaderFilter(UserParser... userProfileParsers) {
         this.userProfileParser = new CompositeParser(userProfileParsers);
     }
@@ -65,11 +73,23 @@ public class UserHeaderFilter implements Filter {
     public void doFilter(ServletRequest req, ServletResponse res,
                          FilterChain filterChain) throws IOException, ServletException {
         HttpServletRequest httpReq = (HttpServletRequest) req;
+        HttpServletResponse httpRes = (HttpServletResponse) res;
+        if(contentSecurityPolicy != null && !contentSecurityPolicy.equals("")) {
+            httpRes.setHeader("Content-Security-Policy",
+                    "default-src 'self' 'unsafe-inline' 'unsafe-eval'; " + contentSecurityPolicy);
+        } else {
+            httpRes.setHeader("Content-Security-Policy",
+                    "default-src 'self' 'unsafe-inline' 'unsafe-eval'");
+        }
+        httpRes.setHeader("X-XSS-Protection",
+                "1; mode=block");
+        httpRes.setHeader("X-Frame-Options",
+                "DENY");
         Optional<IFideliusUserProfile> userProfile = userProfileParser.parse(httpReq);
         if (userProfile.isPresent()) {
-            filterChain.doFilter(new UserProfileRequestWrapper(httpReq, userProfile.get()), res);
+            filterChain.doFilter(new UserProfileRequestWrapper(httpReq, userProfile.get()), httpRes);
         } else {
-            filterChain.doFilter(httpReq, res);
+            filterChain.doFilter(httpReq, httpRes);
         }
     }
 

@@ -37,16 +37,17 @@ Currently Fidelius only supports authorization through LDAP, the application exp
 
 
 ## Application
-| Property                                       	| Description                                                                        	| Type   	|
-|------------------------------------------------	|------------------------------------------------------------------------------------	|--------	|
-| fidelius.membership-server-url                 	| The endpoint of the service Fidelius uses to fetch the Ops/Master memberships      	| string 	|
-| fidelius.membership-server-uri                 	| The URI Fidelius can use to call the membership service for OPS/Master memberships 	| string 	|
-| fidelius.dynamoTable                           	| Name of DynamoDB table to be used to store secrets.                                	| string 	|
-| fidelius.kmsKey                                	| KMS key used to encrypt/decrypt secrets.                                           	| string 	|
-| fidelius.rotate.url         	                    | Secret rotation endpoint URL. 	                                                    | string 	|
-| fidelius.rotate.uri         	                    | Secret rotation endpoint URI. 	                                                    | string 	|
-| fidelius.validActiveDirectoryRegularExpression 	| Regular Expression used to validate secrets marked labeled Active Directory.       	| string 	|
-| fidelius.validActiveDirectoryDescription       	| Description of Regular Expression to guide users to enter valid secret             	| string 	|
+| Property                                       	| Description                                                                        	                                | Type   	|
+|------------------------------------------------	|-------------------------------------------------------------------------------------------------------------------	|--------	|
+| fidelius.membership-server-url                 	| The endpoint of the service Fidelius uses to fetch the Ops/Master memberships      	                                | string 	|
+| fidelius.membership-server-uri                 	| The URI Fidelius can use to call the membership service for OPS/Master memberships 	                                | string 	|
+| fidelius.dynamoTable                           	| Name of DynamoDB table to be used to store secrets.                                	                                | string 	|
+| fidelius.javax.contentSecurityPolicy 	            | (Optional) Content-Security-Policy header to be appended to "default-src 'self' 'unsafe-inline' 'unsafe-eval'; "      | string 	|
+| fidelius.kmsKey                                	| KMS key used to encrypt/decrypt secrets.                                           	                                | string 	|
+| fidelius.rotate.url         	                    | Secret rotation endpoint URL. 	                                                                                    | string 	|
+| fidelius.rotate.uri         	                    | Secret rotation endpoint URI. 	                                                                                    | string 	|
+| fidelius.validActiveDirectoryRegularExpression 	| Regular Expression used to validate secrets marked labeled Active Directory.       	                                | string 	|
+| fidelius.validActiveDirectoryDescription       	| Description of Regular Expression to guide users to enter valid secret             	                                | string 	|
 
 
 ### AWS
