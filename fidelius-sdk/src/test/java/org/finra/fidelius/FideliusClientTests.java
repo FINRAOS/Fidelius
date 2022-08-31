@@ -18,10 +18,8 @@
 package org.finra.fidelius;
 
 
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
-import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
@@ -30,6 +28,10 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.http.SdkHttpClient;
+import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.services.sts.model.GetCallerIdentityRequest;
 
 import java.util.HashMap;
 
@@ -391,65 +393,6 @@ public class FideliusClientTests {
 
     }
 
-    @Test
-    public void testProxyConfig() throws Exception {
-
-        JCredStash jCredStashMock = mock(JCredStash.class);
-
-        HashMap<String, String> envMap = new HashMap<String, String>();
-        envMap.put("CRED_PROXY","someproxy");
-        envMap.put("CRED_PORT","1000");
-
-        EnvConfig envConfigMock = spy(new EnvConfig());
-        when(envConfigMock.getEnvVars()).thenReturn(envMap);
-        PowerMockito.whenNew(EnvConfig.class).withNoArguments().thenReturn(envConfigMock);
-
-
-        ClientConfiguration clientConfigurationMock = spy(new ClientConfiguration());
-        PowerMockito.whenNew(ClientConfiguration.class).withAnyArguments().thenReturn(clientConfigurationMock);
-
-
-        FideliusClient jCredStashFx = spy(new FideliusClient());
-
-        jCredStashFx.jCredStash = jCredStashMock;
-
-        Assert.assertEquals(clientConfigurationMock.getProxyHost(), "someproxy");
-        Assert.assertEquals(clientConfigurationMock.getProxyPort(), 1000);
-
-
-
-    }
-
-    @Test
-    public void testNoProxyConfig() throws Exception {
-
-        JCredStash jCredStashMock = mock(JCredStash.class);
-
-        HashMap<String, String> envMap = new HashMap<String, String>();
-
-        EnvConfig envConfigMock = spy(new EnvConfig());
-        when(envConfigMock.getEnvVars()).thenReturn(envMap);
-        PowerMockito.whenNew(EnvConfig.class).withNoArguments().thenReturn(envConfigMock);
-
-
-        ClientConfiguration clientConfigurationMock = spy(new ClientConfiguration());
-        PowerMockito.whenNew(ClientConfiguration.class).withAnyArguments().thenReturn(clientConfigurationMock);
-
-
-        FideliusClient fideliusClient = spy(new FideliusClient());
-
-        fideliusClient.jCredStash = jCredStashMock;
-
-        Assert.assertEquals(clientConfigurationMock.getProxyHost(), null);
-        Assert.assertEquals(clientConfigurationMock.getProxyPort(), -1);
-
-        Assert.assertEquals(envConfigMock.getProxy(),null);
-        Assert.assertEquals(envConfigMock.getPort(),null);
-        Assert.assertFalse(envConfigMock.hasProxyEnv());
-
-
-    }
-
     @Test(expected = RuntimeException.class)
     @PrepareForTest({LoggerFactory.class, FideliusClient.class})
     public void deleteCredentialThrowsExceptionIfCredentialNotFound() throws Exception {
@@ -612,12 +555,12 @@ public class FideliusClientTests {
     public void errorWhenFailToGetUserOnGetCredential() throws Exception {
         JCredStash jCredStashMock = spy(JCredStash.class);
         FideliusClient fideliusClient = spy(FideliusClient.class);
-        AWSSecurityTokenService awsSecurityTokenService = spy(AWSSecurityTokenService.class);
+        StsClient awsSecurityTokenService = spy(StsClient.class);
 
-        doThrow(new RuntimeException("AWS Cannot get Identity Error")).when(awsSecurityTokenService).getCallerIdentity(new GetCallerIdentityRequest());
+        doThrow(new RuntimeException("AWS Cannot get Identity Error")).when(awsSecurityTokenService).getCallerIdentity(any(GetCallerIdentityRequest.class));
 
         fideliusClient.jCredStash = jCredStashMock;
-        fideliusClient.awsSecurityTokenService = awsSecurityTokenService;
+        fideliusClient.stsClient = awsSecurityTokenService;
 
         String result = fideliusClient.getCredential("secret", "app", "dev", "component", "table");
 
@@ -630,7 +573,7 @@ public class FideliusClientTests {
     public void errorWhenFailToGetUserOnPutCredential() throws Exception {
         JCredStash jCredStashMock = spy(JCredStash.class);
         FideliusClient fideliusClient = spy(FideliusClient.class);
-        AWSSecurityTokenService awsSecurityTokenService = spy(AWSSecurityTokenService.class);
+        StsClient awsSecurityTokenService = spy(StsClient.class);
         HashMap<String, String> context = new HashMap<String, String>();
         context.put("Application", "APP");
         context.put("SDLC", "dev");
@@ -639,10 +582,10 @@ public class FideliusClientTests {
         doNothing().when(jCredStashMock).putSecret(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyMapOf(String.class, String.class));
         doReturn(0).when(jCredStashMock).getHighestVersion(anyString(), anyString());
 
-        doThrow(new RuntimeException("AWS Cannot get Identity Error")).when(awsSecurityTokenService).getCallerIdentity(new GetCallerIdentityRequest());
+        doThrow(new RuntimeException("AWS Cannot get Identity Error")).when(awsSecurityTokenService).getCallerIdentity(any(GetCallerIdentityRequest.class));
 
         fideliusClient.jCredStash = jCredStashMock;
-        fideliusClient.awsSecurityTokenService = awsSecurityTokenService;
+        fideliusClient.stsClient = awsSecurityTokenService;
 
         fideliusClient.putCredential("somecred","somepwd","someapp","somesdlc",null,"sometable", null, "somekey");
     }
@@ -653,13 +596,13 @@ public class FideliusClientTests {
     public void errorWhenFailToGetUserOnDeleteCredential() throws Exception {
         JCredStash jCredStashMock = spy(JCredStash.class);
         FideliusClient fideliusClient = spy(FideliusClient.class);
-        AWSSecurityTokenService awsSecurityTokenService = spy(AWSSecurityTokenService.class);
+        StsClient awsSecurityTokenService = spy(StsClient.class);
 
-        doThrow(new RuntimeException("AWS Cannot get Identity Error")).when(awsSecurityTokenService).getCallerIdentity(new GetCallerIdentityRequest());
+        doThrow(new RuntimeException("AWS Cannot get Identity Error")).when(awsSecurityTokenService).getCallerIdentity(any(GetCallerIdentityRequest.class));
         doNothing().when(jCredStashMock).deleteSecret(anyString(), anyString());
 
         fideliusClient.jCredStash = jCredStashMock;
-        fideliusClient.awsSecurityTokenService = awsSecurityTokenService;
+        fideliusClient.stsClient = awsSecurityTokenService;
 
         fideliusClient.deleteCredential("secret", "app", "dev", "component", "table", null);
     }

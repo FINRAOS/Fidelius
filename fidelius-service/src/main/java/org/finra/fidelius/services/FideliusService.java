@@ -16,14 +16,13 @@
  */
 
 package org.finra.fidelius.services;
-
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.kms.AWSKMSClient;
 import org.finra.fidelius.FideliusClient;
 import org.finra.fidelius.MetadataParameters;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.kms.KmsClient;
 
 @Service
 public class FideliusService extends FideliusClient {
@@ -36,11 +35,11 @@ public class FideliusService extends FideliusClient {
         super(region);
     }
 
-    public FideliusService(ClientConfiguration clientConfiguration, AWSCredentialsProvider provider, String region) {
+    public FideliusService(ClientOverrideConfiguration clientConfiguration, AwsCredentialsProvider provider, String region) {
         super(clientConfiguration, provider, region);
     }
 
-    public void setFideliusClient(AmazonDynamoDBClient dynamoDBClient, AWSKMSClient awskmsClient){
+    public void setFideliusClient(DynamoDbClient dynamoDBClient, KmsClient awskmsClient){
         super.setFideliusClient(dynamoDBClient, awskmsClient);
     }
 

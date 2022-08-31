@@ -17,7 +17,7 @@
 
 package org.finra.fidelius;
 
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,27 +31,27 @@ public class MetadataModelMapper {
 
     public static Map<String,AttributeValue> toDynamo(MetadataParameters metadataParameters){
         HashMap<String, AttributeValue> dynamoRow = new HashMap<>();
-        dynamoRow.put(DynamoAttributes.name.name(), new AttributeValue(metadataParameters.getFullName()));
-        dynamoRow.put(DynamoAttributes.version.name(), new AttributeValue(metadataParameters.getVersion()));
-        dynamoRow.put(DynamoAttributes.sourceType.name(), new AttributeValue(metadataParameters.getSourceType()));
-        dynamoRow.put(DynamoAttributes.source.name(), new AttributeValue(metadataParameters.getSource()));
+        dynamoRow.put(DynamoAttributes.name.name(), AttributeValue.builder().s(metadataParameters.getFullName()).build());
+        dynamoRow.put(DynamoAttributes.version.name(), AttributeValue.builder().s(metadataParameters.getVersion()).build());
+        dynamoRow.put(DynamoAttributes.sourceType.name(), AttributeValue.builder().s(metadataParameters.getSourceType()).build());
+        dynamoRow.put(DynamoAttributes.source.name(), AttributeValue.builder().s(metadataParameters.getSource()).build());
 
         if(metadataParameters.getUpdateBy()!=null)
-            dynamoRow.put(DynamoAttributes.updatedBy.name(), new AttributeValue(metadataParameters.getUpdateBy()));
+            dynamoRow.put(DynamoAttributes.updatedBy.name(), AttributeValue.builder().s(metadataParameters.getUpdateBy()).build());
 
         if(metadataParameters.getUpdateOn()!=null)
-            dynamoRow.put(DynamoAttributes.updatedOn.name(), new AttributeValue(metadataParameters.getUpdateOn()));
+            dynamoRow.put(DynamoAttributes.updatedOn.name(), AttributeValue.builder().s(metadataParameters.getUpdateOn()).build());
 
         if(metadataParameters.getSdlc()!=null)
-            dynamoRow.put(DynamoAttributes.sdlc.name(), new AttributeValue(metadataParameters.getSdlc()));
+            dynamoRow.put(DynamoAttributes.sdlc.name(), AttributeValue.builder().s(metadataParameters.getSdlc()).build());
 
         if(metadataParameters.getComponent()!= null)
-            dynamoRow.put(DynamoAttributes.component.name(), new AttributeValue(metadataParameters.getComponent()));
+            dynamoRow.put(DynamoAttributes.component.name(), AttributeValue.builder().s(metadataParameters.getComponent()).build());
 
         return dynamoRow;
     }
 
-    public static MetadataParameters fromDynamo(Map<String,AttributeValue> dynamoCred){
+    public static MetadataParameters fromDynamo(Map<String, AttributeValue> dynamoCred){
         return new MetadataParameters()
                 .setFullName(getAttributeValue(DynamoAttributes.name.name(), dynamoCred))
                 .setVersion(getAttributeValue(DynamoAttributes.version.name(),dynamoCred))
@@ -66,7 +66,7 @@ public class MetadataModelMapper {
     private static String getAttributeValue(String name, Map<String,AttributeValue> dynamoCred){
         AttributeValue attributeValue = dynamoCred.get(name);
         if(attributeValue!=null){
-            return attributeValue.getS();
+            return attributeValue.s();
         }
         return null;
     }

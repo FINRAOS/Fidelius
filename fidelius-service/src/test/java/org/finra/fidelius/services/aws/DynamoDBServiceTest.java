@@ -17,15 +17,6 @@
 
 package org.finra.fidelius.services.aws;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
-import com.amazonaws.services.dynamodbv2.datamodeling.PaginatedScanList;
-import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughputExceededException;
-import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
-import com.amazonaws.services.securitytoken.model.AWSSecurityTokenServiceException;
-import org.finra.fidelius.FideliusClient;
 import org.finra.fidelius.exceptions.FideliusException;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,18 +25,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughputExceededException;
+import software.amazon.awssdk.services.dynamodb.model.QueryRequest;
+import software.amazon.awssdk.services.dynamodb.model.ScanRequest;
 
-import javax.inject.Inject;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
@@ -59,7 +43,7 @@ public class DynamoDBServiceTest {
     private DynamoDBService dynamoDBService;
 
     @Mock
-    private DynamoDBMapper fakeMapper;
+    private DynamoDbClient dynamoDbClient;
 
 
     @Before
@@ -67,34 +51,16 @@ public class DynamoDBServiceTest {
         MockitoAnnotations.initMocks(this);
     }
 
-    @Test(expected = Exception.class)
-    public void createMapperShouldFailIfDBClientFailsToCreate() throws Exception {
-        when(awsSessionService.getDynamoDBClient(any())).thenThrow(new Exception());
-        dynamoDBService.createMapper("BAD_ACCOUNT_NAME", "bad_region", "table");
-    }
-
-    @Test
-    public void createMapperShouldCompleteIfDBClientCreatesSuccessfully() throws Exception {
-        when(awsSessionService.getDynamoDBClient(any())).thenReturn(new AmazonDynamoDBClient());
-        dynamoDBService.createMapper("some_account", "some_region", "table");
-    }
-
     @Test(expected = FideliusException.class)
     public void scanDynamoDBFailsAfterIntervalReaches60SecondsWhenRetryingOnThrottlingException() {
-        when(fakeMapper.scan(any(), any())).thenThrow(new ProvisionedThroughputExceededException("test"));
-        dynamoDBService.scanDynamoDB(new DynamoDBScanExpression(), Object.class, fakeMapper);
-    }
-
-    @Test(expected = FideliusException.class)
-    public void createMapperShouldThrowFideliusExceptionIfCredentialAccessIsDenied() {
-        when(awsSessionService.getDynamoDBClient(any())).thenThrow(new AWSSecurityTokenServiceException("Access Denied"));
-        dynamoDBService.createMapper("some_account", "some_region", "table");
+        when(dynamoDbClient.scan(any(ScanRequest.class))).thenThrow(ProvisionedThroughputExceededException.builder().message("test").build());
+        dynamoDBService.scanDynamoDB(ScanRequest.builder().build(), dynamoDbClient);
     }
 
     @Test(expected = FideliusException.class)
     public void queryDynamoDBFailsAfterIntervalReaches60SecondsWhenRetryingOnThrottlingException() {
-        when(fakeMapper.query(any(), any())).thenThrow(new ProvisionedThroughputExceededException("test"));
-        dynamoDBService.queryDynamoDB(new DynamoDBQueryExpression(), Object.class, fakeMapper);
+        when(dynamoDbClient.query(any(QueryRequest.class))).thenThrow(ProvisionedThroughputExceededException.builder().message("test").build());
+        dynamoDBService.queryDynamoDB(QueryRequest.builder().build(), dynamoDbClient);
     }
 
 }

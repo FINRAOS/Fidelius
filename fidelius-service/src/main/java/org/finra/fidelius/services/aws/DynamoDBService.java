@@ -17,22 +17,20 @@
 
 package org.finra.fidelius.services.aws;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.datamodeling.*;
-import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughputExceededException;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
-import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
-import com.amazonaws.services.securitytoken.model.AWSSecurityTokenServiceException;
 import org.finra.fidelius.exceptions.FideliusException;
 import org.finra.fidelius.model.aws.AWSEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.*;
+import software.amazon.awssdk.services.sts.model.StsException;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class DynamoDBService {
@@ -42,19 +40,19 @@ public class DynamoDBService {
 
     private Logger logger = LoggerFactory.getLogger(DynamoDBService.class);
 
-    public <T> List<T> scanDynamoDB(DynamoDBScanExpression scanExp, Class<T> clazz, DynamoDBMapper mapper) {
+    public List<Map<String, AttributeValue>> scanDynamoDB(ScanRequest scanRequest, DynamoDbClient dynamoDbClient) {
         logger.info("Scanning DynamoDB table...");
-        List<T> queryResults = null;
+        List<Map<String, AttributeValue>> queryResults = null;
         long startTime = System.currentTimeMillis();
         try {
-                PaginatedScanList<T> scanResults = mapper.scan(clazz, scanExp);
-                queryResults = new ArrayList<>(scanResults);
-            } catch (ProvisionedThroughputExceededException pte) {
-                logger.error("Provisioned Throughput Exceeded. ", pte);
-            } catch (ResourceNotFoundException rnf) {
-                String message = "Credential table not found!";
-                logger.error(message, rnf);
-                throw new FideliusException(message, HttpStatus.NOT_FOUND);
+            ScanResponse scanResponse = dynamoDbClient.scan(scanRequest);
+            queryResults = new ArrayList<>(scanResponse.items());
+        } catch (ProvisionedThroughputExceededException pte) {
+            logger.error("Provisioned Throughput Exceeded. ", pte);
+        } catch (ResourceNotFoundException rnf) {
+            String message = "Credential table not found!";
+            logger.error(message, rnf);
+            throw new FideliusException(message, HttpStatus.NOT_FOUND);
         }
 
         if (queryResults == null) {
@@ -67,12 +65,12 @@ public class DynamoDBService {
         return queryResults;
     }
 
-    public <T>List<T> queryDynamoDB(DynamoDBQueryExpression queryRequest, Class<T> clazz, DynamoDBMapper dynamoDBMapper){
-        List<T> queryResults = null;
+    public List<Map<String, AttributeValue>> queryDynamoDB(QueryRequest queryRequest, DynamoDbClient dynamoDbClient){
+        QueryResponse queryResults = null;
         logger.info("Querying DynamoDB table...");
         long startTime = System.currentTimeMillis();
         try {
-                queryResults = dynamoDBMapper.query(clazz, queryRequest);
+                queryResults = dynamoDbClient.query(queryRequest);
             } catch (ProvisionedThroughputExceededException pte) {
                 logger.error("Provisioned Throughput Exceeded. ", pte);
             } catch (ResourceNotFoundException rnf) {
@@ -88,29 +86,6 @@ public class DynamoDBService {
             logger.info(String.format("Query completed in %.3f seconds", (System.currentTimeMillis() - startTime) / 1000.0));
         }
 
-        return queryResults;
-    }
-
-    // Creates a new DynamoDBMapper object
-    public DynamoDBMapper createMapper(String account, String region, String tableName) {
-        AWSEnvironment awsenv = new AWSEnvironment(account, region);
-
-        AmazonDynamoDBClient dbclient;
-        try {
-            dbclient = awsSessionService.getDynamoDBClient(awsenv);
-        } catch (AWSSecurityTokenServiceException ex) {
-            String message = String.format("User not authorized to access credential table on account: %s in region: %s", account, region);
-            logger.error(message, ex);
-            throw new FideliusException(message, HttpStatus.FORBIDDEN);
-        } catch (RuntimeException re) {
-            String message = re.getMessage();
-            logger.error(message, re);
-            throw new FideliusException(message, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        DynamoDBMapperConfig config = new DynamoDBMapperConfig.Builder()
-                .withTableNameOverride(DynamoDBMapperConfig.TableNameOverride.withTableNameReplacement(tableName))
-                .build();
-        return new DynamoDBMapper(dbclient, config);
+        return queryResults.items();
     }
 }

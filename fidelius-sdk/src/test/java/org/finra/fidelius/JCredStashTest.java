@@ -17,20 +17,17 @@
 
 package org.finra.fidelius;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.document.BatchWriteItemOutcome;
-import com.amazonaws.services.dynamodbv2.document.DynamoDB;
-import com.amazonaws.services.dynamodbv2.document.TableWriteItems;
-import com.amazonaws.services.dynamodbv2.model.*;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
-import com.amazonaws.services.securitytoken.model.GetCallerIdentityResult;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.*;
+import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.services.sts.model.GetCallerIdentityRequest;
+import software.amazon.awssdk.services.sts.model.GetCallerIdentityResponse;
 
 import java.util.*;
 
@@ -41,25 +38,26 @@ import static org.mockito.Mockito.*;
 @PowerMockIgnore( {"javax.management.*","javax.net.ssl.*"})
 public class JCredStashTest {
 
-    private QueryResult getMockQueryResult(int numberOfResults){
+    private QueryResponse getMockQueryResult(int numberOfResults){
 
-        Collection<Map<String,AttributeValue>> collection = new ArrayList<>();
+        Collection<Map<String, AttributeValue>> collection = new ArrayList<>();
 
         for (int i = 0; i < numberOfResults; i++) {
             Map<String, AttributeValue> map = new HashMap<>();
-            map.put("updatedBy", new AttributeValue("arn:aws:sts::123456789876:assumed-role/private_aws_application_dev/L25000"));
-            map.put("contents", new AttributeValue("BvmeuWljKK9oMFDSTKHW10HWyw=="));
-            map.put("hmac", new AttributeValue("6416846cd12b6c45305fc3202092af143378809bf2c5378ab0a12a24d68ac19d=="));
-            map.put("name", new AttributeValue("APP.dev.loadtesting3913=="));
-            map.put("version", new AttributeValue("000000000000000000" + (i+1)));
-            map.put("key", new AttributeValue("AQEBAHiR3vsV8dujB9GydJpKBtZhC3nKVikt90I4dcYRRv5e3wAAAKIwgZ8GCSqGSIb3DQEHBqCBkTCBjgIBADCBiAYJKoZIhvcNAQcBMB4GCWCGSAFlAwQBLjARBAw7QrBVksiA"));
+            map.put("updatedBy", AttributeValue.builder().s("arn:aws:sts::123456789876:assumed-role/private_aws_application_dev/L25000").build());
+            map.put("contents", AttributeValue.builder().s("BvmeuWljKK9oMFDSTKHW10HWyw==").build());
+            map.put("hmac", AttributeValue.builder().s("6416846cd12b6c45305fc3202092af143378809bf2c5378ab0a12a24d68ac19d==").build());
+            map.put("name", AttributeValue.builder().s("APP.dev.loadtesting3913==").build());
+            map.put("version", AttributeValue.builder().s("000000000000000000" + (i+1)).build());
+            map.put("key", AttributeValue.builder().s("AQEBAHiR3vsV8dujB9GydJpKBtZhC3nKVikt90I4dcYRRv5e3wAAAKIwgZ8GCSqGSIb3DQEHBqCBkTCBjgIBADCBiAYJKoZIhvcNAQcBMB4GCWCGSAFlAwQBLjARBAw7QrBVksiA").build());
             collection.add(map);
         }
 
-        QueryResult queryResult = new QueryResult();
-        queryResult.setItems(collection);
-        queryResult.setCount(numberOfResults);
-        queryResult.setScannedCount(numberOfResults);
+        QueryResponse queryResult = QueryResponse.builder()
+                .items(collection)
+                .count(numberOfResults)
+                .scannedCount(numberOfResults)
+                .build();
 
         return queryResult;
     }
@@ -67,81 +65,75 @@ public class JCredStashTest {
     @Test
     public void testDeletingCredentialWith2Versions() throws Exception {
 
-        QueryResult queryResult = getMockQueryResult(2);
-        AmazonDynamoDBClient amazonDynamoDBClient = spy(AmazonDynamoDBClient.class);
-        DynamoDB dynamoDB = mock(DynamoDB.class);
+        QueryResponse queryResult = getMockQueryResult(2);
+        DynamoDbClient amazonDynamoDBClient = spy(DynamoDbClient.class);
+        DynamoDbClient dynamoDB = mock(DynamoDbClient.class);
         JCredStash jCredStash = new JCredStash();
-        BatchWriteItemResult result = new BatchWriteItemResult().withUnprocessedItems(new HashMap<>());
-        BatchWriteItemOutcome outcome = new BatchWriteItemOutcome(result);
+        BatchWriteItemResponse result = BatchWriteItemResponse.builder().unprocessedItems(new HashMap<>()).build();
 
-        jCredStash.amazonDynamoDBClient = amazonDynamoDBClient;
-        jCredStash.dynamoDB = dynamoDB;
+        jCredStash.dynamoDbClient = amazonDynamoDBClient;
 
-        doReturn(queryResult).when(amazonDynamoDBClient).query(anyObject());
-        doReturn(outcome).when(dynamoDB).batchWriteItem(any(TableWriteItems.class));
+        doReturn(queryResult).when(amazonDynamoDBClient).query(any(QueryRequest.class));
+        doReturn(result).when(amazonDynamoDBClient).batchWriteItem(any(BatchWriteItemRequest.class));
 
         jCredStash.deleteSecret("test", "secret");
 
-        verify(dynamoDB,times(1)).batchWriteItem(any(TableWriteItems.class));
+        verify(dynamoDB,times(1)).batchWriteItem(any(BatchWriteItemRequest.class));
     }
 
     @Test
     public void testDeletingCredentialWith1Versions() throws Exception {
 
-        QueryResult queryResult = getMockQueryResult(1);
-        AmazonDynamoDBClient amazonDynamoDBClient = spy(AmazonDynamoDBClient.class);
-        DynamoDB dynamoDB = mock(DynamoDB.class);
+        QueryResponse queryResult = getMockQueryResult(1);
+        DynamoDbClient amazonDynamoDBClient = spy(DynamoDbClient.class);
+        DynamoDbClient dynamoDB = mock(DynamoDbClient.class);
         JCredStash jCredStash = new JCredStash();
-        BatchWriteItemResult result = new BatchWriteItemResult().withUnprocessedItems(new HashMap<>());
-        BatchWriteItemOutcome outcome = new BatchWriteItemOutcome(result);
+        BatchWriteItemResponse result = BatchWriteItemResponse.builder().unprocessedItems(new HashMap<>()).build();
 
-        jCredStash.amazonDynamoDBClient = amazonDynamoDBClient;
-        jCredStash.dynamoDB = dynamoDB;
+        jCredStash.dynamoDbClient = amazonDynamoDBClient;
 
-        doReturn(queryResult).when(amazonDynamoDBClient).query(anyObject());
-        doReturn(outcome).when(dynamoDB).batchWriteItem(any(TableWriteItems.class));
+        doReturn(queryResult).when(amazonDynamoDBClient).query(any(QueryRequest.class));
+        doReturn(result).when(amazonDynamoDBClient).batchWriteItem(any(BatchWriteItemRequest.class));
 
         jCredStash.deleteSecret("test", "secret");
 
-        verify(dynamoDB,times(1)).batchWriteItem(any(TableWriteItems.class));
+        verify(dynamoDB,times(1)).batchWriteItem(any(BatchWriteItemRequest.class));
     }
 
     @Test(expected = RuntimeException.class)
     public void testDeletingCredentialFailed() throws Exception, InterruptedException {
 
-        QueryResult queryResult = getMockQueryResult(1);
-        AmazonDynamoDBClient amazonDynamoDBClient = spy(AmazonDynamoDBClient.class);
-        DynamoDB dynamoDB = mock(DynamoDB.class);
+        QueryResponse queryResult = getMockQueryResult(1);
+        DynamoDbClient amazonDynamoDBClient = spy(DynamoDbClient.class);
+        DynamoDbClient dynamoDB = mock(DynamoDbClient.class);
         JCredStash jCredStash = new JCredStash();
         //Add unprocessed item
         HashMap<String, List<WriteRequest>> unprocessedItem = new HashMap<>();
         unprocessedItem.put("secret", new ArrayList<>());
-        BatchWriteItemResult result = new BatchWriteItemResult().withUnprocessedItems(unprocessedItem);
-        BatchWriteItemOutcome outcome = new BatchWriteItemOutcome(result);
+        BatchWriteItemResponse result = BatchWriteItemResponse.builder().unprocessedItems(unprocessedItem).build();
 
-        jCredStash.amazonDynamoDBClient = amazonDynamoDBClient;
-        jCredStash.dynamoDB = dynamoDB;
+        jCredStash.dynamoDbClient = amazonDynamoDBClient;
         PowerMockito.mockStatic(Thread.class);
 
-        doReturn(queryResult).when(amazonDynamoDBClient).query(anyObject());
-        doReturn(outcome).when(dynamoDB).batchWriteItem(any(TableWriteItems.class));
+        doReturn(queryResult).when(amazonDynamoDBClient).query(any(QueryRequest.class));
+        doReturn(result).when(dynamoDB).batchWriteItem(any(BatchWriteItemRequest.class));
 
         jCredStash.deleteSecret("test", "secret");
 
-        verify(dynamoDB,times(1)).batchWriteItem(any(TableWriteItems.class));
+        verify(dynamoDB,times(1)).batchWriteItem(any(BatchWriteItemRequest.class));
     }
 
 
     @Test(expected = RuntimeException.class)
     public void testDeletingCredentialNotFound() throws Exception {
 
-        QueryResult queryResult = getMockQueryResult(0);
-        AmazonDynamoDBClient amazonDynamoDBClient = spy(AmazonDynamoDBClient.class);
+        QueryResponse queryResult = getMockQueryResult(0);
+        DynamoDbClient amazonDynamoDBClient = spy(DynamoDbClient.class);
         JCredStash jCredStash = new JCredStash();
-        jCredStash.amazonDynamoDBClient = amazonDynamoDBClient;
+        jCredStash.dynamoDbClient = amazonDynamoDBClient;
 
-        doReturn(queryResult).when(amazonDynamoDBClient).query(anyObject());
-        doReturn(new DeleteItemResult()).when(amazonDynamoDBClient).deleteItem(anyObject());
+        doReturn(queryResult).when(amazonDynamoDBClient).query(any(QueryRequest.class));
+        doReturn(DeleteItemResponse.builder().build()).when(amazonDynamoDBClient).deleteItem(any(DeleteItemRequest.class));
 
         jCredStash.deleteSecret("test", "secret");
     }
@@ -150,12 +142,13 @@ public class JCredStashTest {
     public void getUpdatedByShouldReturnCurrentIAMUser() throws Exception{
 
         JCredStash jCredStash = new JCredStash();
-        AWSSecurityTokenService awsSecurityTokenService = spy(AWSSecurityTokenService.class);
-        GetCallerIdentityResult callerIdentityResult = new GetCallerIdentityResult();
-        callerIdentityResult.setArn("arn:aws:sts::123456789876:assumed-role/private_aws_application_dev/L25000");
-        jCredStash.awsSecurityTokenService = awsSecurityTokenService;
+        StsClient awsSecurityTokenService = spy(StsClient.class);
+        GetCallerIdentityResponse callerIdentityResult = GetCallerIdentityResponse.builder()
+                .arn("arn:aws:sts::123456789876:assumed-role/private_aws_application_dev/L25000")
+                .build();
+        jCredStash.stsClient = awsSecurityTokenService;
 
-        doReturn(callerIdentityResult).when(awsSecurityTokenService).getCallerIdentity(anyObject());
+        doReturn(callerIdentityResult).when(awsSecurityTokenService).getCallerIdentity(any(GetCallerIdentityRequest.class));
 
         String user = jCredStash.getUpdatedBy();
 
@@ -166,11 +159,12 @@ public class JCredStashTest {
     public void returnErrorGettingUser() throws Exception{
 
         JCredStash jCredStash = new JCredStash();
-        AWSSecurityTokenService awsSecurityTokenService = spy(AWSSecurityTokenService.class);
-        GetCallerIdentityResult callerIdentityResult = new GetCallerIdentityResult();
-        callerIdentityResult.setArn("arn:aws:sts::123456789876:assumed-role/private_aws_application_dev/L25000");
+        StsClient awsSecurityTokenService = spy(StsClient.class);
+        GetCallerIdentityResponse callerIdentityResult = GetCallerIdentityResponse.builder()
+                .arn("arn:aws:sts::123456789876:assumed-role/private_aws_application_dev/L25000")
+                .build();
 
-        doReturn(callerIdentityResult).when(awsSecurityTokenService).getCallerIdentity(anyObject());
+        doReturn(callerIdentityResult).when(awsSecurityTokenService).getCallerIdentity(any(GetCallerIdentityRequest.class));
 
         String user = jCredStash.getUpdatedBy();
 
