@@ -20,7 +20,6 @@ package org.finra.fidelius.services;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import javassist.runtime.Desc;
 import org.dmfs.httpessentials.client.HttpRequestExecutor;
 import org.dmfs.httpessentials.httpurlconnection.HttpUrlConnectionExecutor;
 import org.dmfs.oauth2.client.*;
@@ -752,13 +751,15 @@ public class CredentialsService {
     }
 
     public List<String> getMetadataInfo(String account, String region, String sourceType, String application) throws Exception {
+        logger.info("Source type: " + sourceType);
         switch (sourceType) {
             case RDS:
                 return getAllRDS(account, region, application);
             case AURORA:
                 return getAllAuroraRegionalCluster(account, region, application);
             default:
-                throw new Exception("Please pass supported values for sourceType");
+                logger.info("No source names to return for source type: " + sourceType);
+                return new ArrayList<>();
         }
     }
     public List<String> getSourceTypes(){
