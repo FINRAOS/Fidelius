@@ -69,3 +69,24 @@
   padding-top: 3%;
   align-self: center;
 }
+
+.hint-text{
+  font-size: 12px;
+}
+
+.hint-box{
+  padding-bottom: 20px;
+}
+
+.icon-hint{
+  vertical-align: middle;
+  pointer-events: auto !important;
+}
+
+.label-spacing{
+  white-space: break-spaces;
+}
+
+::ng-deep .matToolTipLineBreak{
+  white-space: pre-line;
+}

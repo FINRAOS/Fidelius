@@ -62,6 +62,16 @@
 .mat-card{
   padding: 3%;
 }
+
 .hint-text{
   font-size: 12px;
+}
+
+.icon-hint{
+  vertical-align: middle;
+  pointer-events: auto !important;
+}
+
+::ng-deep .matToolTipLineBreak{
+  white-space: pre-line;
 }
