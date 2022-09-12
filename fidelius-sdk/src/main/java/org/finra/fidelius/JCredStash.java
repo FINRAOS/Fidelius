@@ -42,7 +42,6 @@ public class JCredStash {
     protected KmsClient kmsClient;
     protected CredStashCrypto cryptoImpl;
     protected StsClient stsClient;
-    protected static  List<String> TABLE_HEADERS = Arrays.asList("name", "component", "sdlc", "contents", "version", "updatedBy", "updatedOn", "key", "hmac", "source", "sourceType");
 
     protected JCredStash() {
         this.dynamoDbClient = DynamoDbClient.builder().build();
