@@ -35,7 +35,8 @@ import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({JCredStash.class})
-@PowerMockIgnore( {"javax.management.*","javax.net.ssl.*"})
+@PowerMockIgnore( {"javax.management.*","javax.net.ssl.*",
+        "javax.crypto.*", "jdk.xml.internal.*"})
 public class JCredStashTest {
 
     private QueryResponse getMockQueryResult(int numberOfResults){
@@ -67,7 +68,6 @@ public class JCredStashTest {
 
         QueryResponse queryResult = getMockQueryResult(2);
         DynamoDbClient amazonDynamoDBClient = spy(DynamoDbClient.class);
-        DynamoDbClient dynamoDB = mock(DynamoDbClient.class);
         JCredStash jCredStash = new JCredStash();
         BatchWriteItemResponse result = BatchWriteItemResponse.builder().unprocessedItems(new HashMap<>()).build();
 
@@ -78,7 +78,7 @@ public class JCredStashTest {
 
         jCredStash.deleteSecret("test", "secret");
 
-        verify(dynamoDB,times(1)).batchWriteItem(any(BatchWriteItemRequest.class));
+        verify(amazonDynamoDBClient,times(1)).batchWriteItem(any(BatchWriteItemRequest.class));
     }
 
     @Test
@@ -86,7 +86,6 @@ public class JCredStashTest {
 
         QueryResponse queryResult = getMockQueryResult(1);
         DynamoDbClient amazonDynamoDBClient = spy(DynamoDbClient.class);
-        DynamoDbClient dynamoDB = mock(DynamoDbClient.class);
         JCredStash jCredStash = new JCredStash();
         BatchWriteItemResponse result = BatchWriteItemResponse.builder().unprocessedItems(new HashMap<>()).build();
 
@@ -97,7 +96,7 @@ public class JCredStashTest {
 
         jCredStash.deleteSecret("test", "secret");
 
-        verify(dynamoDB,times(1)).batchWriteItem(any(BatchWriteItemRequest.class));
+        verify(amazonDynamoDBClient,times(1)).batchWriteItem(any(BatchWriteItemRequest.class));
     }
 
     @Test(expected = RuntimeException.class)
@@ -163,8 +162,9 @@ public class JCredStashTest {
         GetCallerIdentityResponse callerIdentityResult = GetCallerIdentityResponse.builder()
                 .arn("arn:aws:sts::123456789876:assumed-role/private_aws_application_dev/L25000")
                 .build();
+        jCredStash.stsClient = awsSecurityTokenService;
 
-        doReturn(callerIdentityResult).when(awsSecurityTokenService).getCallerIdentity(any(GetCallerIdentityRequest.class));
+        doThrow(RuntimeException.class).when(awsSecurityTokenService).getCallerIdentity(any(GetCallerIdentityRequest.class));
 
         String user = jCredStash.getUpdatedBy();
 

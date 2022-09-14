@@ -481,8 +481,8 @@ public class FideliusClientTests {
         context.put("SDLC", "dev");
         context.put("Component", "component");
 
-        doNothing().when(jCredStashMock).putSecret(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyMapOf(String.class, String.class));
-        doReturn(0).when(jCredStashMock).getHighestVersion(anyString(), anyString());
+        doNothing().when(jCredStashMock).putSecret(any(), any(), any(), any(), any(), any(), any());
+        doReturn(0).when(jCredStashMock).getHighestVersion(any(), any());
 
         jCredStashFx.jCredStash = jCredStashMock;
 
