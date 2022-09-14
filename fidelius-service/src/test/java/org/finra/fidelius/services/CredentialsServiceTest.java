@@ -174,7 +174,7 @@ public class CredentialsServiceTest {
 
         Map<String, AttributeValue> fakeCred2 = new HashMap<>();
         fakeCred2.put(CredentialsService.NAME, AttributeValue.builder().s("APP.dev.testKey2").build());
-        fakeCred2.put(CredentialsService.SDLC, AttributeValue.builder().s("").build());
+        fakeCred2.put(CredentialsService.SDLC, AttributeValue.builder().s("dev").build());
         fakeCred2.put(CredentialsService.COMPONENT, AttributeValue.builder().s("").build());
         fakeCred2.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
         fakeCred2.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Ned Stark").build());
@@ -226,7 +226,7 @@ public class CredentialsServiceTest {
                 "region",
                 "APP",
                 "dev",
-                null,
+                "",
                 "Ned Stark",
                 "2018-04-04T12:51:37.803Z"));
 
@@ -252,7 +252,7 @@ public class CredentialsServiceTest {
 
         List<Credential> results = credentialsService.getAllCredentials("table", "some-account", "region", "APP");
 
-        assertEquals(results.get(0), expectedCreds.get(0));
+        assertEquals(expectedCreds.get(0), results.get(0));
     }
 
     @Test
@@ -280,7 +280,7 @@ public class CredentialsServiceTest {
         Map<String, AttributeValue> fakeCred4 = new HashMap<>();
         fakeCred4.put(CredentialsService.NAME, AttributeValue.builder().s("APP.TestComponent.dev.testKey").build());
         fakeCred4.put(CredentialsService.SDLC, AttributeValue.builder().s("dev").build());
-        fakeCred4.put(CredentialsService.COMPONENT, AttributeValue.builder().s("").build());
+        fakeCred4.put(CredentialsService.COMPONENT, AttributeValue.builder().s("TestComponent").build());
         fakeCred4.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
         fakeCred4.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Ned Stark").build());
         fakeCred4.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
@@ -322,7 +322,7 @@ public class CredentialsServiceTest {
 
         List<Credential> results = credentialsService.getAllCredentials("table", "some-account", "region", "APP");
 
-        assertEquals(results, expectedCreds);
+        assertEquals(expectedCreds, results);
     }
 
     @Test
@@ -683,11 +683,11 @@ public class CredentialsServiceTest {
         fakeCred1.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
         Map<String, AttributeValue> fakeCred2 = new HashMap<>();
-        fakeCred1.put(CredentialsService.NAME, AttributeValue.builder().s("APP.dev.testKey2").build());
-        fakeCred1.put(CredentialsService.SDLC, AttributeValue.builder().s("dev").build());
-        fakeCred1.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
-        fakeCred1.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Ned Stark").build());
-        fakeCred1.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
+        fakeCred2.put(CredentialsService.NAME, AttributeValue.builder().s("APP.dev.testKey2").build());
+        fakeCred2.put(CredentialsService.SDLC, AttributeValue.builder().s("dev").build());
+        fakeCred2.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred2.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Ned Stark").build());
+        fakeCred2.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
         fakeData.add(fakeCred1);
         fakeData.add(fakeCred2);
@@ -700,6 +700,6 @@ public class CredentialsServiceTest {
         expectedCreds.add(new Credential("testKey", "APP.TestComponent.dev.testKey",  "some-account", "region", "APP", "dev",
                 "TestComponent", "private_aws_somerole_d/L25000", "2018-04-04T12:51:37.803Z"));
 
-        assertTrue(credentialsService.getAllCredentials("table", "some-account", "region", "APP").equals(expectedCreds));
+        assertEquals(expectedCreds, credentialsService.getAllCredentials("table", "some-account", "region", "APP"));
     }
 }
