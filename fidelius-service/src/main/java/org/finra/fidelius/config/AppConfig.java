@@ -17,9 +17,6 @@
 
 package org.finra.fidelius.config;
 
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.retry.PredefinedRetryPolicies;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClient;
 import org.finra.fidelius.authfilter.UserHeaderFilter;
 import org.finra.fidelius.authfilter.parser.IFideliusUserProfile;
 import org.finra.fidelius.authfilter.parser.SSOParser;
@@ -43,6 +40,9 @@ import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.core.support.LdapContextSource;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.core.retry.RetryPolicy;
+import software.amazon.awssdk.services.sts.StsClient;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.spi.DocumentationType;
@@ -87,7 +87,7 @@ public class AppConfig {
     private final FideliusAuthProperties fideliusAuthProperties;
 
     @Autowired
-    private ClientConfiguration clientConfiguration;
+    private ClientOverrideConfiguration clientConfiguration;
 
     public AppConfig(FideliusAuthProperties fideliusAuthProperties){
         //LDAP
@@ -102,20 +102,19 @@ public class AppConfig {
     }
 
     @Bean
-    public ClientConfiguration clientConfiguration() {
-        final ClientConfiguration clientConfiguration = new ClientConfiguration();
-        clientConfiguration.setRetryPolicy(PredefinedRetryPolicies.DYNAMODB_DEFAULT);
-        if (this.proxyHost.isPresent() && this.proxyPort.isPresent()) {
-            clientConfiguration.setProxyHost(this.proxyHost.get());
-            clientConfiguration.setProxyPort(this.proxyPort.get());
-        }
+    public ClientOverrideConfiguration clientConfiguration() {
+        final ClientOverrideConfiguration clientConfiguration = ClientOverrideConfiguration.builder()
+                .retryPolicy(RetryPolicy.defaultRetryPolicy())
+                .build();
 
         return clientConfiguration;
     }
 
     @Bean
-    public AWSSecurityTokenServiceClient awsSecurityTokenServiceClient() {
-        return new AWSSecurityTokenServiceClient(this.clientConfiguration);
+    public StsClient awsSecurityTokenServiceClient() {
+        return StsClient.builder()
+                .overrideConfiguration(this.clientConfiguration)
+                .build();
     }
 
     @Configuration

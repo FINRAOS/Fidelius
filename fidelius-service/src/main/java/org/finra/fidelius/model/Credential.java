@@ -20,6 +20,7 @@ package org.finra.fidelius.model;
 import org.finra.fidelius.model.validators.IsValidActiveDirectoryPassword;
 import org.hibernate.validator.constraints.NotBlank;
 import org.jvnet.hk2.annotations.Optional;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -89,6 +90,32 @@ public class Credential implements Comparable<Credential>{
         if(lastUpdatedDate != null)
             try {
                 this.lastUpdatedDate = ZonedDateTime.parse(lastUpdatedDate);
+            } catch(DateTimeParseException exception) {
+
+            }
+    }
+
+    public Credential(String shortKey, AttributeValue longKey, String account, String region, String application, AttributeValue environment,
+                      AttributeValue component, String lastUpdatedBy, AttributeValue lastUpdatedDate) {
+        this.shortKey = shortKey;
+        this.longKey = longKey.s();
+        this.account = account;
+        this.region = region;
+        this.application = application;
+        this.environment = environment.s();
+        if(component != null) {
+            this.component = component.s();
+        } else {
+            this.component = null;
+        }
+        if(lastUpdatedBy != null) {
+            this.lastUpdatedBy = lastUpdatedBy;
+        } else {
+            this.lastUpdatedBy = null;
+        }
+        if(lastUpdatedDate != null)
+            try {
+                this.lastUpdatedDate = ZonedDateTime.parse(lastUpdatedDate.s());
             } catch(DateTimeParseException exception) {
 
             }

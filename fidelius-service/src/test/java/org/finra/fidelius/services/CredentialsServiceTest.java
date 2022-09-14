@@ -17,8 +17,6 @@
 
 package org.finra.fidelius.services;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.kms.AWSKMSClient;
 import org.finra.fidelius.FideliusClient;
 import org.finra.fidelius.authfilter.parser.FideliusUserProfile;
 import org.finra.fidelius.exceptions.FideliusException;
@@ -44,11 +42,12 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.MockBeans;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.kms.KmsClient;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -85,8 +84,8 @@ public class CredentialsServiceTest {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         when(fideliusService.getCredential(anyString(), anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn("Secret");
-        when(awsSessionService.getDynamoDBClient(any())).thenReturn(new AmazonDynamoDBClient());
-        when(awsSessionService.getKmsClient(any())).thenReturn(new AWSKMSClient());
+        when(awsSessionService.getDynamoDBClient(any())).thenReturn(DynamoDbClient.builder().build());
+        when(awsSessionService.getKmsClient(any())).thenReturn(KmsClient.builder().build());
         FideliusUserEntry profile = new FideliusUserEntry("name", "test", "email@email.com", "John Johnson");
         when(fideliusRoleService.getUserProfile()).thenReturn(profile);
 
@@ -94,29 +93,29 @@ public class CredentialsServiceTest {
 
     @Test
     public void getAllCredentialsShouldBeAbleToObtainCredentialsWithAndWithoutComponents() {
-        List<DBCredential> fakeData = new ArrayList<>();
+        List<Map<String, AttributeValue>> fakeData = new ArrayList<>();
 
-        DBCredential fakeCred1 = new DBCredential();
-        fakeCred1.setName("APP.TestComponent.dev.testKey");
-        fakeCred1.setSdlc("dev");
-        fakeCred1.setComponent("TestComponent");
-        fakeCred1.setVersion("0001");
-        fakeCred1.setUpdatedBy("Jon Snow");
-        fakeCred1.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred1 = new HashMap<>();
+        fakeCred1.put(CredentialsService.NAME, AttributeValue.builder().s("APP.TestComponent.dev.testKey").build());
+        fakeCred1.put(CredentialsService.SDLC, AttributeValue.builder().s("dev").build());
+        fakeCred1.put(CredentialsService.COMPONENT, AttributeValue.builder().s("TestComponent").build());
+        fakeCred1.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred1.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Jon Snow").build());
+        fakeCred1.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
-        DBCredential fakeCred2 = new DBCredential();
-        fakeCred2.setName("APP.dev.testKey2");
-        fakeCred2.setVersion("0001");
-        fakeCred2.setUpdatedBy("Ned Stark");
-        fakeCred2.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred2 = new HashMap<>();
+        fakeCred2.put(CredentialsService.NAME, AttributeValue.builder().s("APP.dev.testKey2").build());
+        fakeCred2.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred2.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Ned Stark").build());
+        fakeCred2.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
-        DBCredential fakeCred3 = fakeCred2;
-        fakeCred3.setSdlc("dev");
+        Map<String, AttributeValue> fakeCred3 = fakeCred2;
+        fakeCred3.put(CredentialsService.SDLC, AttributeValue.builder().s("dev").build());
 
         fakeData.add(fakeCred1);
         fakeData.add(fakeCred2);
 
-        when(dynamoDBService.scanDynamoDB(any(), eq(DBCredential.class), any())).thenReturn(fakeData);
+        when(dynamoDBService.scanDynamoDB(any(), any())).thenReturn(fakeData);
         when(migrateService.migrateCredential(any(), any())).thenReturn(fakeCred3);
 
         List<Credential> expectedCreds = new ArrayList<>();
@@ -125,95 +124,96 @@ public class CredentialsServiceTest {
         expectedCreds.add(new Credential("testKey", "APP.TestComponent.dev.testKey",  "some-account", "region", "APP", "dev",
                 "TestComponent", "Jon Snow", "2018-04-04T12:51:37.803Z"));
 
-        assertTrue(credentialsService.getAllCredentials("table", "some-account", "region", "APP").equals(expectedCreds));
+        assertEquals(expectedCreds, credentialsService.getAllCredentials("table", "some-account", "region", "APP"));
     }
 
     @Test
     public void getAllCredentialsShouldBeAbleToHandleLegacyCredentialEntries() {
-        List<DBCredential> fakeData = new ArrayList<>();
+        List<Map<String, AttributeValue>> fakeData = new ArrayList<>();
 
-        DBCredential fakeCred1 = new DBCredential();
-        fakeCred1.setName("APP.TestComponent.dev.testKey");
-        fakeCred1.setSdlc("dev");
-        fakeCred1.setComponent("TestComponent");
-        fakeCred1.setVersion("0001");
+        Map<String, AttributeValue> fakeCred1 = new HashMap<>();
+        fakeCred1.put(CredentialsService.NAME, AttributeValue.builder().s("APP.TestComponent.dev.testKey").build());
+        fakeCred1.put(CredentialsService.SDLC, AttributeValue.builder().s("dev").build());
+        fakeCred1.put(CredentialsService.COMPONENT, AttributeValue.builder().s("TestComponent").build());
+        fakeCred1.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
 
         fakeData.add(fakeCred1);
 
-        when(dynamoDBService.scanDynamoDB(any(), eq(DBCredential.class), any())).thenReturn(fakeData);
+        when(dynamoDBService.scanDynamoDB(any(), any())).thenReturn(fakeData);
         credentialsService.getAllCredentials("table", "dev", "us-east-1", "APP");
     }
 
     @Test
     public void getCredentialHistoryShouldBeAbleToHandleLegacyCredentialEntries() {
-        List<DBCredential> fakeData = new ArrayList<>();
+        List<Map<String, AttributeValue>> fakeData = new ArrayList<>();
 
-        DBCredential fakeCred1 = new DBCredential();
-        fakeCred1.setName("APP.TestComponent.dev.testKey");
-        fakeCred1.setSdlc("dev");
-        fakeCred1.setComponent("TestComponent");
-        fakeCred1.setVersion("0001");
+        Map<String, AttributeValue> fakeCred1 = new HashMap<>();
+        fakeCred1.put(CredentialsService.NAME, AttributeValue.builder().s("APP.TestComponent.dev.testKey").build());
+        fakeCred1.put(CredentialsService.SDLC, AttributeValue.builder().s("dev").build());
+        fakeCred1.put(CredentialsService.COMPONENT, AttributeValue.builder().s("TestComponent").build());
+        fakeCred1.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
 
         fakeData.add(fakeCred1);
 
-        when(dynamoDBService.scanDynamoDB(any(), eq(DBCredential.class), any())).thenReturn(fakeData);
+        when(dynamoDBService.scanDynamoDB(any(), any())).thenReturn(fakeData);
         credentialsService.getCredentialHistory("table", "dev", "us-east-1", "APP",
                 "dev", "TestComponent", "testKey", false);
     }
 
     @Test
     public void getAllCredentialsShouldBeAbleToMigrateCredentialsWithEmptyComponent() {
-        List<DBCredential> fakeData = new ArrayList<>();
+        List<Map<String, AttributeValue>> fakeData = new ArrayList<>();
 
-        DBCredential fakeCred1 = new DBCredential();
-        fakeCred1.setName("APP.TestComponent.dev.testKey");
-        fakeCred1.setComponent("");
-        fakeCred1.setVersion("0001");
-        fakeCred1.setUpdatedBy("Jon Snow");
-        fakeCred1.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred1 = new HashMap<>();
+        fakeCred1.put(CredentialsService.NAME, AttributeValue.builder().s("APP.TestComponent.dev.testKey").build());
+        fakeCred1.put(CredentialsService.SDLC, AttributeValue.builder().s("dev").build());
+        fakeCred1.put(CredentialsService.COMPONENT, AttributeValue.builder().s("").build());
+        fakeCred1.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred1.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Jon Snow").build());
+        fakeCred1.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
-        DBCredential fakeCred2 = new DBCredential();
-        fakeCred2.setName("APP.dev.testKey2");
-        fakeCred1.setComponent("");
-        fakeCred1.setSdlc("");
-        fakeCred2.setVersion("0001");
-        fakeCred2.setUpdatedBy("Ned Stark");
-        fakeCred2.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred2 = new HashMap<>();
+        fakeCred2.put(CredentialsService.NAME, AttributeValue.builder().s("APP.dev.testKey2").build());
+        fakeCred2.put(CredentialsService.SDLC, AttributeValue.builder().s("").build());
+        fakeCred2.put(CredentialsService.COMPONENT, AttributeValue.builder().s("").build());
+        fakeCred2.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred2.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Ned Stark").build());
+        fakeCred2.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
-        DBCredential fakeCred3 = new DBCredential();
-        fakeCred3.setName("APP.dev.testKey3.extra");
-        fakeCred3.setVersion("0001");
-        fakeCred3.setUpdatedBy("");
-        fakeCred3.setUpdatedDate("");
+        Map<String, AttributeValue> fakeCred3 = new HashMap<>();
+        fakeCred3.put(CredentialsService.NAME, AttributeValue.builder().s("APP.dev.testKey3.extra").build());
+        fakeCred3.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred3.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("").build());
+        fakeCred3.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("").build());
 
-        DBCredential fakeCred4 = new DBCredential();
-        fakeCred4.setName("APP.TestComponent.dev.testKey");
-        fakeCred4.setComponent("TestComponent");
-        fakeCred4.setSdlc("dev");
-        fakeCred4.setVersion("0001");
-        fakeCred4.setUpdatedBy("Ned Stark");
-        fakeCred4.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred4 = new HashMap<>();
+        fakeCred4.put(CredentialsService.NAME, AttributeValue.builder().s("APP.TestComponent.dev.testKey").build());
+        fakeCred4.put(CredentialsService.SDLC, AttributeValue.builder().s("dev").build());
+        fakeCred4.put(CredentialsService.COMPONENT, AttributeValue.builder().s("TestComponent").build());
+        fakeCred4.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred4.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Ned Stark").build());
+        fakeCred4.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
-        DBCredential fakeCred5 = new DBCredential();
-        fakeCred5.setName("APP.dev.testKey2");
-        fakeCred5.setSdlc("dev");
-        fakeCred5.setVersion("0001");
-        fakeCred5.setUpdatedBy("Ned Stark");
-        fakeCred5.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred5 = new HashMap<>();
+        fakeCred5.put(CredentialsService.NAME, AttributeValue.builder().s("APP.dev.testKey2").build());
+        fakeCred5.put(CredentialsService.SDLC, AttributeValue.builder().s("dev").build());
+        fakeCred5.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred5.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Ned Stark").build());
+        fakeCred5.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
-        DBCredential fakeCred6 = new DBCredential();
-        fakeCred6.setName("APP.dev.testKey3.extra");
-        fakeCred6.setSdlc("testKey3");
-        fakeCred6.setComponent("dev");
-        fakeCred6.setVersion("0001");
-        fakeCred6.setUpdatedBy("Ned Stark");
-        fakeCred6.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred6 = new HashMap<>();
+        fakeCred6.put(CredentialsService.NAME, AttributeValue.builder().s("APP.dev.testKey3.extra").build());
+        fakeCred6.put(CredentialsService.SDLC, AttributeValue.builder().s("testKey3").build());
+        fakeCred6.put(CredentialsService.COMPONENT, AttributeValue.builder().s("dev").build());
+        fakeCred6.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred6.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Ned Stark").build());
+        fakeCred6.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
         fakeData.add(fakeCred1);
         fakeData.add(fakeCred2);
         fakeData.add(fakeCred3);
 
-        when(dynamoDBService.scanDynamoDB(any(), eq(DBCredential.class), any())).thenReturn(fakeData);
+        when(dynamoDBService.scanDynamoDB(any(), any())).thenReturn(fakeData);
         when(migrateService.guessCredentialProperties(fakeCred1)).thenReturn(fakeCred4);
         when(migrateService.guessCredentialProperties(fakeCred2)).thenReturn(fakeCred5);
         when(migrateService.guessCredentialProperties(fakeCred3)).thenReturn(fakeCred6);
@@ -257,54 +257,54 @@ public class CredentialsServiceTest {
 
     @Test
     public void getAllCredentialsShouldBeAbleToMigrateCredentialsWithoutSDLC() {
-        List<DBCredential> fakeData = new ArrayList<>();
+        List<Map<String, AttributeValue>> fakeData = new ArrayList<>();
 
-        DBCredential fakeCred1 = new DBCredential();
-        fakeCred1.setName("APP.TestComponent.dev.testKey");
-        fakeCred1.setVersion("0001");
-        fakeCred1.setUpdatedBy("Jon Snow");
-        fakeCred1.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred1 = new HashMap<>();
+        fakeCred1.put(CredentialsService.NAME, AttributeValue.builder().s("APP.TestComponent.dev.testKey").build());
+        fakeCred1.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred1.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Jon Snow").build());
+        fakeCred1.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
-        DBCredential fakeCred2 = new DBCredential();
-        fakeCred2.setName("APP.dev.testKey2");
-        fakeCred2.setVersion("0001");
-        fakeCred2.setUpdatedBy("Ned Stark");
-        fakeCred2.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred2 = new HashMap<>();
+        fakeCred2.put(CredentialsService.NAME, AttributeValue.builder().s("APP.dev.testKey2").build());
+        fakeCred2.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred2.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Ned Stark").build());
+        fakeCred2.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
-        DBCredential fakeCred3 = new DBCredential();
-        fakeCred3.setName("APP.dev.testKey3.extra");
-        fakeCred3.setVersion("0001");
-        fakeCred3.setUpdatedBy("Ned Stark");
-        fakeCred3.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred3 = new HashMap<>();
+        fakeCred3.put(CredentialsService.NAME, AttributeValue.builder().s("APP.dev.testKey3.extra").build());
+        fakeCred3.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred3.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Ned Stark").build());
+        fakeCred3.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
-        DBCredential fakeCred4 = new DBCredential();
-        fakeCred4.setName("APP.TestComponent.dev.testKey");
-        fakeCred4.setComponent("TestComponent");
-        fakeCred4.setSdlc("dev");
-        fakeCred4.setVersion("0001");
-        fakeCred4.setUpdatedBy("Ned Stark");
-        fakeCred4.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred4 = new HashMap<>();
+        fakeCred4.put(CredentialsService.NAME, AttributeValue.builder().s("APP.TestComponent.dev.testKey").build());
+        fakeCred4.put(CredentialsService.SDLC, AttributeValue.builder().s("dev").build());
+        fakeCred4.put(CredentialsService.COMPONENT, AttributeValue.builder().s("").build());
+        fakeCred4.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred4.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Ned Stark").build());
+        fakeCred4.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
-        DBCredential fakeCred5 = new DBCredential();
-        fakeCred5.setName("APP.dev.testKey2");
-        fakeCred5.setSdlc("dev");
-        fakeCred5.setVersion("0001");
-        fakeCred5.setUpdatedBy("Ned Stark");
-        fakeCred5.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred5 = new HashMap<>();
+        fakeCred5.put(CredentialsService.NAME, AttributeValue.builder().s("APP.dev.testKey2").build());
+        fakeCred5.put(CredentialsService.SDLC, AttributeValue.builder().s("dev").build());
+        fakeCred5.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred5.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Ned Stark").build());
+        fakeCred5.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
-        DBCredential fakeCred6 = new DBCredential();
-        fakeCred6.setName("APP.dev.testKey3.extra");
-        fakeCred6.setSdlc("testKey3");
-        fakeCred6.setComponent("dev");
-        fakeCred6.setVersion("0001");
-        fakeCred6.setUpdatedBy("Ned Stark");
-        fakeCred6.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred6 = new HashMap<>();
+        fakeCred6.put(CredentialsService.NAME, AttributeValue.builder().s("APP.dev.testKey3.extra").build());
+        fakeCred6.put(CredentialsService.SDLC, AttributeValue.builder().s("testKey3").build());
+        fakeCred6.put(CredentialsService.COMPONENT, AttributeValue.builder().s("dev").build());
+        fakeCred6.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred6.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Ned Stark").build());
+        fakeCred6.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
         fakeData.add(fakeCred1);
         fakeData.add(fakeCred2);
         fakeData.add(fakeCred3);
 
-        when(dynamoDBService.scanDynamoDB(any(), eq(DBCredential.class), any())).thenReturn(fakeData);
+        when(dynamoDBService.scanDynamoDB(any(), any())).thenReturn(fakeData);
         when(migrateService.guessCredentialProperties(fakeCred1)).thenReturn(fakeCred4);
         when(migrateService.guessCredentialProperties(fakeCred2)).thenReturn(fakeCred5);
         when(migrateService.guessCredentialProperties(fakeCred3)).thenReturn(fakeCred6);
@@ -327,25 +327,25 @@ public class CredentialsServiceTest {
 
     @Test
     public void getCredential() {
-        List<DBCredential> fakeData = new ArrayList<>();
+        List<Map<String, AttributeValue>> fakeData = new ArrayList<>();
 
-        DBCredential fakeCred1 = new DBCredential();
-        fakeCred1.setName("APP.TestComponent.dev.testKey");
-        fakeCred1.setVersion("0001");
-        fakeCred1.setUpdatedBy("Jon Snow");
-        fakeCred1.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred1 = new HashMap<>();
+        fakeCred1.put(CredentialsService.NAME, AttributeValue.builder().s("APP.TestComponent.dev.testKey").build());
+        fakeCred1.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred1.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Jon Snow").build());
+        fakeCred1.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
-        DBCredential fakeCred4 = new DBCredential();
-        fakeCred4.setName("APP.TestComponent.dev.testKey");
-        fakeCred4.setComponent("TestComponent");
-        fakeCred4.setSdlc("dev");
-        fakeCred4.setVersion("0001");
-        fakeCred4.setUpdatedBy("Ned Stark");
-        fakeCred4.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred4 = new HashMap<>();
+        fakeCred4.put(CredentialsService.NAME, AttributeValue.builder().s("APP.TestComponent.dev.testKey").build());
+        fakeCred4.put(CredentialsService.SDLC, AttributeValue.builder().s("dev").build());
+        fakeCred4.put(CredentialsService.COMPONENT, AttributeValue.builder().s("TestComponent").build());
+        fakeCred4.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred4.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Ned Stark").build());
+        fakeCred4.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
         fakeData.add(fakeCred1);
 
-        when(dynamoDBService.queryDynamoDB(any(), eq(DBCredential.class), any())).thenReturn(fakeData);
+        when(dynamoDBService.queryDynamoDB(any(), any())).thenReturn(fakeData);
         when(migrateService.migrateCredential(any(), any())).thenReturn(fakeCred4);
 
         Credential expectedCreds = new Credential("testKey", "APP.TestComponent.dev.testKey",  "some-account", "region", "APP", "dev",
@@ -358,23 +358,23 @@ public class CredentialsServiceTest {
 
     @Test(expected = Exception.class)
     public void getCredentialFaliureToMigrate()throws Exception {
-        List<DBCredential> fakeData = new ArrayList<>();
+        List<Map<String, AttributeValue>> fakeData = new ArrayList<>();
 
-        DBCredential fakeCred1 = new DBCredential();
-        fakeCred1.setName("APP.TestComponent.dev.testKey");
-        fakeCred1.setVersion("0001");
-        fakeCred1.setUpdatedBy("Jon Snow");
-        fakeCred1.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred1 = new HashMap<>();
+        fakeCred1.put(CredentialsService.NAME, AttributeValue.builder().s("APP.TestComponent.dev.testKey").build());
+        fakeCred1.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred1.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Jon Snow").build());
+        fakeCred1.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
-        DBCredential fakeCred4 = new DBCredential();
-        fakeCred4.setName("APP.TestComponent.dev.testKey");
-        fakeCred4.setVersion("0001");
-        fakeCred4.setUpdatedBy("Ned Stark");
-        fakeCred4.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred4 = new HashMap<>();
+        fakeCred4.put(CredentialsService.NAME, AttributeValue.builder().s("APP.TestComponent.dev.testKey").build());
+        fakeCred4.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred4.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Ned Stark").build());
+        fakeCred4.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
         fakeData.add(fakeCred1);
 
-        when(dynamoDBService.queryDynamoDB(any(), eq(DBCredential.class), any())).thenReturn(fakeData);
+        when(dynamoDBService.queryDynamoDB(any(), any())).thenReturn(fakeData);
         when(migrateService.migrateCredential(any(), any())).thenReturn(null);
 
         Credential expectedCreds = new Credential("testKey", "APP.TestComponent.dev.testKey",  "some-account", "region", "APP", "dev",
@@ -388,23 +388,23 @@ public class CredentialsServiceTest {
 
     @Test
     public void getCredentialFaliureToFindCredential() {
-        List<DBCredential> fakeData = new ArrayList<>();
+        List<Map<String, AttributeValue>> fakeData = new ArrayList<>();
 
-        DBCredential fakeCred1 = new DBCredential();
-        fakeCred1.setName("APP.TestComponent.dev.testKey");
-        fakeCred1.setVersion("0001");
-        fakeCred1.setUpdatedBy("Jon Snow");
-        fakeCred1.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred1 = new HashMap<>();
+        fakeCred1.put(CredentialsService.NAME, AttributeValue.builder().s("APP.TestComponent.dev.testKey").build());
+        fakeCred1.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred1.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Jon Snow").build());
+        fakeCred1.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
-        DBCredential fakeCred4 = new DBCredential();
-        fakeCred4.setName("APP.TestComponent.dev.testKey");
-        fakeCred4.setVersion("0001");
-        fakeCred4.setUpdatedBy("Ned Stark");
-        fakeCred4.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred4 = new HashMap<>();
+        fakeCred4.put(CredentialsService.NAME, AttributeValue.builder().s("APP.TestComponent.dev.testKey").build());
+        fakeCred4.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred4.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Ned Stark").build());
+        fakeCred4.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
         fakeData.add(fakeCred1);
 
-        when(dynamoDBService.scanDynamoDB(any(), eq(DBCredential.class), any())).thenReturn(fakeData);
+        when(dynamoDBService.scanDynamoDB(any(), any())).thenReturn(fakeData);
         when(migrateService.migrateCredential(any(), any())).thenThrow(NoSuchElementException.class);
 
         Credential expectedCreds = new Credential("testKey", "APP.TestComponent.dev.testKey",  "some-account", "region", "APP", "dev",
@@ -419,28 +419,28 @@ public class CredentialsServiceTest {
 
     @Test
     public void getAllCredentialsShouldOnlyReturnLatestVersionOfCredentials() {
-        List<DBCredential> fakeData = new ArrayList<>();
+        List<Map<String, AttributeValue>> fakeData = new ArrayList<>();
 
-        DBCredential fakeCred1 = new DBCredential();
-        fakeCred1.setName("APP.TestComponent.dev.testKey");
-        fakeCred1.setVersion("0001");
-        fakeCred1.setUpdatedBy("Jon Snow");
-        fakeCred1.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred1 = new HashMap<>();
+        fakeCred1.put(CredentialsService.NAME, AttributeValue.builder().s("APP.TestComponent.dev.testKey").build());
+        fakeCred1.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred1.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Jon Snow").build());
+        fakeCred1.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
-        DBCredential fakeCred2 = new DBCredential();
-        fakeCred2.setName("APP.TestComponent.dev.testKey");
-        fakeCred2.setVersion("0002");
-        fakeCred2.setUpdatedBy("Ned Stark");
-        fakeCred2.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred2 = new HashMap<>();
+        fakeCred2.put(CredentialsService.NAME, AttributeValue.builder().s("APP.TestComponent.dev.testKey").build());
+        fakeCred2.put(CredentialsService.VERSION, AttributeValue.builder().s("0002").build());
+        fakeCred2.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Ned Stark").build());
+        fakeCred2.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
-        DBCredential fakeCred3 = fakeCred2;
-        fakeCred3.setSdlc("dev");
-        fakeCred3.setComponent("TestComponent");
+        Map<String, AttributeValue> fakeCred3 = fakeCred2;
+        fakeCred3.put(CredentialsService.SDLC, AttributeValue.builder().s("dev").build());
+        fakeCred3.put(CredentialsService.COMPONENT, AttributeValue.builder().s("TestComponent").build());
 
         fakeData.add(fakeCred1);
         fakeData.add(fakeCred2);
 
-        when(dynamoDBService.scanDynamoDB(any(), eq(DBCredential.class), any())).thenReturn(fakeData);
+        when(dynamoDBService.scanDynamoDB(any(), any())).thenReturn(fakeData);
 
         List<Credential> expectedCreds = new ArrayList<>();
         expectedCreds.add(new Credential("testKey", "APP.TestComponent.dev.testKey", "my_account","region", "APP","dev",
@@ -453,17 +453,17 @@ public class CredentialsServiceTest {
 
     @Test
     public void getCredentialHistoryShouldBeAbleToCorrectlyCreateAHistoryObjectFromObtainedData() {
-        List<DBCredential> fakeData = new ArrayList<>();
+        List<Map<String, AttributeValue>> fakeData = new ArrayList<>();
 
-        DBCredential fakeCred = new DBCredential();
-        fakeCred.setName("APP.dev.TestComponent.testKey");
-        fakeCred.setVersion("0001");
-        fakeCred.setUpdatedBy("Jon Snow");
-        fakeCred.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred = new HashMap<>();
+        fakeCred.put(CredentialsService.NAME, AttributeValue.builder().s("APP.TestComponent.dev.testKey").build());
+        fakeCred.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Jon Snow").build());
+        fakeCred.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
         fakeData.add(fakeCred);
 
-        when(dynamoDBService.queryDynamoDB(any(), eq(DBCredential.class), any())).thenReturn(fakeData);
+        when(dynamoDBService.queryDynamoDB(any(), any())).thenReturn(fakeData);
 
         List<HistoryEntry> expectedHistory = new ArrayList<>();
         HistoryEntry expectedEntry = new HistoryEntry(1, "Jon Snow", "2018-04-04T12:51:37.803Z");
@@ -580,13 +580,13 @@ public class CredentialsServiceTest {
 
     @Test(expected = FideliusException.class)
     public void createCredentialShouldNotCreateDuplicateCredentials() throws FideliusException {
-        List<DBCredential> fakeData = new ArrayList<>();
+        List<Map<String, AttributeValue>> fakeData = new ArrayList<>();
 
-        DBCredential fakeCred = new DBCredential();
-        fakeCred.setName("APP.dev.testComponent.testKey");
-        fakeCred.setVersion("0001");
-        fakeCred.setUpdatedBy("Jon Snow");
-        fakeCred.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred = new HashMap<>();
+        fakeCred.put(CredentialsService.NAME, AttributeValue.builder().s("APP.dev.testComponent.testKey").build());
+        fakeCred.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Jon Snow").build());
+        fakeCred.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
         fakeData.add(fakeCred);
 
@@ -599,7 +599,7 @@ public class CredentialsServiceTest {
         credential.setShortKey("testKey");
         credential.setSecret("secretPassword");
 
-        when(dynamoDBService.queryDynamoDB(any(), eq(DBCredential.class), any())).thenReturn(fakeData);
+        when(dynamoDBService.queryDynamoDB(any(), any())).thenReturn(fakeData);
         Credential result = credentialsService.createCredential(credential);
     }
 
@@ -672,27 +672,27 @@ public class CredentialsServiceTest {
 
     @Test
     public void getAllCredentialsShortensFullIAMRoleARNs() {
-        List<DBCredential> fakeData = new ArrayList<>();
+        List<Map<String, AttributeValue>> fakeData = new ArrayList<>();
 
-        DBCredential fakeCred1 = new DBCredential();
-        fakeCred1.setName("APP.TestComponent.dev.testKey");
-        fakeCred1.setSdlc("dev");
-        fakeCred1.setComponent("TestComponent");
-        fakeCred1.setVersion("0001");
-        fakeCred1.setUpdatedBy("arn:aws:sts::1234567890:assumed-role/private_aws_somerole_d/L25000");
-        fakeCred1.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred1 = new HashMap<>();
+        fakeCred1.put(CredentialsService.NAME, AttributeValue.builder().s("APP.TestComponent.dev.testKey").build());
+        fakeCred1.put(CredentialsService.SDLC, AttributeValue.builder().s("dev").build());
+        fakeCred1.put(CredentialsService.COMPONENT, AttributeValue.builder().s("TestComponent").build());
+        fakeCred1.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred1.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("arn:aws:sts::1234567890:assumed-role/private_aws_somerole_d/L25000").build());
+        fakeCred1.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
-        DBCredential fakeCred2 = new DBCredential();
-        fakeCred2.setName("APP.dev.testKey2");
-        fakeCred2.setSdlc("dev");
-        fakeCred2.setVersion("0001");
-        fakeCred2.setUpdatedBy("Ned Stark");
-        fakeCred2.setUpdatedDate("2018-04-04T12:51:37.803Z");
+        Map<String, AttributeValue> fakeCred2 = new HashMap<>();
+        fakeCred1.put(CredentialsService.NAME, AttributeValue.builder().s("APP.dev.testKey2").build());
+        fakeCred1.put(CredentialsService.SDLC, AttributeValue.builder().s("dev").build());
+        fakeCred1.put(CredentialsService.VERSION, AttributeValue.builder().s("0001").build());
+        fakeCred1.put(CredentialsService.UPDATED_BY, AttributeValue.builder().s("Ned Stark").build());
+        fakeCred1.put(CredentialsService.UPDATED_ON, AttributeValue.builder().s("2018-04-04T12:51:37.803Z").build());
 
         fakeData.add(fakeCred1);
         fakeData.add(fakeCred2);
 
-        when(dynamoDBService.scanDynamoDB(any(), eq(DBCredential.class), any())).thenReturn(fakeData);
+        when(dynamoDBService.scanDynamoDB(any(), any())).thenReturn(fakeData);
 
         List<Credential> expectedCreds = new ArrayList<>();
         expectedCreds.add(new Credential("testKey2", "APP.dev.testKey2", "some-account","region", "APP", "dev",

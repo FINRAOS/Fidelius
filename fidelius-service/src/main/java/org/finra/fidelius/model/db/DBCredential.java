@@ -17,11 +17,9 @@
 
 package org.finra.fidelius.model.db;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@DynamoDBTable(tableName = "")
 public class DBCredential {
 
     private String name;
@@ -31,7 +29,6 @@ public class DBCredential {
     private String sdlc;
     private String component;
 
-    @DynamoDBHashKey(attributeName = "name")
     public String getName() {
         return name;
     }
@@ -39,7 +36,6 @@ public class DBCredential {
         this.name = name;
     }
 
-    @DynamoDBRangeKey(attributeName = "version")
     public String getVersion() {
         return version;
     }
@@ -47,7 +43,6 @@ public class DBCredential {
         this.version = version;
     }
 
-    @DynamoDBAttribute(attributeName = "updatedBy")
     public String getUpdatedBy() {
         return updatedBy;
     }
@@ -55,7 +50,6 @@ public class DBCredential {
         this.updatedBy = updatedBy;
     }
 
-    @DynamoDBAttribute(attributeName = "updatedOn")
     public String getUpdatedDate() {
         return updatedDate;
     }
@@ -63,7 +57,6 @@ public class DBCredential {
         this.updatedDate = updatedDate;
     }
 
-    @DynamoDBAttribute(attributeName = "sdlc")
     public String getSdlc(){
         if (sdlc != null && !sdlc.isEmpty()) {
             return sdlc;
@@ -73,7 +66,6 @@ public class DBCredential {
     }
     public void setSdlc(String sdlc){ this.sdlc = sdlc;}
 
-    @DynamoDBAttribute(attributeName = "component")
     public String getComponent() {
         if (component != null && !component.isEmpty()) {
             return component;
@@ -83,7 +75,7 @@ public class DBCredential {
     }
     public void setComponent(String component){ this.component = component;}
 
-    @DynamoDBIgnore
+
     public String getShortKey() {
         if(component != null && !component.isEmpty())
             return name.split("\\."+component+"\\."+sdlc+"\\.")[1];
@@ -96,7 +88,6 @@ public class DBCredential {
         }
     }
 
-    @DynamoDBIgnore
     @Override
     public String toString() {
         return "DBCredential{" +

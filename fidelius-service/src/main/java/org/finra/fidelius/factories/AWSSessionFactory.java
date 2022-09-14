@@ -17,11 +17,14 @@
 
 package org.finra.fidelius.factories;
 
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.auth.BasicSessionCredentials;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClient;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.sts.StsClient;
 
 import javax.inject.Inject;
 
@@ -29,13 +32,19 @@ import javax.inject.Inject;
 public class AWSSessionFactory {
 
     @Inject
-    private ClientConfiguration clientConfiguration;
+    private ClientOverrideConfiguration clientConfiguration;
 
-    public AmazonDynamoDBClient createDynamoDBClient(BasicSessionCredentials basicSessionCredentials) {
-        return new AmazonDynamoDBClient(basicSessionCredentials, clientConfiguration);
+    public DynamoDbClient createDynamoDBClient(AwsCredentialsProvider awsCredentialsProvider, Region region) {
+        return DynamoDbClient.builder()
+                .credentialsProvider(awsCredentialsProvider)
+                .region(region)
+                .overrideConfiguration(clientConfiguration)
+                .build();
     }
 
-    public AWSSecurityTokenServiceClient createSecurityTokenServiceClient() {
-        return new AWSSecurityTokenServiceClient(clientConfiguration);
+    public StsClient createSecurityTokenServiceClient() {
+        return StsClient.builder()
+                .overrideConfiguration(clientConfiguration)
+                .build();
     }
 }

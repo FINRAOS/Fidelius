@@ -17,21 +17,23 @@
 
 package org.finra.fidelius.model.aws;
 
+import software.amazon.awssdk.regions.Region;
+
 public class AWSEnvironment {
 
     private String account;
-    private String region;
+    private Region region;
 
     public AWSEnvironment(String account, String region) {
+        this.region = Region.of(region);
         this.account = account;
-        this.region = region;
     }
 
     public String getAccount() {
         return account;
     }
 
-    public String getRegion() {
+    public Region getRegion() {
         return region;
     }
 }

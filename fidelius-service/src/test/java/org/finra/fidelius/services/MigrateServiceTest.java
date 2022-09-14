@@ -17,10 +17,6 @@
 
 package org.finra.fidelius.services;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.kms.AWSKMSClient;
-import org.finra.fidelius.model.db.DBCredential;
 import org.finra.fidelius.services.aws.AWSSessionService;
 import org.finra.fidelius.services.aws.DynamoDBService;
 import org.junit.Assert;
@@ -32,6 +28,12 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.beans.factory.annotation.Value;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.kms.KmsClient;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -52,9 +54,6 @@ public class MigrateServiceTest {
     @Mock
     private DynamoDBService dynamoDBService;
 
-    @Mock
-    private DynamoDBMapper mapper;
-
     /**
      * Name of DynamoDb table that contains credentials
      */
@@ -64,224 +63,223 @@ public class MigrateServiceTest {
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        when(awsSessionService.getDynamoDBClient(any())).thenReturn(new AmazonDynamoDBClient());
-        when(awsSessionService.getKmsClient(any())).thenReturn(new AWSKMSClient());
+        when(awsSessionService.getDynamoDBClient(any())).thenReturn(DynamoDbClient.builder().build());
+        when(awsSessionService.getKmsClient(any())).thenReturn(KmsClient.builder().build());
     }
 
     @Test
     public void migrateCredentialWith3Fields() throws Exception {
-        DBCredential dbCredential = new DBCredential();
-        dbCredential.setName("APP.dev.key");
+        Map<String, AttributeValue> dbCredential = new HashMap<>();
+        dbCredential.put("name", AttributeValue.builder().s("APP.dev.key").build());
 
         doReturn("correct").when(fideliusService).getCredential("key", "APP", "dev", null, tableName, "FideliusMigrateTask");
 
-        DBCredential result = migrateService.migrateCredential(dbCredential, fideliusService);
+        Map<String, AttributeValue> result = migrateService.migrateCredential(dbCredential, fideliusService);
 
-        Assert.assertEquals("dev", result.getSdlc());
-        Assert.assertEquals(null, result.getComponent());
+        Assert.assertEquals("dev", result.get("sdlc").s());
+        Assert.assertNull(result.get("component"));
     }
 
     @Test
     public void migrateCredentialWith3FieldsAndSpecialCharacter() throws Exception {
-        DBCredential dbCredential = new DBCredential();
-        dbCredential.setName("APP.dev.<user-id>");
+        Map<String, AttributeValue> dbCredential = new HashMap<>();
+        dbCredential.put("name", AttributeValue.builder().s("APP.dev.<user-id>").build());
 
         doReturn("correct").when(fideliusService).getCredential("<user-id>", "APP", "dev", null, tableName, "FideliusMigrateTask");
 
-        DBCredential result = migrateService.migrateCredential(dbCredential, fideliusService);
+        Map<String, AttributeValue> result = migrateService.migrateCredential(dbCredential, fideliusService);
 
-        Assert.assertEquals("dev", result.getSdlc());
-        Assert.assertEquals(null, result.getComponent());
+        Assert.assertEquals("dev", result.get("sdlc").s());
+        Assert.assertNull(result.get("component"));
     }
 
     @Test
     public void guessCredentialWith3Fields() throws Exception {
-        DBCredential dbCredential = new DBCredential();
-        dbCredential.setName("APP.dev.key");
+        Map<String, AttributeValue> dbCredential = new HashMap<>();
+        dbCredential.put("name", AttributeValue.builder().s("APP.dev.key").build());
 
-        DBCredential result = migrateService.guessCredentialProperties(dbCredential);
+        Map<String, AttributeValue> result = migrateService.guessCredentialProperties(dbCredential);
 
-        Assert.assertEquals("dev", result.getSdlc());
-        Assert.assertEquals(null, result.getComponent());
-        Assert.assertEquals("key", result.getShortKey());
+        Assert.assertEquals("dev", result.get("sdlc").s());
+        Assert.assertNull(result.get("component"));
+        Assert.assertEquals("key", CredentialsService.getShortKey(result));
 
     }
 
     @Test
     public void guessCredentialWith3FieldsAndSpecialCharacters() throws Exception {
-        DBCredential dbCredential = new DBCredential();
-        dbCredential.setName("APP.dev-int.<key#");
+        Map<String, AttributeValue> dbCredential = new HashMap<>();
+        dbCredential.put("name", AttributeValue.builder().s("APP.dev-int.<key#").build());
 
-        DBCredential result = migrateService.guessCredentialProperties(dbCredential);
+        Map<String, AttributeValue> result = migrateService.guessCredentialProperties(dbCredential);
 
-        Assert.assertEquals("dev-int", result.getSdlc());
-        Assert.assertEquals(null, result.getComponent());
-        Assert.assertEquals("<key#", result.getShortKey());
+        Assert.assertEquals("dev-int", result.get("sdlc").s());
+        Assert.assertNull(result.get("component"));
+        Assert.assertEquals("<key#", CredentialsService.getShortKey(result));
     }
 
     @Test
     public void migrateCredentialWith3FieldsShouldFail() throws Exception {
-        DBCredential dbCredential = new DBCredential();
-        dbCredential.setName("APP.dev.key");
+        Map<String, AttributeValue> dbCredential = new HashMap<>();
+        dbCredential.put("name", AttributeValue.builder().s("APP.dev.key").build());
 
-        DBCredential result = migrateService.migrateCredential(dbCredential, fideliusService);
+        Map<String, AttributeValue> result = migrateService.migrateCredential(dbCredential, fideliusService);
 
-        Assert.assertEquals(null, result.getSdlc());
-        Assert.assertEquals(null, result.getComponent());
+        Assert.assertNull(result.get("sdlc"));
+        Assert.assertNull(result.get("component"));
     }
 
     @Test
     public void migrateCredentialWith4FieldsAndNoComponent() throws Exception {
-        DBCredential dbCredential = new DBCredential();
-        dbCredential.setName("APP.dev.secret.key");
+        Map<String, AttributeValue> dbCredential = new HashMap<>();
+        dbCredential.put("name", AttributeValue.builder().s("APP.dev.secret.key").build());
 
         doReturn("correct").when(fideliusService).getCredential("secret.key", "APP", "dev", null, tableName, "FideliusMigrateTask");
 
-        DBCredential result = migrateService.migrateCredential(dbCredential, fideliusService);
+        Map<String, AttributeValue> result = migrateService.migrateCredential(dbCredential, fideliusService);
 
-        Assert.assertEquals("dev", result.getSdlc());
-        Assert.assertEquals(null, result.getComponent());
+        Assert.assertEquals("dev", result.get("sdlc").s());
+        Assert.assertNull(result.get("component"));
     }
 
     @Test
     public void migrateCredentialWith4FieldsAndComponent() throws Exception {
-        DBCredential dbCredential = new DBCredential();
-        dbCredential.setName("APP.component.dev.key");
+        Map<String, AttributeValue> dbCredential = new HashMap<>();
+        dbCredential.put("name", AttributeValue.builder().s("APP.component.dev.key").build());
 
         doReturn("correct").when(fideliusService).getCredential("key", "APP", "dev", "component", tableName, "FideliusMigrateTask");
 
-        DBCredential result = migrateService.migrateCredential(dbCredential, fideliusService);
+        Map<String, AttributeValue> result = migrateService.migrateCredential(dbCredential, fideliusService);
 
-        Assert.assertEquals("dev", result.getSdlc());
-        Assert.assertEquals("component", result.getComponent());
+        Assert.assertEquals("dev", result.get("sdlc").s());
+        Assert.assertEquals("component", result.get("component").s());
     }
 
     @Test
     public void migrateCredentialWith4FieldsAndComponentShouldBeNull() throws Exception {
-        DBCredential dbCredential = new DBCredential();
-        dbCredential.setName("APP.component.dev.key");
+        Map<String, AttributeValue> dbCredential = new HashMap<>();
+        dbCredential.put("name", AttributeValue.builder().s("APP.component.dev.key").build());
 
-        DBCredential result = migrateService.migrateCredential(dbCredential, fideliusService);
+        Map<String, AttributeValue> result = migrateService.migrateCredential(dbCredential, fideliusService);
 
-        Assert.assertEquals(null, result.getSdlc());
-        Assert.assertEquals(null, result.getComponent());
+        Assert.assertNull(result.get("sdlc"));
+        Assert.assertNull(result.get("component"));
     }
 
     @Test
     public void guessCredentialWith4Fields() throws Exception {
-        DBCredential dbCredential = new DBCredential();
-        dbCredential.setName("APP.component.dev.key");
+        Map<String, AttributeValue> dbCredential = new HashMap<>();
+        dbCredential.put("name", AttributeValue.builder().s("APP.component.dev.key").build());
 
-        DBCredential result = migrateService.guessCredentialProperties(dbCredential);
+        Map<String, AttributeValue> result = migrateService.guessCredentialProperties(dbCredential);
 
-        Assert.assertEquals("component", result.getSdlc());
-        Assert.assertEquals(null, result.getComponent());
-        Assert.assertEquals("dev.key", result.getShortKey());
+        Assert.assertEquals("component", result.get("sdlc").s());
+        Assert.assertNull(result.get("component"));
+        Assert.assertEquals("dev.key", CredentialsService.getShortKey(result));
 
     }
 
     @Test
     public void guessCredentialWith4FieldsAndSpecialCharacters() throws Exception {
-        DBCredential dbCredential = new DBCredential();
-        dbCredential.setName("APP.dev-int.component.<key>");
+        Map<String, AttributeValue> dbCredential = new HashMap<>();
+        dbCredential.put("name", AttributeValue.builder().s("APP.dev-int.component.<key>").build());
 
-        DBCredential result = migrateService.guessCredentialProperties(dbCredential);
+        Map<String, AttributeValue> result = migrateService.guessCredentialProperties(dbCredential);
 
-        Assert.assertEquals("dev-int", result.getSdlc());
-        Assert.assertEquals(null, result.getComponent());
-        Assert.assertEquals("component.<key>", result.getShortKey());
-
+        Assert.assertEquals("dev-int", result.get("sdlc").s());
+        Assert.assertNull(result.get("component"));
+        Assert.assertEquals("component.<key>", CredentialsService.getShortKey(result));
     }
 
     @Test
     public void migrateCredentialWithMoreThan4FieldsAndNoComponent() throws Exception {
-        DBCredential dbCredential = new DBCredential();
-        dbCredential.setName("APP.dev.secret.long.key");
+        Map<String, AttributeValue> dbCredential = new HashMap<>();
+        dbCredential.put("name", AttributeValue.builder().s("APP.dev.secret.long.key").build());
 
         doReturn("correct").when(fideliusService).getCredential("secret.long.key", "APP", "dev", null, tableName, "FideliusMigrateTask");
 
-        DBCredential result = migrateService.migrateCredential(dbCredential, fideliusService);
+        Map<String, AttributeValue> result = migrateService.migrateCredential(dbCredential, fideliusService);
 
-        Assert.assertEquals("dev", result.getSdlc());
-        Assert.assertEquals(null, result.getComponent());
+        Assert.assertEquals("dev", result.get("sdlc").s());
+        Assert.assertNull(result.get("component"));
     }
 
     @Test
     public void migrateCredentialWithMoreThan4FieldsAndNoComponentSpecialCharacters() throws Exception {
-        DBCredential dbCredential = new DBCredential();
-        dbCredential.setName("APP.dev-int.secret.'long.<key*");
+        Map<String, AttributeValue> dbCredential = new HashMap<>();
+        dbCredential.put("name", AttributeValue.builder().s("APP.dev-int.secret.'long.<key*").build());
 
         doReturn("correct").when(fideliusService).getCredential("secret.'long.<key*", "APP", "dev-int", null, tableName, "FideliusMigrateTask");
 
-        DBCredential result = migrateService.migrateCredential(dbCredential, fideliusService);
+        Map<String, AttributeValue> result = migrateService.migrateCredential(dbCredential, fideliusService);
 
-        Assert.assertEquals("dev-int", result.getSdlc());
-        Assert.assertEquals(null, result.getComponent());
+        Assert.assertEquals("dev-int", result.get("sdlc").s());
+        Assert.assertNull(result.get("component"));
     }
 
 
     @Test
     public void migrateCredentialWithMoreThan4FieldsAndComponent() throws Exception {
-        DBCredential dbCredential = new DBCredential();
-        dbCredential.setName("APP.component.dev.secret.long.key");
+        Map<String, AttributeValue> dbCredential = new HashMap<>();
+        dbCredential.put("name", AttributeValue.builder().s("APP.component.dev.secret.long.key").build());
 
         doReturn("correct").when(fideliusService).getCredential("secret.long.key", "APP", "dev", "component", tableName, "FideliusMigrateTask");
 
-        DBCredential result = migrateService.migrateCredential(dbCredential, fideliusService);
+        Map<String, AttributeValue> result = migrateService.migrateCredential(dbCredential, fideliusService);
 
-        Assert.assertEquals("dev", result.getSdlc());
-        Assert.assertEquals("component", result.getComponent());
+        Assert.assertEquals("dev", result.get("sdlc").s());
+        Assert.assertEquals("component", result.get("component").s());
     }
 
     @Test
     public void migrateCredentialWithMoreThan4FieldsAndComponentSpecialCharacters() throws Exception {
-        DBCredential dbCredential = new DBCredential();
-        dbCredential.setName("APP.component.dev-int.secret.long.<key>");
+        Map<String, AttributeValue> dbCredential = new HashMap<>();
+        dbCredential.put("name", AttributeValue.builder().s("APP.component.dev-int.secret.long.<key>").build());
 
         doReturn("correct").when(fideliusService).getCredential("secret.long.<key>", "APP", "dev-int", "component", tableName, "FideliusMigrateTask");
 
-        DBCredential result = migrateService.migrateCredential(dbCredential, fideliusService);
+        Map<String, AttributeValue> result = migrateService.migrateCredential(dbCredential, fideliusService);
 
-        Assert.assertEquals("dev-int", result.getSdlc());
-        Assert.assertEquals("component", result.getComponent());
+        Assert.assertEquals("dev-int", result.get("sdlc").s());
+        Assert.assertEquals("component", result.get("component").s());
     }
 
     @Test
     public void guessCredentialWithMoreThan4Fields() throws Exception {
-        DBCredential dbCredential = new DBCredential();
-        dbCredential.setName("APP.dev.secret.long.key");
+        Map<String, AttributeValue> dbCredential = new HashMap<>();
+        dbCredential.put("name", AttributeValue.builder().s("APP.dev.secret.long.key").build());
 
-        DBCredential result = migrateService.guessCredentialProperties(dbCredential);
+        Map<String, AttributeValue> result = migrateService.guessCredentialProperties(dbCredential);
 
-        Assert.assertEquals("dev", result.getSdlc());
-        Assert.assertEquals(null, result.getComponent());
-        Assert.assertEquals("secret.long.key", result.getShortKey());
+        Assert.assertEquals("dev", result.get("sdlc").s());
+        Assert.assertNull(result.get("component"));
+        Assert.assertEquals("secret.long.key", CredentialsService.getShortKey(result));
 
     }
 
     @Test
     public void guessCredentialWithMoreThan4FieldsAndCharacters() throws Exception {
-        DBCredential dbCredential = new DBCredential();
-        dbCredential.setName("APP.dev-int.secret.long.<key*");
+        Map<String, AttributeValue> dbCredential = new HashMap<>();
+        dbCredential.put("name", AttributeValue.builder().s("APP.dev-int.secret.long.<key*").build());
 
-        DBCredential result = migrateService.guessCredentialProperties(dbCredential);
+        Map<String, AttributeValue> result = migrateService.guessCredentialProperties(dbCredential);
 
-        Assert.assertEquals("dev-int", result.getSdlc());
-        Assert.assertEquals(null, result.getComponent());
-        Assert.assertEquals("secret.long.<key*", result.getShortKey());
+        Assert.assertEquals("dev-int", result.get("sdlc").s());
+        Assert.assertNull(result.get("component"));
+        Assert.assertEquals("secret.long.<key*", CredentialsService.getShortKey(result));
 
     }
 
     @Test
     public void guessCredentialWith3FieldsAndSpecialCharactersOnSDLC() throws Exception {
-        DBCredential dbCredential = new DBCredential();
-        dbCredential.setName("APP.dev-int*.secret");
+        Map<String, AttributeValue> dbCredential = new HashMap<>();
+        dbCredential.put("name", AttributeValue.builder().s("APP.dev-int*.secret").build());
 
-        DBCredential result = migrateService.guessCredentialProperties(dbCredential);
+        Map<String, AttributeValue> result = migrateService.guessCredentialProperties(dbCredential);
 
-        Assert.assertEquals("dev-int*", result.getSdlc());
-        Assert.assertEquals(null, result.getComponent());
-        Assert.assertEquals("APP.dev-int*.secret", result.getShortKey());
+        Assert.assertEquals("dev-int*", result.get("sdlc").s());
+        Assert.assertNull(result.get("component"));
+        Assert.assertEquals("APP.dev-int*.secret", CredentialsService.getShortKey(result));
 
     }
 }

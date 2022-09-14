@@ -17,12 +17,14 @@
 
 package org.finra.fidelius.services;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import org.finra.fidelius.model.db.DBCredential;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,44 +56,44 @@ public class MigrateService {
 
     private Logger logger = LoggerFactory.getLogger(MigrateService.class);
 
-    public DBCredential migrateCredential(DBCredential dbCredential, FideliusService fideliusService) {
+    public Map<String, AttributeValue> migrateCredential(Map<String, AttributeValue> dbCredential, FideliusService fideliusService) {
         this.fideliusService = fideliusService;
-        Matcher threeFieldsMatcher = threeFieldsPattern.matcher(dbCredential.getName());
-        Matcher fourFieldsMatcher = fourFieldsPattern.matcher(dbCredential.getName());
-        Matcher extraFieldsMatcher = extraFieldsPattern.matcher(dbCredential.getName());
+        Matcher threeFieldsMatcher = threeFieldsPattern.matcher(dbCredential.get(CredentialsService.NAME).s());
+        Matcher fourFieldsMatcher = fourFieldsPattern.matcher(dbCredential.get(CredentialsService.NAME).s());
+        Matcher extraFieldsMatcher = extraFieldsPattern.matcher(dbCredential.get(CredentialsService.NAME).s());
 
         if (threeFieldsMatcher.matches()) {
-            logger.info("3 Fields: " + dbCredential.getName());
+            logger.info("3 Fields: " + dbCredential.get(CredentialsService.NAME).s());
             try {
                 String key = threeFieldsMatcher.group(3);
                 String ags = threeFieldsMatcher.group(1);
                 String sdlc = threeFieldsMatcher.group(2);
                 migrate(ags, sdlc, null, key, dbCredential);
             } catch (Exception e) {
-                logger.error("Error migrating " + dbCredential.getName());
+                logger.error("Error migrating " + dbCredential.get(CredentialsService.NAME).s());
             }
         }
 
-        if (fourFieldsMatcher.matches() && dbCredential.getSdlc() == null) {
-            logger.info("4 Fields: " + dbCredential.getName());
+        if (fourFieldsMatcher.matches() && dbCredential.get(CredentialsService.SDLC) == null) {
+            logger.info("4 Fields: " + dbCredential.get(CredentialsService.NAME).s());
             migrate(fourFieldsMatcher, dbCredential);
         }
 
-        if (extraFieldsMatcher.matches() && dbCredential.getSdlc() == null) {
-            logger.info("More than 4 Fields: " + dbCredential.getName());
+        if (extraFieldsMatcher.matches() && dbCredential.get(CredentialsService.SDLC) == null) {
+            logger.info("More than 4 Fields: " + dbCredential.get(CredentialsService.NAME).s());
             migrate(extraFieldsMatcher, dbCredential);
         }
 
-        if(dbCredential.getSdlc() != null)
-            logger.info("Successfully retrieved " + dbCredential.getName());
+        if(dbCredential.get(CredentialsService.SDLC) != null)
+            logger.info("Successfully retrieved " + dbCredential.get(CredentialsService.NAME).s());
         else {
-            logger.error("Failed to migrate: " + dbCredential.getName());
+            logger.error("Failed to migrate: " + dbCredential.get(CredentialsService.NAME).s());
         }
 
         return dbCredential;
     }
 
-    private void migrate(String ags, String sdlc, String component, String key, DBCredential dbCredential) throws Exception{
+    private void migrate(String ags, String sdlc, String component, String key, Map<String, AttributeValue> dbCredential) throws Exception{
         String user = "FideliusMigrateTask";
 
         String credentialSecret = fideliusService.getCredential(key,ags,sdlc,component, tableName, user);
@@ -99,14 +101,14 @@ public class MigrateService {
         if(credentialSecret == null)
             throw new Exception("Error retrieving key");
         else {
-            logger.info(dbCredential.getName() + " retrieved");
-            dbCredential.setSdlc(sdlc);
+            logger.info(dbCredential.get(CredentialsService.NAME).s() + " retrieved");
+            dbCredential.put(CredentialsService.SDLC, AttributeValue.builder().s(sdlc).build());
             if(component != null)
-                dbCredential.setComponent(component);
+                dbCredential.put(CredentialsService.COMPONENT, AttributeValue.builder().s(component).build());
         }
     }
 
-    private void migrate(Matcher matcher, DBCredential dbCredential){
+    private void migrate(Matcher matcher, Map<String, AttributeValue> dbCredential){
         try {
             String key = matcher.group(4);
             String ags = matcher.group(1);
@@ -114,35 +116,36 @@ public class MigrateService {
             String component = matcher.group(2);
             migrate(ags, sdlc, component, key, dbCredential);
         } catch(Exception e){
-            logger.error("Error retrieving " + dbCredential.getName(), e.getMessage());
+            logger.error("Error retrieving " + dbCredential.get(CredentialsService.NAME).s(), e.getMessage());
             try {
                 String key = matcher.group(3)+"."+matcher.group(4);
                 String ags = matcher.group(1);
                 String sdlc = matcher.group(2);
                 migrate(ags, sdlc, null, key, dbCredential);
             } catch(Exception e1){
-                logger.error("Error retrieving " + dbCredential.getName(), e.getMessage());
+                logger.error("Error retrieving " + dbCredential.get(CredentialsService.NAME).s(), e.getMessage());
             }
         }
     }
 
-    public DBCredential guessCredentialProperties(DBCredential dbCredential) {
-        Matcher threeFieldsMatcher = threeFieldsPattern.matcher(dbCredential.getName());
+    public Map<String, AttributeValue> guessCredentialProperties(Map<String, AttributeValue> dbCredential) {
+        Matcher threeFieldsMatcher = threeFieldsPattern.matcher(dbCredential.get("name").s());
+        Map<String, AttributeValue> updatedDbCredential = new HashMap<>(dbCredential);
 
         if (threeFieldsMatcher.matches()) {
-            logger.info("Parsing " + dbCredential.getName());
-                String sdlc = threeFieldsMatcher.group(2);
-                dbCredential.setSdlc(sdlc);
+            logger.info("Parsing " + dbCredential.get("name").s());
+            String sdlc = threeFieldsMatcher.group(2);
+            updatedDbCredential.put("sdlc", AttributeValue.builder().s(sdlc).build());
         } else{
             try {
-                String sdlc = dbCredential.getName().split("\\.")[1];
-                dbCredential.setSdlc(sdlc);
+                String sdlc = dbCredential.get("name").s().split("\\.")[1];
+                updatedDbCredential.put("sdlc", AttributeValue.builder().s(sdlc).build());
             } catch (Exception e) {
-                logger.error("Error parsing key " + dbCredential.getName());
+                logger.error("Error parsing key " + dbCredential.get("name").s());
             }
         }
 
-        return dbCredential;
+        return updatedDbCredential;
     }
 }
 

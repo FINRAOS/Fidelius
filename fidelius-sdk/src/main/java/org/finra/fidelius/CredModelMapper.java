@@ -17,7 +17,7 @@
 
 package org.finra.fidelius;
 
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,28 +31,28 @@ public class CredModelMapper {
 
     public static Map<String,AttributeValue> toDynamo(EncryptedCredential encryptedCredential){
         HashMap<String, AttributeValue> dynamoRow = new HashMap<>();
-        dynamoRow.put(DynamoAttributes.name.name(), new AttributeValue(encryptedCredential.getFullName()));
-        dynamoRow.put(DynamoAttributes.version.name(), new AttributeValue(encryptedCredential.getVersion()));
-        dynamoRow.put(DynamoAttributes.key.name(), new AttributeValue(encryptedCredential.getDatakey()));
-        dynamoRow.put(DynamoAttributes.contents.name(), new AttributeValue(encryptedCredential.getCredential()));
-        dynamoRow.put(DynamoAttributes.hmac.name(), new AttributeValue(encryptedCredential.getHmac()));
+        dynamoRow.put(DynamoAttributes.name.name(), AttributeValue.builder().s(encryptedCredential.getFullName()).build());
+        dynamoRow.put(DynamoAttributes.version.name(), AttributeValue.builder().s(encryptedCredential.getVersion()).build());
+        dynamoRow.put(DynamoAttributes.key.name(), AttributeValue.builder().s(encryptedCredential.getDatakey()).build());
+        dynamoRow.put(DynamoAttributes.contents.name(), AttributeValue.builder().s(encryptedCredential.getCredential()).build());
+        dynamoRow.put(DynamoAttributes.hmac.name(), AttributeValue.builder().s(encryptedCredential.getHmac()).build());
 
         if(encryptedCredential.getUpdateBy()!=null)
-            dynamoRow.put(DynamoAttributes.updatedBy.name(), new AttributeValue(encryptedCredential.getUpdateBy()));
+            dynamoRow.put(DynamoAttributes.updatedBy.name(), AttributeValue.builder().s(encryptedCredential.getUpdateBy()).build());
 
         if(encryptedCredential.getUpdateOn()!=null)
-            dynamoRow.put(DynamoAttributes.updatedOn.name(), new AttributeValue(encryptedCredential.getUpdateOn()));
+            dynamoRow.put(DynamoAttributes.updatedOn.name(), AttributeValue.builder().s(encryptedCredential.getUpdateOn()).build());
 
         if(encryptedCredential.getSdlc()!=null)
-            dynamoRow.put(DynamoAttributes.sdlc.name(), new AttributeValue(encryptedCredential.getSdlc()));
+            dynamoRow.put(DynamoAttributes.sdlc.name(), AttributeValue.builder().s(encryptedCredential.getSdlc()).build());
 
         if(encryptedCredential.getComponent()!= null)
-            dynamoRow.put(DynamoAttributes.component.name(), new AttributeValue(encryptedCredential.getComponent()));
+            dynamoRow.put(DynamoAttributes.component.name(), AttributeValue.builder().s(encryptedCredential.getComponent()).build());
 
         return dynamoRow;
     }
 
-    public static EncryptedCredential fromDynamo(Map<String,AttributeValue> dynamoCred){
+    public static EncryptedCredential fromDynamo(Map<String, AttributeValue> dynamoCred){
         return new EncryptedCredential()
                                 .setFullName(getAttributeValue(DynamoAttributes.name.name(), dynamoCred))
                                 .setCredential(getAttributeValue(DynamoAttributes.contents.name(),dynamoCred))
@@ -68,7 +68,7 @@ public class CredModelMapper {
     private static String getAttributeValue(String name, Map<String,AttributeValue> dynamoCred){
         AttributeValue attributeValue = dynamoCred.get(name);
         if(attributeValue!=null){
-            return attributeValue.getS();
+            return attributeValue.s();
         }
         return null;
     }

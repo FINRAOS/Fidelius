@@ -17,15 +17,6 @@
 
 package org.finra.fidelius.services;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.kms.AWSKMSClient;
-import com.amazonaws.services.rds.AmazonRDSClient;
-import com.amazonaws.services.rds.model.*;
-import com.amazonaws.services.securitytoken.model.AWSSecurityTokenServiceException;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -44,7 +35,6 @@ import org.finra.fidelius.model.HistoryEntry;
 import org.finra.fidelius.model.Metadata;
 import org.finra.fidelius.model.rotate.RotateRequest;
 import org.finra.fidelius.model.aws.AWSEnvironment;
-import org.finra.fidelius.model.db.DBCredential;
 import org.finra.fidelius.services.account.AccountsService;
 import org.finra.fidelius.services.auth.FideliusRoleService;
 import org.finra.fidelius.services.aws.AWSSessionService;
@@ -60,11 +50,21 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.QueryRequest;
+import software.amazon.awssdk.services.dynamodb.model.ScanRequest;
+import software.amazon.awssdk.services.kms.KmsClient;
+import software.amazon.awssdk.services.rds.RdsClient;
+import software.amazon.awssdk.services.rds.model.*;
+import software.amazon.awssdk.services.sts.model.StsException;
 
 import javax.inject.Inject;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -119,6 +119,13 @@ public class CredentialsService {
     private final static String RDS = "rds";
     private final static String AURORA = "aurora";
 
+    public final static String NAME = "name";
+    public final static String VERSION = "version";
+    public final static String UPDATED_BY = "updatedBy";
+    public final static String UPDATED_ON = "updatedOn";
+    public final static String SDLC = "sdlc";
+    public final static String COMPONENT = "component";
+
     private Logger logger = LoggerFactory.getLogger(CredentialsService.class);
     private RestTemplate restTemplate;
 
@@ -140,10 +147,10 @@ public class CredentialsService {
      */
     protected void setFideliusEnvironment(String account, String region) {
         AWSEnvironment awsEnvironment = new AWSEnvironment(account, region);
-        AmazonDynamoDBClient dynamoDBClient;
+        DynamoDbClient dynamoDBClient;
         try {
             dynamoDBClient = awsSessionService.getDynamoDBClient(awsEnvironment);
-        } catch (AWSSecurityTokenServiceException ex) {
+        } catch (StsException ex) {
             String message = String.format("Not authorized to access credential table on account: %s in region: %s", account, region);
             logger.error(message, ex);
             throw new FideliusException(message, HttpStatus.FORBIDDEN);
@@ -152,8 +159,8 @@ public class CredentialsService {
             logger.error(message, re);
             throw new FideliusException(message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        AWSKMSClient awskmsClient = awsSessionService.getKmsClient(awsEnvironment);
-        fideliusService.setFideliusClient(dynamoDBClient, awskmsClient);
+        KmsClient kmsClient = awsSessionService.getKmsClient(awsEnvironment);
+        fideliusService.setFideliusClient(dynamoDBClient, kmsClient);
     }
 
     /**
@@ -162,12 +169,12 @@ public class CredentialsService {
      * @param account AWS account
      * @param region  AWS Region
      */
-    protected AmazonRDSClient setRDSClient(String account, String region) {
+    protected RdsClient setRDSClient(String account, String region) {
         AWSEnvironment awsEnvironment = new AWSEnvironment(account, region);
-        AmazonRDSClient amazonRDSClient;
+        RdsClient rdsClient;
         try {
-            amazonRDSClient = awsSessionService.getRdsClient(awsEnvironment);
-        } catch (AWSSecurityTokenServiceException ex) {
+            rdsClient = awsSessionService.getRdsClient(awsEnvironment);
+        } catch (StsException ex) {
             String message = String.format("Not authorized to access rds on account: %s in region: %s", account, region);
             logger.error(message, ex);
             throw new FideliusException(message, HttpStatus.FORBIDDEN);
@@ -176,52 +183,52 @@ public class CredentialsService {
             logger.error(message, re);
             throw new FideliusException(message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return amazonRDSClient;
+        return rdsClient;
     }
 
     @PreAuthorize("@fideliusRoleService.isAuthorized(#application, #account, \"LIST_CREDENTIALS\")")
     public List<Credential> getAllCredentials(String tableName, String account, String region, String application) throws FideliusException{
         logger.info(String.format("Getting all credentials for app %s using account %s and region %s.", application, account, region));
+        AWSEnvironment awsEnvironment = new AWSEnvironment(account, region);
         List<Credential> results = new ArrayList<>();
+        DynamoDbClient dynamoDbClient = awsSessionService.getDynamoDBClient(awsEnvironment);
 
-        DynamoDBMapper mapper = dynamoDBService.createMapper(account, region, tableName);
         setFideliusEnvironment(account, region);
 
         Map<String, String> ean = new HashMap<>();
-        ean.put("#tempname", "name");
+        ean.put("#tempname", NAME);
 
         Map<String, AttributeValue> eav = new HashMap<>();
-        eav.put(":key", new AttributeValue().withS(application + "."));
+        eav.put(":key", AttributeValue.builder().s(application + ".").build());
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("begins_with (#tempname, :key)");
+        ScanRequest scanRequest = ScanRequest.builder()
+                .tableName(tableName)
+                .filterExpression("begins_with (#tempname, :key)")
+                .expressionAttributeNames(ean)
+                .expressionAttributeValues(eav)
+                .build();
 
-        DynamoDBScanExpression queryExp = new DynamoDBScanExpression()
-                .withFilterExpression(sb.toString())
-                .withExpressionAttributeValues(eav)
-                .withExpressionAttributeNames(ean);
-
-        List<DBCredential> queryResults = dynamoDBService.scanDynamoDB(queryExp, DBCredential.class, mapper);
+        List<Map<String, AttributeValue>> queryResults = dynamoDBService.scanDynamoDB(scanRequest, dynamoDbClient);
 
         // Gets only latest version of each credential
-        Map<String, DBCredential> credentials = getLatestCredentialVersion(queryResults);
+        Map<String, Map<String, AttributeValue>> credentials = getLatestCredentialVersion(queryResults);
 
-        for (DBCredential dbCredential : credentials.values()) {
-            if(dbCredential.getSdlc() == null){
-                logger.info(String.format("Credential %s missing attributes.  Attempting to add missing attributes: ", dbCredential.getName()));
+        for (Map<String, AttributeValue> dbCredential : credentials.values()) {
+            if(dbCredential.get(SDLC) == null){
+                logger.info(String.format("Credential %s missing attributes.  Attempting to add missing attributes: ", dbCredential.get(NAME)));
                 dbCredential = migrateService.guessCredentialProperties(dbCredential);
             }
 
             try {
-                Credential credential = new Credential(dbCredential.getShortKey(), dbCredential.getName(), account, region, application,
-                        dbCredential.getSdlc(), dbCredential.getComponent(), splitRoleARN(dbCredential.getUpdatedBy()),
-                        dbCredential.getUpdatedDate());
+                Credential credential = new Credential(getShortKey(dbCredential), dbCredential.get(NAME), account, region, application,
+                        dbCredential.get(SDLC), dbCredential.get(COMPONENT), splitRoleARN(dbCredential.get(UPDATED_BY)),
+                        dbCredential.get(UPDATED_ON));
 
                 if(credential.getEnvironment() != null)
                     results.add(credential);
 
             }catch (Exception e){
-                logger.error("Error parsing key " + dbCredential.getName(), e);
+                logger.error("Error parsing key " + dbCredential.get(NAME), e);
           }
         }
         logger.info(String.format("%2d credentials for application %s successfully retrieved.",results.size(), application));
@@ -235,36 +242,39 @@ public class CredentialsService {
 
     @PreAuthorize("@fideliusRoleService.isAuthorized(#application, #account, \"LIST_CREDENTIALS\")")
     public Credential getCredential(String account, String region, String application, String longKey) throws FideliusException {
-        DynamoDBMapper mapper = dynamoDBService.createMapper(account, region, tableName);
+        AWSEnvironment awsEnvironment = new AWSEnvironment(account, region);
+        DynamoDbClient dynamoDbClient = awsSessionService.getDynamoDBClient(awsEnvironment);
         setFideliusEnvironment(account, region);
 
         Map<String, String> ean = new HashMap<>();
-        ean.put("#tempname", "name");
+        ean.put("#tempname", NAME);
 
         Map<String, AttributeValue> eav = new HashMap<>();
-        eav.put(":key", new AttributeValue().withS(longKey));
+        eav.put(":key", AttributeValue.builder().s(longKey).build());
 
-        DynamoDBQueryExpression<DBCredential> queryExpression = new DynamoDBQueryExpression<DBCredential>()
-                .withExpressionAttributeNames(ean)
-                .withKeyConditionExpression("#tempname = :key")
-                .withExpressionAttributeValues(eav);
-        List<DBCredential> queryResults = dynamoDBService.queryDynamoDB(queryExpression, DBCredential.class, mapper);
+        QueryRequest queryRequest = QueryRequest.builder()
+                .tableName(tableName)
+                .expressionAttributeNames(ean)
+                .keyConditionExpression("#tempname = :key")
+                .expressionAttributeValues(eav)
+                .build();
+        List<Map<String, AttributeValue>> queryResults = dynamoDBService.queryDynamoDB(queryRequest, dynamoDbClient);
 
         // Gets only latest version of each credential
-        Map<String, DBCredential> credentials = getLatestCredentialVersion(queryResults);
+        Map<String, Map<String, AttributeValue>> credentials = getLatestCredentialVersion(queryResults);
 
         try {
-            DBCredential dbCredential = credentials.values().stream().findFirst().get();
-            if(dbCredential.getSdlc() == null) {
+            Map<String, AttributeValue> dbCredential = credentials.values().stream().findFirst().get();
+            if(dbCredential.get(SDLC) == null) {
                 dbCredential = migrateService.migrateCredential(dbCredential, fideliusService);
             }
 
             try {
-                return (new Credential(dbCredential.getShortKey(), dbCredential.getName(), account, region, application,
-                        dbCredential.getSdlc(), dbCredential.getComponent(), splitRoleARN(dbCredential.getUpdatedBy()),
-                        dbCredential.getUpdatedDate()));
+                return (new Credential(getShortKey(dbCredential), dbCredential.get(NAME), account, region, application,
+                        dbCredential.get(CredentialsService.SDLC), dbCredential.get(CredentialsService.COMPONENT), splitRoleARN(dbCredential.get(CredentialsService.UPDATED_BY)),
+                        dbCredential.get(CredentialsService.UPDATED_ON)));
             }catch (Exception e){
-                logger.error("Error parsing key " + dbCredential.getName(), e);
+                logger.error("Error parsing key " + dbCredential.get(CredentialsService.NAME).s(), e);
             }
         } catch (NoSuchElementException e) {
             logger.error("Credential " + longKey + " not found" , e);
@@ -278,7 +288,8 @@ public class CredentialsService {
     public List<HistoryEntry> getCredentialHistory(String tableName, String account, String region, String application,
                                                    String environment, String component, String key, boolean isMetadata) throws FideliusException {
         List<HistoryEntry> results = new ArrayList<>();
-        DynamoDBMapper mapper = dynamoDBService.createMapper(account, region, tableName);
+        AWSEnvironment awsEnvironment = new AWSEnvironment(account, region);
+        DynamoDbClient dynamoDbClient = awsSessionService.getDynamoDBClient(awsEnvironment);
         setFideliusEnvironment(account, region);
 
         StringBuilder fullKeyBuilder = new StringBuilder();
@@ -293,21 +304,23 @@ public class CredentialsService {
         fullKeyBuilder.append(String.format(".%s", key));
 
         Map<String, String> ean = new HashMap<>();
-        ean.put("#tempname", "name");
+        ean.put("#tempname", NAME);
 
         Map<String, AttributeValue> eav = new HashMap<>();
-        eav.put(":key", new AttributeValue().withS(fullKeyBuilder.toString()));
+        eav.put(":key", AttributeValue.builder().s(fullKeyBuilder.toString()).build());
 
-        DynamoDBQueryExpression<DBCredential> queryExpression = new DynamoDBQueryExpression<DBCredential>()
-                .withExpressionAttributeNames(ean)
-                .withKeyConditionExpression("#tempname = :key")
-                .withExpressionAttributeValues(eav);
+        QueryRequest queryRequest = QueryRequest.builder()
+                .tableName(tableName)
+                .expressionAttributeNames(ean)
+                .keyConditionExpression("#tempname = :key")
+                .expressionAttributeValues(eav)
+                .build();
 
         logger.info(String.format("Retrieving history of credential/metadata %s using account %s and region %s", fullKeyBuilder, account, region));
-        List<DBCredential> queryResults = dynamoDBService.queryDynamoDB(queryExpression, DBCredential.class, mapper);
+        List<Map<String, AttributeValue>> queryResults = dynamoDBService.queryDynamoDB(queryRequest, dynamoDbClient);
 
-        for (DBCredential dbCred : queryResults) {
-            results.add(new HistoryEntry(new Integer(dbCred.getVersion()), splitRoleARN(dbCred.getUpdatedBy()), dbCred.getUpdatedDate()));
+        for (Map<String, AttributeValue> dbCred : queryResults) {
+            results.add(new HistoryEntry(Integer.parseInt(dbCred.get(VERSION).s()), splitRoleARN(dbCred.get(UPDATED_BY)), dbCred.get(UPDATED_ON).s()));
         }
 
         logger.info(String.format("Found %d entries for credential/metadata %s.", results.size(), fullKeyBuilder));
@@ -646,10 +659,10 @@ public class CredentialsService {
         return "";
     }
 
-    private String splitRoleARN(String roleARN) {
+    private String splitRoleARN(AttributeValue roleARN) {
         if (roleARN == null) return null;
 
-        String[] roleTokens = roleARN.split(":assumed-role/");
+        String[] roleTokens = roleARN.s().split(":assumed-role/");
         if (roleTokens.length > 1){
             return roleTokens[1];
         } else {
@@ -657,14 +670,14 @@ public class CredentialsService {
         }
     }
 
-    private Map<String, DBCredential> getLatestCredentialVersion(List<DBCredential> queryResults) {
-        Map<String, DBCredential> credentials = new HashMap<>();
-        for (DBCredential dbCredential : queryResults) {
-            if (!credentials.containsKey(dbCredential.getName())) {
-                credentials.put(dbCredential.getName(), dbCredential);
+    private Map<String, Map<String, AttributeValue>> getLatestCredentialVersion(List<Map<String, AttributeValue>> queryResults) {
+        Map<String, Map<String, AttributeValue>> credentials = new HashMap<>();
+        for (Map<String, AttributeValue> dbCredential : queryResults) {
+            if (!credentials.containsKey(dbCredential.get("name").s())) {
+                credentials.put(dbCredential.get("name").s(), dbCredential);
             }
-            else if (credentials.get(dbCredential.getName()).getVersion().compareTo(dbCredential.getVersion()) < 1) {
-                credentials.replace(dbCredential.getName(), dbCredential);
+            else if (Integer.parseInt(credentials.get(dbCredential.get("name").s()).get("version").s()) < Integer.parseInt(dbCredential.get("version").s())) {
+                credentials.replace(dbCredential.get("name").s(), dbCredential);
             }
         }
 
@@ -676,32 +689,32 @@ public class CredentialsService {
         logger.info(String.format("Getting all RDS for account %s and region %s.", account, region));
         List<String> results = new ArrayList<>();
 
-        AmazonRDSClient amazonRDSClient = setRDSClient(account, region);
-        Filter rdsEngineFilter = new Filter().withName("engine").withValues("postgres", "mysql", "oracle-se2", "oracle-ee", "custom-oracle-ee","oracle-ee-cdb", "oracle-se2-cdb");
-        DescribeDBInstancesResult response = amazonRDSClient.describeDBInstances(new DescribeDBInstancesRequest().withFilters(rdsEngineFilter));
-        List<DBInstance> dbList = response.getDBInstances();
+        RdsClient rdsClient = setRDSClient(account, region);
+        Filter rdsEngineFilter = Filter.builder().name("engine").values("postgres", "mysql", "oracle-se2", "oracle-ee", "custom-oracle-ee","oracle-ee-cdb", "oracle-se2-cdb").build();
+        DescribeDbInstancesResponse response = rdsClient.describeDBInstances(DescribeDbInstancesRequest.builder().filters(rdsEngineFilter).build());
+        List<DBInstance> dbList = response.dbInstances();
 
         for(DBInstance db: dbList) {
-            if(db.getDBInstanceIdentifier().startsWith(application.toLowerCase())){
-                results.add(db.getDBInstanceIdentifier());
+            if(db.dbInstanceIdentifier().startsWith(application.toLowerCase())){
+                results.add(db.dbInstanceIdentifier());
             }
         }
 
-        while(response.getMarker() != null){
-            response = amazonRDSClient.describeDBInstances(new DescribeDBInstancesRequest().withMarker(response.getMarker()).withFilters(rdsEngineFilter));
-            dbList = response.getDBInstances();
+        while(response.marker() != null){
+            response = rdsClient.describeDBInstances(DescribeDbInstancesRequest.builder().marker(response.marker()).filters(rdsEngineFilter).build());
+            dbList = response.dbInstances();
             for(DBInstance db: dbList) {
-                if(db.getDBInstanceIdentifier().startsWith(application.toLowerCase())){
-                    results.add(db.getDBInstanceIdentifier());
+                if(db.dbInstanceIdentifier().startsWith(application.toLowerCase())){
+                    results.add(db.dbInstanceIdentifier());
                 }
             }
         }
 
-        while(response.getMarker() != null){
-            response = amazonRDSClient.describeDBInstances(new DescribeDBInstancesRequest().withMarker(response.getMarker()).withFilters(rdsEngineFilter));
-            dbList = response.getDBInstances();
+        while(response.marker() != null){
+            response = rdsClient.describeDBInstances(DescribeDbInstancesRequest.builder().marker(response.marker()).filters(rdsEngineFilter).build());
+            dbList = response.dbInstances();
             for(DBInstance db: dbList) {
-                results.add(db.getDBInstanceIdentifier());
+                results.add(db.dbInstanceIdentifier());
             }
         }
 
@@ -713,32 +726,24 @@ public class CredentialsService {
         logger.info(String.format("Getting all Aurora clusters for account %s and region %s.", account, region));
         List<String> results = new ArrayList<>();
 
-        AmazonRDSClient amazonRDSClient = setRDSClient(account, region);
+        RdsClient amazonRDSClient = setRDSClient(account, region);
 
-        DescribeDBClustersResult response = amazonRDSClient.describeDBClusters();
-        List<DBCluster> dbClusterList = response.getDBClusters();
+        DescribeDbClustersResponse response = amazonRDSClient.describeDBClusters();
+        List<DBCluster> dbClusterList = response.dbClusters();
 
         for(DBCluster cluster: dbClusterList) {
-            if(cluster.getDBClusterIdentifier().startsWith(application.toLowerCase())){
-                results.add(cluster.getDBClusterIdentifier());
+            if(cluster.dbClusterIdentifier().startsWith(application.toLowerCase())){
+                results.add(cluster.dbClusterIdentifier());
             }
         }
 
-        while(response.getMarker() != null){
-            response = amazonRDSClient.describeDBClusters(new DescribeDBClustersRequest().withMarker(response.getMarker()));
-            dbClusterList = response.getDBClusters();
+        while(response.marker() != null){
+            response = amazonRDSClient.describeDBClusters(DescribeDbClustersRequest.builder().marker(response.marker()).build());
+            dbClusterList = response.dbClusters();
             for(DBCluster cluster: dbClusterList) {
-                if(cluster.getDBClusterIdentifier().startsWith(application.toLowerCase())){
-                    results.add(cluster.getDBClusterIdentifier());
+                if(cluster.dbClusterIdentifier().startsWith(application.toLowerCase())){
+                    results.add(cluster.dbClusterIdentifier());
                 }
-            }
-        }
-
-        while(response.getMarker() != null){
-            response = amazonRDSClient.describeDBClusters(new DescribeDBClustersRequest().withMarker(response.getMarker()));
-            dbClusterList = response.getDBClusters();
-            for(DBCluster cluster: dbClusterList) {
-                results.add(cluster.getDBClusterIdentifier());
             }
         }
 
@@ -746,17 +751,31 @@ public class CredentialsService {
     }
 
     public List<String> getMetadataInfo(String account, String region, String sourceType, String application) throws Exception {
+        logger.info("Source type: " + sourceType);
         switch (sourceType) {
             case RDS:
                 return getAllRDS(account, region, application);
             case AURORA:
                 return getAllAuroraRegionalCluster(account, region, application);
             default:
-                throw new Exception("Please pass supported values for sourceType");
+                logger.info("No source names to return for source type: " + sourceType);
+                return new ArrayList<>();
         }
     }
     public List<String> getSourceTypes(){
         return Arrays.asList(sourceTypes.split(","));
+    }
+
+    public static String getShortKey(Map<String, AttributeValue> secret) {
+        if(secret.get("component") != null && !secret.get("component").s().isEmpty())
+            return secret.get("name").s().split("\\."+secret.get("component").s()+"\\."+secret.get("sdlc").s()+"\\.")[1];
+        else {
+            Pattern p = Pattern.compile("([-\\w]+)\\.([-\\w]+)\\.(\\S+)");
+            Matcher m = p.matcher(secret.get("name").s());
+            if(m.matches())
+                return m.group(3);
+            return secret.get("name").s();
+        }
     }
 
     private String getOAuth2Header(String username, String password) {

@@ -17,30 +17,19 @@
 
 package org.finra.fidelius;
 
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
-import com.amazonaws.services.dynamodbv2.document.*;
-import com.amazonaws.services.dynamodbv2.document.spec.QuerySpec;
-import com.amazonaws.services.dynamodbv2.document.utils.NameMap;
-import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
-import com.amazonaws.services.dynamodbv2.model.*;
-import com.amazonaws.services.kms.AWSKMS;
-import com.amazonaws.services.kms.AWSKMSClientBuilder;
-import com.amazonaws.services.kms.model.DecryptRequest;
-import com.amazonaws.services.kms.model.DecryptResult;
-import com.amazonaws.services.kms.model.GenerateDataKeyRequest;
-import com.amazonaws.services.kms.model.GenerateDataKeyResult;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClient;
-import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
 import org.apache.commons.codec.binary.Base64;
-import com.amazonaws.services.dynamodbv2.document.BatchWriteItemOutcome;
-import com.amazonaws.services.dynamodbv2.document.DynamoDB;
-import com.amazonaws.services.dynamodbv2.document.Item;
-import com.amazonaws.services.dynamodbv2.document.TableWriteItems;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.*;
+import software.amazon.awssdk.services.kms.KmsClient;
+import software.amazon.awssdk.services.kms.model.DecryptRequest;
+import software.amazon.awssdk.services.kms.model.DecryptResponse;
+import software.amazon.awssdk.services.kms.model.GenerateDataKeyRequest;
+import software.amazon.awssdk.services.kms.model.GenerateDataKeyResponse;
+import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.services.sts.model.GetCallerIdentityRequest;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -49,87 +38,108 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class JCredStash {
-    protected AmazonDynamoDB amazonDynamoDBClient;
-    protected AWSKMS awskmsClient;
+    protected DynamoDbClient dynamoDbClient;
+    protected KmsClient kmsClient;
     protected CredStashCrypto cryptoImpl;
-    protected AWSSecurityTokenService awsSecurityTokenService;
-    protected DynamoDB dynamoDB;
+    protected StsClient stsClient;
 
     protected JCredStash() {
-        this.amazonDynamoDBClient = AmazonDynamoDBClientBuilder.defaultClient();
-        this.awskmsClient = AWSKMSClientBuilder.defaultClient();
+        this.dynamoDbClient = DynamoDbClient.builder().build();
+        this.kmsClient = KmsClient.builder().build();
         this.cryptoImpl = new CredStashBouncyCastleCrypto();
-        this.awsSecurityTokenService = AWSSecurityTokenServiceClient.builder().withClientConfiguration(new ClientConfiguration()).build();
-        this.dynamoDB = new DynamoDB(amazonDynamoDBClient);
+        this.stsClient = StsClient.builder().overrideConfiguration(ClientOverrideConfiguration.builder().build()).build();
     }
 
-    protected JCredStash(AWSCredentialsProvider awsCredentialsProvider) {
-        this.amazonDynamoDBClient = AmazonDynamoDBClientBuilder.standard()
-                .withCredentials(awsCredentialsProvider)
+    protected JCredStash(AwsCredentialsProvider awsCredentialsProvider) {
+        this.dynamoDbClient = DynamoDbClient.builder()
+                .credentialsProvider(awsCredentialsProvider)
                 .build();
-        this.awskmsClient = AWSKMSClientBuilder.standard()
-                .withCredentials(awsCredentialsProvider)
+        this.kmsClient = KmsClient.builder()
+                .credentialsProvider(awsCredentialsProvider)
                 .build();
         this.cryptoImpl = new CredStashBouncyCastleCrypto();
-        this.awsSecurityTokenService = AWSSecurityTokenServiceClient.builder().withClientConfiguration(new ClientConfiguration()).build();
-        this.dynamoDB = new DynamoDB(amazonDynamoDBClient);
+        this.stsClient = StsClient.builder().overrideConfiguration(ClientOverrideConfiguration.builder().build()).build();
     }
 
-    protected JCredStash(AmazonDynamoDB amazonDynamoDBClient, AWSKMS awskmsClient) {
-        this.amazonDynamoDBClient = amazonDynamoDBClient;
-        this.awskmsClient = awskmsClient;
+    protected JCredStash(DynamoDbClient amazonDynamoDBClient, KmsClient awskmsClient) {
+        this.dynamoDbClient = amazonDynamoDBClient;
+        this.kmsClient = awskmsClient;
         this.cryptoImpl = new CredStashBouncyCastleCrypto();
-        this.awsSecurityTokenService = AWSSecurityTokenServiceClient.builder().withClientConfiguration(new ClientConfiguration()).build();
-        this.dynamoDB = new DynamoDB(amazonDynamoDBClient);
+        this.stsClient = StsClient.builder().overrideConfiguration(ClientOverrideConfiguration.builder().build()).build();
     }
 
-    protected JCredStash(AmazonDynamoDB amazonDynamoDBClient, AWSKMS awskmsClient, AWSSecurityTokenService awsSecurityTokenService) {
-        this.amazonDynamoDBClient = amazonDynamoDBClient;
-        this.awskmsClient = awskmsClient;
+    protected JCredStash(DynamoDbClient dynamoDbClient, KmsClient kmsClient, StsClient stsClient) {
+        this.dynamoDbClient = dynamoDbClient;
+        this.kmsClient = kmsClient;
         this.cryptoImpl = new CredStashBouncyCastleCrypto();
-        this.awsSecurityTokenService = awsSecurityTokenService;
-        this.dynamoDB = new DynamoDB(amazonDynamoDBClient);
+        this.stsClient = stsClient;
     }
 
     protected Map<String, AttributeValue> readDynamoItem(String tableName, String secret) {
         // TODO: allow multiple secrets to be fetched by pattern or list
         // TODO: allow specific version to be fetched
-        QueryResult queryResult = amazonDynamoDBClient.query(new QueryRequest(tableName)
-                .withLimit(1)
-                .withScanIndexForward(false)
-                .withConsistentRead(true)
-                .addKeyConditionsEntry("name", new Condition()
-                        .withComparisonOperator(ComparisonOperator.EQ)
-                        .withAttributeValueList(new AttributeValue(secret)))
+        Map<String, Condition> keyConditions = new HashMap<>();
+        keyConditions.put("name", Condition.builder()
+                .attributeValueList(
+                        AttributeValue.builder().s(secret).build()
+                )
+                .comparisonOperator(ComparisonOperator.EQ)
+                .build());
+        keyConditions.put("version", Condition.builder()
+                .attributeValueList(
+                        AttributeValue.builder().s("0").build()
+                )
+                .comparisonOperator(ComparisonOperator.BEGINS_WITH)
+                .build());
+        QueryResponse queryResponse = dynamoDbClient.query(QueryRequest.builder()
+                .tableName(tableName)
+                .limit(1)
+                .scanIndexForward(false)
+                .consistentRead(true)
+                .keyConditions(keyConditions)
+                .build()
         );
-        if(queryResult.getCount() == 0) {
+        if(queryResponse.count() == 0) {
             throw new RuntimeException("Secret " + secret + " could not be found");
         }
-        Map<String, AttributeValue> item = queryResult.getItems().get(0);
+        Map<String, AttributeValue> item = queryResponse.items().get(0);
 
         return item;
     }
 
-    protected QueryResult getCredentials(String tableName, String secret) {
-        QueryRequest queryRequest = new QueryRequest(tableName)
-                .withScanIndexForward(false)
-                .withConsistentRead(true)
-                .addKeyConditionsEntry("name", new Condition()
-                        .withComparisonOperator(ComparisonOperator.EQ)
-                        .withAttributeValueList(new AttributeValue(secret)));
+    protected QueryResponse getCredentials(String tableName, String secret) {
+        Map<String, Condition> keyConditions = new HashMap<>();
+        keyConditions.put("name", Condition.builder()
+                .attributeValueList(
+                        AttributeValue.builder().s(secret).build()
+                )
+                .comparisonOperator(ComparisonOperator.EQ)
+                .build());
+        keyConditions.put("version", Condition.builder()
+                .attributeValueList(
+                        AttributeValue.builder().s("0").build()
+                )
+                .comparisonOperator(ComparisonOperator.BEGINS_WITH)
+                .build());
+        QueryRequest queryRequest = QueryRequest.builder()
+                .tableName(tableName)
+                .scanIndexForward(false)
+                .consistentRead(true)
+                .keyConditions(keyConditions)
+                .build();
 
-        QueryResult queryResult = amazonDynamoDBClient.query(queryRequest);
+        QueryResponse queryResponse = dynamoDbClient.query(queryRequest);
 
-        if(queryResult.getCount() == 0) {
+        if(queryResponse.count() == 0) {
             throw new RuntimeException("Secret " + secret + " could not be found");
         }
 
-        return queryResult;
+        return queryResponse;
     }
 
     protected String getUpdatedBy() throws Exception {
         try {
-            return awsSecurityTokenService.getCallerIdentity(new GetCallerIdentityRequest()).getArn();
+            return stsClient.getCallerIdentity(GetCallerIdentityRequest.builder().build()).arn();
         } catch(Exception e){
             throw new RuntimeException("Error getting user");
         }
@@ -138,37 +148,33 @@ public class JCredStash {
     private ByteBuffer decryptKeyWithKMS(byte[] encryptedKeyBytes, Map<String, String> context) {
         ByteBuffer blob = ByteBuffer.wrap(encryptedKeyBytes);
 
-        DecryptResult decryptResult = awskmsClient.decrypt(new DecryptRequest().withCiphertextBlob(blob).withEncryptionContext(context));
+        DecryptResponse decryptResponse = kmsClient.decrypt(DecryptRequest.builder().ciphertextBlob(SdkBytes.fromByteBuffer(blob)).encryptionContext(context).build());
 
-        return decryptResult.getPlaintext();
+        return decryptResponse.plaintext().asByteBuffer();
     }
 
     protected int getHighestVersion(String name, String tableName) {
+        HashMap<String, String> attributeName = new HashMap();
+        HashMap<String, AttributeValue> attributeValue = new HashMap();
+        attributeName.put("#n", "name");
+        attributeValue.put(":v_name", AttributeValue.builder().s(name).build());
+        QueryRequest spec = QueryRequest.builder()
+                .tableName(tableName)
+                .scanIndexForward(false)
+                .consistentRead(true)
+                .keyConditionExpression("#n = :v_name")
+                .expressionAttributeValues(attributeValue)
+                .expressionAttributeNames(attributeName)
+                .projectionExpression("version")
+                .build();
 
-        DynamoDB dynamoDB = new DynamoDB(amazonDynamoDBClient);
-        Table table = dynamoDB.getTable(tableName);
+        List<Map<String, AttributeValue>> items = dynamoDbClient.query(spec).items();
 
-        QuerySpec spec = new QuerySpec()
-                .withScanIndexForward(false)
-                .withConsistentRead(true)
-                .withKeyConditionExpression("#n = :v_name")
-                .withValueMap(new ValueMap()
-                        .withString(":v_name", name)
-                )
-                .withNameMap(new NameMap()
-                        .with("#n", "name")
-                )
-                .withProjectionExpression("version");
-
-        ItemCollection<QueryOutcome> items = table.query(spec);
-
-        Integer maxVersion = 0;
-        Iterator<Item> iter = items.iterator();
-        while (iter.hasNext()) {
-            Item next = iter.next();
-            Integer version = new Integer((String) next.get("version"));
-            if (version.compareTo(maxVersion) > 0) {
-                maxVersion = version.intValue();
+        int maxVersion = 0;
+        for(Map<String, AttributeValue> item : items) {
+            int version = Integer.parseInt(item.get("version").s());
+            if(version > maxVersion) {
+                maxVersion = version;
             }
         }
         return maxVersion;
@@ -219,12 +225,13 @@ public class JCredStash {
     protected EncryptedCredential encrypt(String name, String credential, String version, String user, String kmsKey, Map<String,String> context){
         // generate a 64 byte key with KMS
         // half for data encryption, other half for HMAC
-        GenerateDataKeyRequest dataKeyRequest = new GenerateDataKeyRequest()
-                .withKeyId(kmsKey)
-                .withEncryptionContext(context)
-                .withNumberOfBytes(64);
-        GenerateDataKeyResult dataKeyResult = awskmsClient.generateDataKey(dataKeyRequest);
-        byte[] resultArray = dataKeyResult.getPlaintext().array();
+        GenerateDataKeyRequest dataKeyRequest = GenerateDataKeyRequest.builder()
+                .keyId(kmsKey)
+                .encryptionContext(context)
+                .numberOfBytes(64)
+                .build();
+        GenerateDataKeyResponse dataKeyResponse = kmsClient.generateDataKey(dataKeyRequest);
+        byte[] resultArray = dataKeyResponse.plaintext().asByteArray();
         byte[] dataKey = Arrays.copyOfRange(resultArray, 0, 32);
         byte[] hmacKey = Arrays.copyOfRange(resultArray, 32, resultArray.length);
 
@@ -234,7 +241,7 @@ public class JCredStash {
         CredStashBouncyCastleCrypto crypto = new CredStashBouncyCastleCrypto();
         byte[] encryptedContents = crypto.encrypt(dataKey, credential.getBytes());
         byte[] hmac = crypto.digest(hmacKey, encryptedContents);
-        byte[] wrappedKey = dataKeyResult.getCiphertextBlob().array();
+        byte[] wrappedKey = dataKeyResponse.ciphertextBlob().asByteArray();
 
         // format the hmac digest as a string containing only hexadecimal digits
         // see:
@@ -314,10 +321,13 @@ public class JCredStash {
 
         HashMap<String, String> cond = new HashMap<>();
         cond.put("#n", "name");
-        PutItemRequest request = new PutItemRequest(tableName, data)
-                .withConditionExpression("attribute_not_exists(#n)")
-                .withExpressionAttributeNames(cond);
-        amazonDynamoDBClient.putItem(request);
+        PutItemRequest request = PutItemRequest.builder()
+                .tableName(tableName)
+                .item(data)
+                .conditionExpression("attribute_not_exists(#n)")
+                .expressionAttributeNames(cond)
+                .build();
+        dynamoDbClient.putItem(request);
     }
 
     protected void putMetadata(String tableName, String secretName, String version, String sourceType,
@@ -343,22 +353,29 @@ public class JCredStash {
 
         HashMap<String, String> cond = new HashMap<>();
         cond.put("#n", "name");
-        PutItemRequest request = new PutItemRequest(tableName, data)
-                .withConditionExpression("attribute_not_exists(#n)")
-                .withExpressionAttributeNames(cond);
-        amazonDynamoDBClient.putItem(request);
+        PutItemRequest request = PutItemRequest.builder()
+                .tableName(tableName)
+                .item(data)
+                .conditionExpression("attribute_not_exists(#n)")
+                .expressionAttributeNames(cond)
+                .build();
+        dynamoDbClient.putItem(request);
     }
 
     protected void deleteSecret(String tableName, String secretName) throws InterruptedException {
 
-        QueryResult queryResult = getCredentials(tableName, secretName);
-
-        TableWriteItems itemsToDelete = new TableWriteItems(tableName);
-        for ( Map<String, AttributeValue> item :queryResult.getItems()) {
-            itemsToDelete.addHashAndRangePrimaryKeyToDelete(
-                    "name", item.get("name").getS(),
-                    "version", item.get("version").getS());
+        QueryResponse queryResponse = getCredentials(tableName, secretName);
+        Map<String, List<WriteRequest>> writeRequestMap = new HashMap<>();
+        List<WriteRequest> writeRequests = new ArrayList<>();
+        for (Map<String, AttributeValue> item : queryResponse.items()) {
+            Map<String, AttributeValue> preppedItemMap = filterItemMapForDeletion(item);
+            WriteRequest writeRequest = WriteRequest.builder()
+                    .deleteRequest(DeleteRequest.builder().key(preppedItemMap).build()
+            ).build();
+            writeRequests.add(writeRequest);
         }
+        writeRequestMap.put(tableName, writeRequests);
+        BatchWriteItemRequest batchWriteItemRequest = BatchWriteItemRequest.builder().requestItems(writeRequestMap).build();
 
         Map<String, List<WriteRequest>> unprocessed = null ;
         int attempts = 0;
@@ -368,18 +385,19 @@ public class JCredStash {
                 Thread.sleep((1 << attempts) * 1000);
             }
             attempts++;
-            BatchWriteItemOutcome outcome;
-            if (unprocessed == null || unprocessed.size() > 0) {
-                // handle initial request
-                outcome = dynamoDB.batchWriteItem(itemsToDelete);
-            } else {
-                // handle unprocessed items
-                outcome = dynamoDB.batchWriteItemUnprocessed(unprocessed);
-            }
-            unprocessed = outcome.getUnprocessedItems();
+            BatchWriteItemResponse batchWriteItemResponse = dynamoDbClient.batchWriteItem(batchWriteItemRequest);
+            unprocessed = batchWriteItemResponse.unprocessedItems();
+            batchWriteItemRequest = BatchWriteItemRequest.builder().requestItems(unprocessed).build();
         } while (unprocessed.size() > 0 && attempts < 6);
 
         if(unprocessed.size() > 0)
             throw new RuntimeException("Error deleting secret " + secretName + " with " + unprocessed.size() + " versions not deleted");
+    }
+
+    private Map<String, AttributeValue> filterItemMapForDeletion(Map<String, AttributeValue> items) {
+        HashMap<String, AttributeValue> populatedItem = new HashMap<>();
+        populatedItem.put("name", items.get("name"));
+        populatedItem.put("version", items.get("version"));
+        return populatedItem;
     }
 }

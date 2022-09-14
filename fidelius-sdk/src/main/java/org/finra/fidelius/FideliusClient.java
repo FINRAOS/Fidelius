@@ -17,34 +17,41 @@
 
 package org.finra.fidelius;
 
-import java.util.Collections;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.regions.*;
-import com.amazonaws.retry.PredefinedRetryPolicies;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
-import com.amazonaws.services.ec2.model.*;
-import com.amazonaws.services.lambda.AWSLambda;
-import com.amazonaws.services.lambda.AWSLambdaClientBuilder;
-import com.amazonaws.services.lambda.model.*;
-import com.amazonaws.services.kms.AWSKMS;
-import com.amazonaws.services.kms.AWSKMSClientBuilder;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
-import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
-import com.amazonaws.util.EC2MetadataUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.awscore.retry.AwsRetryPolicy;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.core.client.config.SdkClientConfiguration;
+import software.amazon.awssdk.core.internal.http.loader.DefaultSdkHttpClientBuilder;
+import software.amazon.awssdk.http.SdkHttpClient;
+import software.amazon.awssdk.http.apache.ApacheHttpClient;
+import software.amazon.awssdk.http.apache.ProxyConfiguration;
+import software.amazon.awssdk.http.apache.internal.impl.ApacheSdkHttpClient;
+import software.amazon.awssdk.regions.internal.util.EC2MetadataUtils;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
+import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.Ec2ClientBuilder;
+import software.amazon.awssdk.services.ec2.model.*;
+import software.amazon.awssdk.services.kms.KmsClient;
+import software.amazon.awssdk.services.kms.KmsClientBuilder;
+import software.amazon.awssdk.services.lambda.LambdaClient;
+import software.amazon.awssdk.services.lambda.LambdaClientBuilder;
+import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.services.sts.StsClientBuilder;
+import software.amazon.awssdk.services.sts.model.GetCallerIdentityRequest;
+
+import javax.swing.plaf.synth.Region;
 
 
 public class FideliusClient {
@@ -52,79 +59,86 @@ public class FideliusClient {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     protected EnvConfig envConfig;
+    protected ProxyConfiguration proxyConfig;
     protected JCredStash jCredStash;
-    protected AWSSecurityTokenService awsSecurityTokenService;
+    protected StsClient stsClient;
 
-    private final AmazonEC2 client;
-    private final AWSLambda lambda;
+    private final Ec2Client ec2Client;
+    private final LambdaClient lambdaClient;
 
     public FideliusClient() {
-        this(null, new DefaultAWSCredentialsProviderChain());
+        this(null, AwsCredentialsProviderChain.builder().addCredentialsProvider(DefaultCredentialsProvider.create()).build());
     }
 
     public FideliusClient(String region) {
-        this(null, new DefaultAWSCredentialsProviderChain(), region);
+        this(null, AwsCredentialsProviderChain.builder().addCredentialsProvider(DefaultCredentialsProvider.create()).build(), region);
     }
 
-    public FideliusClient(ClientConfiguration clientConf, AWSCredentialsProvider provider) {
+    public FideliusClient(ClientOverrideConfiguration clientConf, AwsCredentialsProvider provider) {
         this(clientConf, provider, null);
     }
 
-    public FideliusClient(ClientConfiguration clientConf, AWSCredentialsProvider provider, String region) {
+    public FideliusClient(ClientOverrideConfiguration clientConf, AwsCredentialsProvider provider, String region) {
 
         envConfig = new EnvConfig();
-        ClientConfiguration kmsEc2ClientConfiguration = clientConf;
+        ClientOverrideConfiguration kmsEc2ClientConfiguration = clientConf;
 
         if(clientConf==null){
             clientConf = defaultClientConfiguration(envConfig);
-            clientConf.setRetryPolicy(PredefinedRetryPolicies.DYNAMODB_DEFAULT);
             kmsEc2ClientConfiguration = defaultClientConfiguration(envConfig);
-            kmsEc2ClientConfiguration.setRetryPolicy(PredefinedRetryPolicies.getDefaultRetryPolicyWithCustomMaxRetries(5));
         }
 
-        AmazonDynamoDBClientBuilder ddbBuilder = AmazonDynamoDBClientBuilder.standard()
-                .withCredentials(provider)
-                .withClientConfiguration(clientConf);
+        DynamoDbClientBuilder dynamoDbBuilder = DynamoDbClient.builder()
+                .credentialsProvider(provider)
+                .overrideConfiguration(clientConf);
 
-        AWSKMSClientBuilder kmsBuilder = AWSKMSClientBuilder.standard()
-                .withCredentials(provider)
-                .withClientConfiguration(kmsEc2ClientConfiguration);
+        KmsClientBuilder kmsBuilder = KmsClient.builder()
+                .credentialsProvider(provider)
+                .overrideConfiguration(kmsEc2ClientConfiguration);
 
-        AWSSecurityTokenServiceClientBuilder stsBuilder =  AWSSecurityTokenServiceClientBuilder.standard()
-                .withClientConfiguration(clientConf)
-                .withCredentials(provider);
+        StsClientBuilder stsBuilder =  StsClient.builder()
+                .overrideConfiguration(clientConf)
+                .credentialsProvider(provider);
 
-        AmazonEC2ClientBuilder clientBuilder = AmazonEC2ClientBuilder.standard()
-                .withCredentials(provider)
-                .withClientConfiguration(kmsEc2ClientConfiguration);
+        Ec2ClientBuilder clientBuilder = Ec2Client.builder()
+                .credentialsProvider(provider)
+                .overrideConfiguration(kmsEc2ClientConfiguration);
 
-        AWSLambdaClientBuilder lambdaClientBuilder = AWSLambdaClientBuilder.standard()
-                .withClientConfiguration(clientConf)
-                .withCredentials(provider);
+        LambdaClientBuilder lambdaClientBuilder = LambdaClient.builder()
+                .credentialsProvider(provider)
+                .overrideConfiguration(clientConf);
 
         if(region != null){
-            Regions regionEnum = Regions.fromName(region);
-            ddbBuilder.withRegion(regionEnum);
-            kmsBuilder.withRegion(regionEnum);
-            stsBuilder.withRegion(regionEnum);
-            clientBuilder.withRegion(regionEnum);
-            lambdaClientBuilder.withRegion(regionEnum);
+            software.amazon.awssdk.regions.Region awsRegion = software.amazon.awssdk.regions.Region.of(region);
+            dynamoDbBuilder = dynamoDbBuilder.region(awsRegion);
+            kmsBuilder = kmsBuilder.region(awsRegion);
+            stsBuilder = stsBuilder.region(awsRegion);
+            clientBuilder = clientBuilder.region(awsRegion);
+            lambdaClientBuilder = lambdaClientBuilder.region(awsRegion);
         }
-        lambda = lambdaClientBuilder.build();
-        client = clientBuilder.build();
-        awsSecurityTokenService = stsBuilder.build();
-        jCredStash = new JCredStash(ddbBuilder.build(), kmsBuilder.build(), awsSecurityTokenService);
-    }
-
-    protected void setFideliusClient(AmazonDynamoDB ddb, AWSKMS kms) {
-        jCredStash = new JCredStash(ddb, kms, awsSecurityTokenService);
-    }
-
-    protected ClientConfiguration defaultClientConfiguration(EnvConfig envConfig){
-        ClientConfiguration clientConfiguration = new ClientConfiguration();
         if(envConfig.hasProxyEnv()) {
-            clientConfiguration.setProxyHost(envConfig.getProxy());
-            clientConfiguration.setProxyPort(Integer.parseInt(envConfig.getPort()));
+            SdkHttpClient sdkHttpClient = ApacheHttpClient.builder()
+                    .proxyConfiguration(proxyConfig).build();
+            dynamoDbBuilder = dynamoDbBuilder.httpClient(sdkHttpClient);
+            kmsBuilder = kmsBuilder.httpClient(sdkHttpClient);
+            stsBuilder = stsBuilder.httpClient(sdkHttpClient);
+            clientBuilder = clientBuilder.httpClient(sdkHttpClient);
+            lambdaClientBuilder = lambdaClientBuilder.httpClient(sdkHttpClient);
+        }
+        lambdaClient = lambdaClientBuilder.build();
+        ec2Client = clientBuilder.build();
+        stsClient = stsBuilder.build();
+        jCredStash = new JCredStash(dynamoDbBuilder.build(), kmsBuilder.build(), stsClient);
+    }
+
+    protected void setFideliusClient(DynamoDbClient ddb, KmsClient kms) {
+        jCredStash = new JCredStash(ddb, kms, stsClient);
+    }
+
+    protected ClientOverrideConfiguration defaultClientConfiguration(EnvConfig envConfig){
+        ClientOverrideConfiguration clientConfiguration = ClientOverrideConfiguration.builder().retryPolicy(AwsRetryPolicy.defaultRetryPolicy()).build();
+        if(envConfig.hasProxyEnv()) {
+            proxyConfig = ProxyConfiguration.builder().endpoint(URI.create(envConfig.getProxy() + ":" + envConfig.getPort())).build();
         }
         return clientConfiguration;
     }
@@ -161,23 +175,23 @@ public class FideliusClient {
 
         String instanceID = EC2MetadataUtils.getInstanceId();
 
-        DescribeInstancesRequest instancesRequest = new DescribeInstancesRequest().withInstanceIds(instanceID);
-        DescribeInstancesResult instancesResult = client.describeInstances(instancesRequest);
+        DescribeInstancesRequest instancesRequest = DescribeInstancesRequest.builder().instanceIds(instanceID).build();
+        DescribeInstancesResponse instancesResult = ec2Client.describeInstances(instancesRequest);
 
         // There should only be one Instance with identical instanceID
-        List<Reservation> reservations = instancesResult.getReservations();
+        List<Reservation> reservations = instancesResult.reservations();
         if (reservations.size() > 1) {
             return null;
         }
 
         Reservation reservation = reservations.get(0);
-        Instance instance = reservation.getInstances().get(0);
-        List<Tag> tagList = instance.getTags();
+        Instance instance = reservation.instances().get(0);
+        List<Tag> tagList = instance.tags();
 
         HashMap<String, String> tagMap = new HashMap<String, String>();
         for (Tag t : tagList) {
-            if (t.getKey().equals(Constants.FID_CONTEXT_APPLICATION) || t.getKey().equals(Constants.FID_CONTEXT_SDLC) || t.getKey().equals(Constants.FID_CONTEXT_COMPONENT))
-                tagMap.put(t.getKey(), t.getValue());
+            if (t.key().equals(Constants.FID_CONTEXT_APPLICATION) || t.key().equals(Constants.FID_CONTEXT_SDLC) || t.key().equals(Constants.FID_CONTEXT_COMPONENT))
+                tagMap.put(t.key(), t.value());
         }
         return tagMap;
     }
@@ -245,7 +259,7 @@ public class FideliusClient {
     }
 
     protected String getUserIdentity() throws Exception {
-        return awsSecurityTokenService.getCallerIdentity(new GetCallerIdentityRequest()).getArn();
+        return stsClient.getCallerIdentity(GetCallerIdentityRequest.builder().build()).arn();
     }
 
     /**
@@ -507,6 +521,9 @@ public class FideliusClient {
             logger.info("User "+ user + " deleted credential " + prefixedName);
         } catch (RuntimeException e) { // Credential not found
             logger.info("Credential " + prefixedName + " not found. [" + e.toString() + "] ");
+            for(StackTraceElement ste : e.getStackTrace()) {
+                logger.error(ste.toString());
+            }
             throw new RuntimeException(e);
         }
     }

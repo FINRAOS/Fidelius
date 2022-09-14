@@ -17,19 +17,6 @@
 
 package org.finra.fidelius.services.aws;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicSessionCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.kms.AWSKMSClient;
-import com.amazonaws.services.kms.AWSKMSClientBuilder;
-import com.amazonaws.services.rds.AmazonRDSClient;
-import com.amazonaws.services.rds.AmazonRDSClientBuilder;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClient;
-import com.amazonaws.services.securitytoken.model.AssumeRoleRequest;
-import com.amazonaws.services.securitytoken.model.AssumeRoleResult;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -43,6 +30,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.kms.KmsClient;
+import software.amazon.awssdk.services.kms.KmsClientBuilder;
+import software.amazon.awssdk.services.rds.RdsClient;
+import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
+import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
+import software.amazon.awssdk.services.sts.model.AssumeRoleResponse;
+import software.amazon.awssdk.services.sts.model.Credentials;
 
 import javax.inject.Inject;
 import java.util.concurrent.ExecutionException;
@@ -66,36 +65,57 @@ public class AWSSessionService {
 
     private Logger logger = LoggerFactory.getLogger(AWSSessionService.class);
 
-    private LoadingCache<AWSEnvironment, BasicSessionCredentials> credentialCache = CacheBuilder.newBuilder()
+    private LoadingCache<AWSEnvironment, Credentials> credentialCache = CacheBuilder.newBuilder()
             .maximumSize(100)
             .concurrencyLevel(10)
             .refreshAfterWrite(360 * 1000, TimeUnit.MILLISECONDS)
-            .build(new CacheLoader<AWSEnvironment, BasicSessionCredentials>() {
+            .build(new CacheLoader<AWSEnvironment, Credentials>() {
                 @Override
-                public BasicSessionCredentials load(AWSEnvironment environment) throws Exception {
+                public Credentials load(AWSEnvironment environment) throws Exception {
                     return getFreshCredentials(environment);
                 }
             });
 
 
-    private BasicSessionCredentials getFreshCredentials(AWSEnvironment environment) throws Exception{
+    private Credentials getFreshCredentials(AWSEnvironment environment) throws Exception{
 
         String roleArn = getRoleArn(environment.getAccount(), assumeRole);
         logger.info("Assuming to role: " + roleArn + " for environment " + environment.getAccount() + " on region " + environment.getRegion()
                 + " with timeout of " + (sessionTimeout / 1000) + " seconds (with " + (sessionTimeoutPad / 1000) + " padding.)");
 
-        AssumeRoleRequest assumeRequest = new AssumeRoleRequest()
-                .withRoleArn(roleArn)
-                .withDurationSeconds((sessionTimeout + sessionTimeoutPad) / 1000)
-                .withRoleSessionName("CREDSTSH_APP");
+        AssumeRoleRequest assumeRequest = AssumeRoleRequest.builder()
+                .roleArn(roleArn)
+                .durationSeconds((sessionTimeout + sessionTimeoutPad) / 1000)
+                .roleSessionName("CREDSTSH_APP")
+                .build();
 
-        AssumeRoleResult assumeResult = awsSessionFactory.createSecurityTokenServiceClient().assumeRole(assumeRequest);
+        AssumeRoleResponse assumeRoleResponse = awsSessionFactory.createSecurityTokenServiceClient().assumeRole(assumeRequest);
 
-        return new BasicSessionCredentials(
-                assumeResult.getCredentials().getAccessKeyId(),
-                assumeResult.getCredentials().getSecretAccessKey(),
-                assumeResult.getCredentials().getSessionToken());
+        return assumeRoleResponse.credentials();
 
+    }
+
+    private StsAssumeRoleCredentialsProvider getStsAssumeRoleCredentialsProvider(AWSEnvironment environment){
+        try {
+            String roleArn = getRoleArn(environment.getAccount(), assumeRole);
+            StsClient stsClient = awsSessionFactory.createSecurityTokenServiceClient();
+            AssumeRoleRequest assumeRoleRequest = formAssumeRoleRequest(roleArn);
+            return StsAssumeRoleCredentialsProvider.builder()
+                    .stsClient(stsClient)
+                    .refreshRequest(assumeRoleRequest)
+                    .build();
+        } catch (Exception e) {
+            Throwables.throwIfUnchecked(e.getCause());
+        }
+        return null;
+    }
+
+    private AssumeRoleRequest formAssumeRoleRequest(String roleArn) {
+        return AssumeRoleRequest.builder()
+                .roleArn(roleArn)
+                .durationSeconds((sessionTimeout + sessionTimeoutPad) / 1000)
+                .roleSessionName("CREDSTSH_APP")
+                .build();
     }
 
     private String getRoleArn(String alias, String role) throws Exception {
@@ -114,36 +134,26 @@ public class AWSSessionService {
         return sb.toString();
     }
 
-    public AmazonDynamoDBClient getDynamoDBClient(AWSEnvironment env) {
-        BasicSessionCredentials creds = null;
-        try {
-            creds = credentialCache.getUnchecked(env);
-        } catch (UncheckedExecutionException ue) {
-            Throwables.throwIfUnchecked(ue.getCause());
-        }
-        AmazonDynamoDBClient dynamoClient = awsSessionFactory.createDynamoDBClient(creds);
-        dynamoClient.setRegion(Region.getRegion(Regions.fromName(env.getRegion())));
-        return dynamoClient;
+    public DynamoDbClient getDynamoDBClient(AWSEnvironment env) {
+        StsAssumeRoleCredentialsProvider stsAssumeRoleCredentialsProvider = getStsAssumeRoleCredentialsProvider(env);
+        return awsSessionFactory.createDynamoDBClient(stsAssumeRoleCredentialsProvider, env.getRegion());
     }
 
-    public AWSKMSClient getKmsClient(AWSEnvironment environment) {
-        BasicSessionCredentials credentials = credentialCache.getUnchecked(environment);
-        AWSKMSClient awsKmsClient = (AWSKMSClient) AWSKMSClientBuilder
-                .standard()
-                .withCredentials(new AWSStaticCredentialsProvider(credentials))
-                .withRegion(environment.getRegion())
+    public KmsClient getKmsClient(AWSEnvironment env) {
+        StsAssumeRoleCredentialsProvider stsAssumeRoleCredentialsProvider = getStsAssumeRoleCredentialsProvider(env);
+        return KmsClient
+                .builder()
+                .credentialsProvider(stsAssumeRoleCredentialsProvider)
+                .region(env.getRegion())
                 .build();
-
-        return awsKmsClient;
     }
 
-    public AmazonRDSClient getRdsClient(AWSEnvironment environment){
-        BasicSessionCredentials credentials = credentialCache.getUnchecked(environment);
-
-        return (AmazonRDSClient) AmazonRDSClientBuilder
-                .standard()
-                .withCredentials(new AWSStaticCredentialsProvider(credentials))
-                .withRegion(environment.getRegion())
+    public RdsClient getRdsClient(AWSEnvironment env){
+        StsAssumeRoleCredentialsProvider stsAssumeRoleCredentialsProvider = getStsAssumeRoleCredentialsProvider(env);
+        return RdsClient
+                .builder()
+                .credentialsProvider(stsAssumeRoleCredentialsProvider)
+                .region(env.getRegion())
                 .build();
     }
 
