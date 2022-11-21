@@ -44,16 +44,27 @@ public class DynamoDBService {
         logger.info("Scanning DynamoDB table...");
         List<Map<String, AttributeValue>> queryResults = null;
         long startTime = System.currentTimeMillis();
-        try {
-            ScanResponse scanResponse = dynamoDbClient.scan(scanRequest);
-            queryResults = new ArrayList<>(scanResponse.items());
-        } catch (ProvisionedThroughputExceededException pte) {
-            logger.error("Provisioned Throughput Exceeded. ", pte);
-        } catch (ResourceNotFoundException rnf) {
-            String message = "Credential table not found!";
-            logger.error(message, rnf);
-            throw new FideliusException(message, HttpStatus.NOT_FOUND);
-        }
+        Map<String, AttributeValue> lastEvaluatedKey = null;
+        do {
+            try {
+                ScanResponse scanResponse = dynamoDbClient.scan(scanRequest);
+                queryResults = new ArrayList<>(scanResponse.items());
+                lastEvaluatedKey = scanResponse.lastEvaluatedKey();
+                scanRequest = ScanRequest.builder()
+                        .tableName(scanRequest.tableName())
+                        .filterExpression(scanRequest.filterExpression())
+                        .exclusiveStartKey(scanResponse.lastEvaluatedKey())
+                        .expressionAttributeNames(scanRequest.expressionAttributeNames())
+                        .expressionAttributeValues(scanRequest.expressionAttributeValues())
+                        .build();
+            } catch (ProvisionedThroughputExceededException pte) {
+                logger.error("Provisioned Throughput Exceeded. ", pte);
+            } catch (ResourceNotFoundException rnf) {
+                String message = "Credential table not found!";
+                logger.error(message, rnf);
+                throw new FideliusException(message, HttpStatus.NOT_FOUND);
+            }
+        } while (lastEvaluatedKey != null && !lastEvaluatedKey.isEmpty());
 
         if (queryResults == null) {
             logger.error("Throttling rate exceeded!");
