@@ -33,9 +33,15 @@ public class CredModelMapper {
         HashMap<String, AttributeValue> dynamoRow = new HashMap<>();
         dynamoRow.put(DynamoAttributes.name.name(), AttributeValue.builder().s(encryptedCredential.getFullName()).build());
         dynamoRow.put(DynamoAttributes.version.name(), AttributeValue.builder().s(encryptedCredential.getVersion()).build());
-        dynamoRow.put(DynamoAttributes.key.name(), AttributeValue.builder().s(encryptedCredential.getDatakey()).build());
-        dynamoRow.put(DynamoAttributes.contents.name(), AttributeValue.builder().s(encryptedCredential.getCredential()).build());
-        dynamoRow.put(DynamoAttributes.hmac.name(), AttributeValue.builder().s(encryptedCredential.getHmac()).build());
+
+        if(encryptedCredential.getDatakey()!=null)
+            dynamoRow.put(DynamoAttributes.key.name(), AttributeValue.builder().s(encryptedCredential.getDatakey()).build());
+
+        if(encryptedCredential.getCredential()!=null)
+            dynamoRow.put(DynamoAttributes.contents.name(), AttributeValue.builder().s(encryptedCredential.getCredential()).build());
+
+        if(encryptedCredential.getHmac()!=null)
+            dynamoRow.put(DynamoAttributes.hmac.name(), AttributeValue.builder().s(encryptedCredential.getHmac()).build());
 
         if(encryptedCredential.getUpdateBy()!=null)
             dynamoRow.put(DynamoAttributes.updatedBy.name(), AttributeValue.builder().s(encryptedCredential.getUpdateBy()).build());
