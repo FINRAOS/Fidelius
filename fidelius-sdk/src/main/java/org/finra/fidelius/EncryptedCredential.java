@@ -140,7 +140,7 @@ public class EncryptedCredential {
 
     private byte[] hexAttributeValueToBytes(String value) {
         try {
-            return value != null ? Hex.decodeHex(value.toCharArray()) : null;
+            return Hex.decodeHex(value.toCharArray());
         } catch (DecoderException e) {
             throw new RuntimeException(e);
         }
@@ -171,12 +171,11 @@ public class EncryptedCredential {
 
         EncryptedCredential that = (EncryptedCredential) o;
 
-
+        if (!datakey.equals(that.datakey)) return false;
+        if (!credential.equals(that.credential)) return false;
+        if (!hmac.equals(that.hmac)) return false;
         if (!version.equals(that.version)) return false;
         if (!fullName.equals(that.fullName)) return false;
-        if (datakey != null ? !datakey.equals(that.datakey) : that.datakey != null) return false;
-        if (credential != null ? !credential.equals(that.credential) : that.credential != null) return false;
-        if (hmac != null ? !hmac.equals(that.hmac) : that.hmac != null) return false;
         if (updateBy != null ? !updateBy.equals(that.updateBy) : that.updateBy != null) return false;
         if (updatedOn != null ? !updatedOn.equals(that.updatedOn) : that.updatedOn != null) return false;
         if (component != null ? !component.equals(that.component) : that.component != null) return false;
