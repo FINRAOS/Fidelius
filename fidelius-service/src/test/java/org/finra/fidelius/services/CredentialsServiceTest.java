@@ -115,7 +115,7 @@ public class CredentialsServiceTest {
         fakeData.add(fakeCred1);
         fakeData.add(fakeCred2);
 
-        when(dynamoDBService.scanDynamoDB(any(), any())).thenReturn(fakeData);
+        when(dynamoDBService.scanDynamoDB(any(), any(), any())).thenReturn(fakeData);
         when(migrateService.migrateCredential(any(), any())).thenReturn(fakeCred3);
 
         List<Credential> expectedCreds = new ArrayList<>();
@@ -139,7 +139,7 @@ public class CredentialsServiceTest {
 
         fakeData.add(fakeCred1);
 
-        when(dynamoDBService.scanDynamoDB(any(), any())).thenReturn(fakeData);
+        when(dynamoDBService.scanDynamoDB(any(), any(), any())).thenReturn(fakeData);
         credentialsService.getAllCredentials("table", "dev", "us-east-1", "APP");
     }
 
@@ -155,7 +155,7 @@ public class CredentialsServiceTest {
 
         fakeData.add(fakeCred1);
 
-        when(dynamoDBService.scanDynamoDB(any(), any())).thenReturn(fakeData);
+        when(dynamoDBService.scanDynamoDB(any(), any(), any())).thenReturn(fakeData);
         credentialsService.getCredentialHistory("table", "dev", "us-east-1", "APP",
                 "dev", "TestComponent", "testKey", false);
     }
@@ -213,7 +213,7 @@ public class CredentialsServiceTest {
         fakeData.add(fakeCred2);
         fakeData.add(fakeCred3);
 
-        when(dynamoDBService.scanDynamoDB(any(), any())).thenReturn(fakeData);
+        when(dynamoDBService.scanDynamoDB(any(), any(), any())).thenReturn(fakeData);
         when(migrateService.guessCredentialProperties(fakeCred1)).thenReturn(fakeCred4);
         when(migrateService.guessCredentialProperties(fakeCred2)).thenReturn(fakeCred5);
         when(migrateService.guessCredentialProperties(fakeCred3)).thenReturn(fakeCred6);
@@ -304,7 +304,7 @@ public class CredentialsServiceTest {
         fakeData.add(fakeCred2);
         fakeData.add(fakeCred3);
 
-        when(dynamoDBService.scanDynamoDB(any(), any())).thenReturn(fakeData);
+        when(dynamoDBService.scanDynamoDB(any(), any(), any())).thenReturn(fakeData);
         when(migrateService.guessCredentialProperties(fakeCred1)).thenReturn(fakeCred4);
         when(migrateService.guessCredentialProperties(fakeCred2)).thenReturn(fakeCred5);
         when(migrateService.guessCredentialProperties(fakeCred3)).thenReturn(fakeCred6);
@@ -404,7 +404,7 @@ public class CredentialsServiceTest {
 
         fakeData.add(fakeCred1);
 
-        when(dynamoDBService.scanDynamoDB(any(), any())).thenReturn(fakeData);
+        when(dynamoDBService.scanDynamoDB(any(), any(), any())).thenReturn(fakeData);
         when(migrateService.migrateCredential(any(), any())).thenThrow(NoSuchElementException.class);
 
         Credential expectedCreds = new Credential("testKey", "APP.TestComponent.dev.testKey",  "some-account", "region", "APP", "dev",
@@ -440,7 +440,7 @@ public class CredentialsServiceTest {
         fakeData.add(fakeCred1);
         fakeData.add(fakeCred2);
 
-        when(dynamoDBService.scanDynamoDB(any(), any())).thenReturn(fakeData);
+        when(dynamoDBService.scanDynamoDB(any(), any(), any())).thenReturn(fakeData);
 
         List<Credential> expectedCreds = new ArrayList<>();
         expectedCreds.add(new Credential("testKey", "APP.TestComponent.dev.testKey", "my_account","region", "APP","dev",
@@ -692,7 +692,7 @@ public class CredentialsServiceTest {
         fakeData.add(fakeCred1);
         fakeData.add(fakeCred2);
 
-        when(dynamoDBService.scanDynamoDB(any(), any())).thenReturn(fakeData);
+        when(dynamoDBService.scanDynamoDB(any(), any(), any())).thenReturn(fakeData);
 
         List<Credential> expectedCreds = new ArrayList<>();
         expectedCreds.add(new Credential("testKey2", "APP.dev.testKey2", "some-account","region", "APP", "dev",

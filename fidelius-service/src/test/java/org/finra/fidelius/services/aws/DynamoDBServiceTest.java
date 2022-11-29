@@ -25,6 +25,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughputExceededException;
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest;
@@ -45,6 +46,9 @@ public class DynamoDBServiceTest {
     @Mock
     private DynamoDbClient dynamoDbClient;
 
+    @Mock
+    private DynamoDbEnhancedClient dynamoDbEnhancedClient;
+
 
     @Before
     public void setUp() throws Exception {
@@ -53,8 +57,8 @@ public class DynamoDBServiceTest {
 
     @Test(expected = FideliusException.class)
     public void scanDynamoDBFailsAfterIntervalReaches60SecondsWhenRetryingOnThrottlingException() {
-        when(dynamoDbClient.scan(any(ScanRequest.class))).thenThrow(ProvisionedThroughputExceededException.builder().message("test").build());
-        dynamoDBService.scanDynamoDB(ScanRequest.builder().build(), dynamoDbClient);
+        when(dynamoDbEnhancedClient.table(any(), any())).thenThrow(ProvisionedThroughputExceededException.builder().message("test").build());
+        dynamoDBService.scanDynamoDB(dynamoDbEnhancedClient, "testTable", "TEST");
     }
 
     @Test(expected = FideliusException.class)

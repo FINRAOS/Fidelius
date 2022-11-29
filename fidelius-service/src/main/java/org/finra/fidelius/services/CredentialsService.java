@@ -50,10 +50,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-import software.amazon.awssdk.services.dynamodb.model.QueryRequest;
-import software.amazon.awssdk.services.dynamodb.model.ScanRequest;
+import software.amazon.awssdk.services.dynamodb.model.*;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.rds.RdsClient;
 import software.amazon.awssdk.services.rds.model.*;
@@ -192,23 +191,26 @@ public class CredentialsService {
         AWSEnvironment awsEnvironment = new AWSEnvironment(account, region);
         List<Credential> results = new ArrayList<>();
         DynamoDbClient dynamoDbClient = awsSessionService.getDynamoDBClient(awsEnvironment);
+        DynamoDbEnhancedClient dynamoDbEnhancedClient = awsSessionService.getDynamoDBEnhancedClient(dynamoDbClient);
 
         setFideliusEnvironment(account, region);
 
-        Map<String, String> ean = new HashMap<>();
-        ean.put("#tempname", NAME);
+//        Map<String, String> ean = new HashMap<>();
+//        ean.put("#tempname", NAME);
+//
+//        Map<String, AttributeValue> eav = new HashMap<>();
+//        eav.put(":key", AttributeValue.builder().s(application + ".").build());
+//
+//        ScanRequest scanRequest = ScanRequest.builder()
+//                .tableName(tableName)
+//                .filterExpression("begins_with (" + NAME + ", " + application + ".)")
+//                .expressionAttributeNames(ean)
+//                .expressionAttributeValues(eav)
+//                .build();
 
-        Map<String, AttributeValue> eav = new HashMap<>();
-        eav.put(":key", AttributeValue.builder().s(application + ".").build());
 
-        ScanRequest scanRequest = ScanRequest.builder()
-                .tableName(tableName)
-                .filterExpression("begins_with (#tempname, :key)")
-                .expressionAttributeNames(ean)
-                .expressionAttributeValues(eav)
-                .build();
 
-        List<Map<String, AttributeValue>> queryResults = dynamoDBService.scanDynamoDB(scanRequest, dynamoDbClient);
+        List<Map<String, AttributeValue>> queryResults = dynamoDBService.scanDynamoDB(dynamoDbEnhancedClient, tableName, application);
 
         // Gets only latest version of each credential
         Map<String, Map<String, AttributeValue>> credentials = getLatestCredentialVersion(queryResults);
@@ -320,7 +322,11 @@ public class CredentialsService {
         List<Map<String, AttributeValue>> queryResults = dynamoDBService.queryDynamoDB(queryRequest, dynamoDbClient);
 
         for (Map<String, AttributeValue> dbCred : queryResults) {
-            results.add(new HistoryEntry(Integer.parseInt(dbCred.get(VERSION).s()), splitRoleARN(dbCred.get(UPDATED_BY)), dbCred.get(UPDATED_ON).s()));
+            String updatedOn = null;
+            if(dbCred.get(UPDATED_ON) != null && dbCred.get(UPDATED_ON).s() != null) {
+                updatedOn = dbCred.get(UPDATED_ON).s();
+            }
+            results.add(new HistoryEntry(Integer.parseInt(dbCred.get(VERSION).s()), splitRoleARN(dbCred.get(UPDATED_BY)), updatedOn));
         }
 
         logger.info(String.format("Found %d entries for credential/metadata %s.", results.size(), fullKeyBuilder));
@@ -660,7 +666,7 @@ public class CredentialsService {
     }
 
     private String splitRoleARN(AttributeValue roleARN) {
-        if (roleARN == null) return null;
+        if (roleARN == null || roleARN.s() == null) return null;
 
         String[] roleTokens = roleARN.s().split(":assumed-role/");
         if (roleTokens.length > 1){
@@ -767,9 +773,13 @@ public class CredentialsService {
     }
 
     public static String getShortKey(Map<String, AttributeValue> secret) {
-        if(secret.get("component") != null && !secret.get("component").s().isEmpty())
-            return secret.get("name").s().split("\\."+secret.get("component").s()+"\\."+secret.get("sdlc").s()+"\\.")[1];
-        else {
+        if(secret.get("component") != null && secret.get("component").s() != null) {
+            Pattern p = Pattern.compile("([-\\w]+)\\.([-\\w]+)\\.([-\\w]+)\\.(\\S+)");
+            Matcher m = p.matcher(secret.get("name").s());
+            if(m.matches())
+                return m.group(4);
+            return secret.get("name").s();
+        } else {
             Pattern p = Pattern.compile("([-\\w]+)\\.([-\\w]+)\\.(\\S+)");
             Matcher m = p.matcher(secret.get("name").s());
             if(m.matches())

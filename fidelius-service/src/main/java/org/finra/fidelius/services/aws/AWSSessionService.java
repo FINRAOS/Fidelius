@@ -33,6 +33,7 @@ import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.KmsClientBuilder;
@@ -137,6 +138,10 @@ public class AWSSessionService {
     public DynamoDbClient getDynamoDBClient(AWSEnvironment env) {
         StsAssumeRoleCredentialsProvider stsAssumeRoleCredentialsProvider = getStsAssumeRoleCredentialsProvider(env);
         return awsSessionFactory.createDynamoDBClient(stsAssumeRoleCredentialsProvider, env.getRegion());
+    }
+
+    public DynamoDbEnhancedClient getDynamoDBEnhancedClient(DynamoDbClient dynamoDbClient) {
+        return awsSessionFactory.createDynamoDBEnhancedClient(dynamoDbClient);
     }
 
     public KmsClient getKmsClient(AWSEnvironment env) {
