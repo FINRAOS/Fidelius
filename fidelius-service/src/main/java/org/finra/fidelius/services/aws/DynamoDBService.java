@@ -18,11 +18,15 @@
 package org.finra.fidelius.services.aws;
 
 import org.finra.fidelius.exceptions.FideliusException;
+import org.finra.fidelius.model.CredentialSchema;
 import org.finra.fidelius.model.aws.AWSEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
 import software.amazon.awssdk.services.sts.model.StsException;
@@ -40,33 +44,30 @@ public class DynamoDBService {
 
     private Logger logger = LoggerFactory.getLogger(DynamoDBService.class);
 
-    public List<Map<String, AttributeValue>> scanDynamoDB(ScanRequest scanRequest, DynamoDbClient dynamoDbClient) {
+    public List<Map<String, AttributeValue>> scanDynamoDB(DynamoDbEnhancedClient dynamoDbEnhancedClient, String tableName, String application) {
         logger.info("Scanning DynamoDB table...");
-        List<Map<String, AttributeValue>> queryResults = null;
+        List<Map<String, AttributeValue>> queryResults = new ArrayList<>();
         long startTime = System.currentTimeMillis();
-        Map<String, AttributeValue> lastEvaluatedKey = null;
+        int attempts = 0;
+        int maxAttempts = 5;
+        boolean scanOperationComplete = false;
         do {
             try {
-                ScanResponse scanResponse = dynamoDbClient.scan(scanRequest);
-                queryResults = new ArrayList<>(scanResponse.items());
-                lastEvaluatedKey = scanResponse.lastEvaluatedKey();
-                scanRequest = ScanRequest.builder()
-                        .tableName(scanRequest.tableName())
-                        .filterExpression(scanRequest.filterExpression())
-                        .exclusiveStartKey(scanResponse.lastEvaluatedKey())
-                        .expressionAttributeNames(scanRequest.expressionAttributeNames())
-                        .expressionAttributeValues(scanRequest.expressionAttributeValues())
-                        .build();
-            } catch (ProvisionedThroughputExceededException pte) {
-                logger.error("Provisioned Throughput Exceeded. ", pte);
+                DynamoDbTable<CredentialSchema> credentialTable = dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(CredentialSchema.class));
+                for (CredentialSchema rec : credentialTable.scan().items()) {
+                    if(rec.getName().startsWith(application)) {
+                        queryResults.add(rec.getMapOfAttributeValues());
+                    }
+                }
+                scanOperationComplete = true;
             } catch (ResourceNotFoundException rnf) {
                 String message = "Credential table not found!";
                 logger.error(message, rnf);
                 throw new FideliusException(message, HttpStatus.NOT_FOUND);
             }
-        } while (lastEvaluatedKey != null && !lastEvaluatedKey.isEmpty());
+        } while (!scanOperationComplete && attempts < maxAttempts);
 
-        if (queryResults == null) {
+        if (queryResults.isEmpty() && attempts >= maxAttempts) {
             logger.error("Throttling rate exceeded!");
             throw new FideliusException("Throttling rate exceeded!", HttpStatus.REQUEST_TIMEOUT);
         } else {
@@ -80,8 +81,18 @@ public class DynamoDBService {
         QueryResponse queryResults = null;
         logger.info("Querying DynamoDB table...");
         long startTime = System.currentTimeMillis();
-        try {
+        Map<String, AttributeValue> lastEvaluatedKey = null;
+        do {
+            try {
                 queryResults = dynamoDbClient.query(queryRequest);
+                lastEvaluatedKey = queryResults.lastEvaluatedKey();
+                queryRequest = QueryRequest.builder()
+                        .tableName(queryRequest.tableName())
+                        .scanIndexForward(queryRequest.scanIndexForward())
+                        .consistentRead(queryRequest.consistentRead())
+                        .keyConditions(queryRequest.keyConditions())
+                        .exclusiveStartKey(lastEvaluatedKey)
+                        .build();
             } catch (ProvisionedThroughputExceededException pte) {
                 logger.error("Provisioned Throughput Exceeded. ", pte);
             } catch (ResourceNotFoundException rnf) {
@@ -89,6 +100,7 @@ public class DynamoDBService {
                 logger.error(message, rnf);
                 throw new FideliusException(message, HttpStatus.NOT_FOUND);
             }
+        } while(lastEvaluatedKey != null && !lastEvaluatedKey.isEmpty());
 
         if (queryResults == null) {
             logger.error("Throttling rate exceeded!");
