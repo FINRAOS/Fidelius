@@ -758,7 +758,7 @@ public class CredentialsService {
     }
 
     public static String getShortKey(Map<String, AttributeValue> secret) {
-        if(secret.get("component") != null && secret.get("component").s() != null) {
+        if(secret.get("component") != null && secret.get("component").s() != null && !secret.get("component").s().isEmpty()) {
             Pattern p = Pattern.compile("([-\\w]+)\\.([-\\w]+)\\.([-\\w]+)\\.(\\S+)");
             Matcher m = p.matcher(secret.get("name").s());
             if(m.matches())
