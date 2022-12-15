@@ -60,14 +60,6 @@ public class DynamoDBService {
                     }
                 }
                 scanOperationComplete = true;
-            } catch (ProvisionedThroughputExceededException pte) {
-                logger.error("Provisioned Throughput Exceeded. ", pte);
-                try {
-                    Thread.sleep((1 << attempts) * 1000);
-                    attempts++;
-                } catch(InterruptedException e) {
-
-                }
             } catch (ResourceNotFoundException rnf) {
                 String message = "Credential table not found!";
                 logger.error(message, rnf);

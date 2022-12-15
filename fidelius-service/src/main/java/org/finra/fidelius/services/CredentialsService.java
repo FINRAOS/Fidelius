@@ -195,21 +195,6 @@ public class CredentialsService {
 
         setFideliusEnvironment(account, region);
 
-//        Map<String, String> ean = new HashMap<>();
-//        ean.put("#tempname", NAME);
-//
-//        Map<String, AttributeValue> eav = new HashMap<>();
-//        eav.put(":key", AttributeValue.builder().s(application + ".").build());
-//
-//        ScanRequest scanRequest = ScanRequest.builder()
-//                .tableName(tableName)
-//                .filterExpression("begins_with (" + NAME + ", " + application + ".)")
-//                .expressionAttributeNames(ean)
-//                .expressionAttributeValues(eav)
-//                .build();
-
-
-
         List<Map<String, AttributeValue>> queryResults = dynamoDBService.scanDynamoDB(dynamoDbEnhancedClient, tableName, application);
 
         // Gets only latest version of each credential
