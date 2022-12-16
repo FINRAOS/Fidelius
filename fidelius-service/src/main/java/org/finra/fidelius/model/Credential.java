@@ -103,7 +103,7 @@ public class Credential implements Comparable<Credential>{
         this.region = region;
         this.application = application;
         this.environment = environment.s();
-        if(component != null) {
+        if(component != null && component.s() != null) {
             this.component = component.s();
         } else {
             this.component = null;
@@ -113,7 +113,7 @@ public class Credential implements Comparable<Credential>{
         } else {
             this.lastUpdatedBy = null;
         }
-        if(lastUpdatedDate != null)
+        if(lastUpdatedDate != null && lastUpdatedDate.s() != null)
             try {
                 this.lastUpdatedDate = ZonedDateTime.parse(lastUpdatedDate.s());
             } catch(DateTimeParseException exception) {

@@ -28,6 +28,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughputExceededException;
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest;
+import software.amazon.awssdk.services.dynamodb.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.dynamodb.model.ScanRequest;
 
 import static org.mockito.Matchers.any;
@@ -52,8 +53,8 @@ public class DynamoDBServiceTest {
     }
 
     @Test(expected = FideliusException.class)
-    public void scanDynamoDBFailsAfterIntervalReaches60SecondsWhenRetryingOnThrottlingException() {
-        when(dynamoDbClient.scan(any(ScanRequest.class))).thenThrow(ProvisionedThroughputExceededException.builder().message("test").build());
+    public void scanDynamoDBCannotFindTableException() {
+        when(dynamoDbClient.scan(any(ScanRequest.class))).thenThrow(ResourceNotFoundException.builder().message("test").build());
         dynamoDBService.scanDynamoDB(ScanRequest.builder().build(), dynamoDbClient);
     }
 

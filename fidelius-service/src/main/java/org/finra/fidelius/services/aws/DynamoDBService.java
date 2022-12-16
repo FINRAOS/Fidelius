@@ -42,13 +42,13 @@ public class DynamoDBService {
 
     public List<Map<String, AttributeValue>> scanDynamoDB(ScanRequest scanRequest, DynamoDbClient dynamoDbClient) {
         logger.info("Scanning DynamoDB table...");
-        List<Map<String, AttributeValue>> queryResults = null;
+        List<Map<String, AttributeValue>> queryResults = new ArrayList<>();
         long startTime = System.currentTimeMillis();
         Map<String, AttributeValue> lastEvaluatedKey = null;
         do {
             try {
                 ScanResponse scanResponse = dynamoDbClient.scan(scanRequest);
-                queryResults = new ArrayList<>(scanResponse.items());
+                queryResults.addAll(scanResponse.items());
                 lastEvaluatedKey = scanResponse.lastEvaluatedKey();
                 scanRequest = ScanRequest.builder()
                         .tableName(scanRequest.tableName())
@@ -66,13 +66,7 @@ public class DynamoDBService {
             }
         } while (lastEvaluatedKey != null && !lastEvaluatedKey.isEmpty());
 
-        if (queryResults == null) {
-            logger.error("Throttling rate exceeded!");
-            throw new FideliusException("Throttling rate exceeded!", HttpStatus.REQUEST_TIMEOUT);
-        } else {
-            logger.info(String.format("Scan completed in %.3f seconds", (System.currentTimeMillis() - startTime) / 1000.0));
-        }
-
+        logger.info(String.format("Scan completed in %.3f seconds", (System.currentTimeMillis() - startTime) / 1000.0));
         return queryResults;
     }
 

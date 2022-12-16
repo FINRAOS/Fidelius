@@ -68,20 +68,21 @@ public class MigrateService {
                 String key = threeFieldsMatcher.group(3);
                 String ags = threeFieldsMatcher.group(1);
                 String sdlc = threeFieldsMatcher.group(2);
-                migrate(ags, sdlc, null, key, dbCredential);
+                dbCredential = migrate(ags, sdlc, null, key, dbCredential);
             } catch (Exception e) {
                 logger.error("Error migrating " + dbCredential.get(CredentialsService.NAME).s());
+                logger.error(e.getMessage());
             }
         }
 
         if (fourFieldsMatcher.matches() && dbCredential.get(CredentialsService.SDLC) == null) {
             logger.info("4 Fields: " + dbCredential.get(CredentialsService.NAME).s());
-            migrate(fourFieldsMatcher, dbCredential);
+            dbCredential = migrate(fourFieldsMatcher, dbCredential);
         }
 
         if (extraFieldsMatcher.matches() && dbCredential.get(CredentialsService.SDLC) == null) {
             logger.info("More than 4 Fields: " + dbCredential.get(CredentialsService.NAME).s());
-            migrate(extraFieldsMatcher, dbCredential);
+            dbCredential = migrate(extraFieldsMatcher, dbCredential);
         }
 
         if(dbCredential.get(CredentialsService.SDLC) != null)
@@ -93,39 +94,43 @@ public class MigrateService {
         return dbCredential;
     }
 
-    private void migrate(String ags, String sdlc, String component, String key, Map<String, AttributeValue> dbCredential) throws Exception{
+    private Map<String, AttributeValue> migrate(String ags, String sdlc, String component, String key, Map<String, AttributeValue> dbCredential) throws Exception{
         String user = "FideliusMigrateTask";
 
         String credentialSecret = fideliusService.getCredential(key,ags,sdlc,component, tableName, user);
+        Map<String, AttributeValue> dbCredentialCopy = new HashMap<>(dbCredential);
 
         if(credentialSecret == null)
             throw new Exception("Error retrieving key");
         else {
             logger.info(dbCredential.get(CredentialsService.NAME).s() + " retrieved");
-            dbCredential.put(CredentialsService.SDLC, AttributeValue.builder().s(sdlc).build());
+            dbCredentialCopy.put(CredentialsService.SDLC, AttributeValue.builder().s(sdlc).build());
             if(component != null)
-                dbCredential.put(CredentialsService.COMPONENT, AttributeValue.builder().s(component).build());
+                dbCredentialCopy.put(CredentialsService.COMPONENT, AttributeValue.builder().s(component).build());
         }
+        return dbCredentialCopy;
     }
 
-    private void migrate(Matcher matcher, Map<String, AttributeValue> dbCredential){
+    private Map<String, AttributeValue> migrate(Matcher matcher, Map<String, AttributeValue> dbCredential){
+        Map<String, AttributeValue> dbCredentialCopy = new HashMap<>(dbCredential);
         try {
             String key = matcher.group(4);
             String ags = matcher.group(1);
             String sdlc = matcher.group(3);
             String component = matcher.group(2);
-            migrate(ags, sdlc, component, key, dbCredential);
+            dbCredentialCopy = migrate(ags, sdlc, component, key, dbCredential);
         } catch(Exception e){
             logger.error("Error retrieving " + dbCredential.get(CredentialsService.NAME).s(), e.getMessage());
             try {
                 String key = matcher.group(3)+"."+matcher.group(4);
                 String ags = matcher.group(1);
                 String sdlc = matcher.group(2);
-                migrate(ags, sdlc, null, key, dbCredential);
+                dbCredentialCopy = migrate(ags, sdlc, null, key, dbCredential);
             } catch(Exception e1){
                 logger.error("Error retrieving " + dbCredential.get(CredentialsService.NAME).s(), e.getMessage());
             }
         }
+        return dbCredentialCopy;
     }
 
     public Map<String, AttributeValue> guessCredentialProperties(Map<String, AttributeValue> dbCredential) {

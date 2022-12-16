@@ -265,7 +265,7 @@ public class CredentialsService {
 
         try {
             Map<String, AttributeValue> dbCredential = credentials.values().stream().findFirst().get();
-            if(dbCredential.get(SDLC) == null) {
+            if(dbCredential.get(SDLC) == null || dbCredential.get(SDLC).s() == null) {
                 dbCredential = migrateService.migrateCredential(dbCredential, fideliusService);
             }
 
@@ -320,7 +320,11 @@ public class CredentialsService {
         List<Map<String, AttributeValue>> queryResults = dynamoDBService.queryDynamoDB(queryRequest, dynamoDbClient);
 
         for (Map<String, AttributeValue> dbCred : queryResults) {
-            results.add(new HistoryEntry(Integer.parseInt(dbCred.get(VERSION).s()), splitRoleARN(dbCred.get(UPDATED_BY)), dbCred.get(UPDATED_ON).s()));
+            String updatedOn = null;
+            if(dbCred.get(UPDATED_ON) != null && dbCred.get(UPDATED_ON).s() != null) {
+                updatedOn = dbCred.get(UPDATED_ON).s();
+            }
+            results.add(new HistoryEntry(Integer.parseInt(dbCred.get(VERSION).s()), splitRoleARN(dbCred.get(UPDATED_BY)), updatedOn));
         }
 
         logger.info(String.format("Found %d entries for credential/metadata %s.", results.size(), fullKeyBuilder));
@@ -660,7 +664,7 @@ public class CredentialsService {
     }
 
     private String splitRoleARN(AttributeValue roleARN) {
-        if (roleARN == null) return null;
+        if (roleARN == null || roleARN.s() == null) return null;
 
         String[] roleTokens = roleARN.s().split(":assumed-role/");
         if (roleTokens.length > 1){
@@ -767,9 +771,13 @@ public class CredentialsService {
     }
 
     public static String getShortKey(Map<String, AttributeValue> secret) {
-        if(secret.get("component") != null && !secret.get("component").s().isEmpty())
-            return secret.get("name").s().split("\\."+secret.get("component").s()+"\\."+secret.get("sdlc").s()+"\\.")[1];
-        else {
+        if(secret.get("component") != null && secret.get("component").s() != null && !secret.get("component").s().isEmpty()) {
+            Pattern p = Pattern.compile("([-\\w]+)\\.([-\\w]+)\\.([-\\w]+)\\.(\\S+)");
+            Matcher m = p.matcher(secret.get("name").s());
+            if(m.matches())
+                return m.group(4);
+            return secret.get("name").s();
+        } else {
             Pattern p = Pattern.compile("([-\\w]+)\\.([-\\w]+)\\.(\\S+)");
             Matcher m = p.matcher(secret.get("name").s());
             if(m.matches())
