@@ -18,19 +18,13 @@
 package org.finra.fidelius.factories;
 
 import org.springframework.stereotype.Component;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
-import software.amazon.awssdk.core.retry.RetryPolicy;
-import software.amazon.awssdk.core.retry.backoff.FullJitterBackoffStrategy;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.sts.StsClient;
 
 import javax.inject.Inject;
-import java.time.Duration;
 
 @Component
 public class AWSSessionFactory {
@@ -39,18 +33,11 @@ public class AWSSessionFactory {
     private ClientOverrideConfiguration clientConfiguration;
 
     public DynamoDbClient createDynamoDBClient(AwsCredentialsProvider awsCredentialsProvider, Region region) {
-        FullJitterBackoffStrategy backoffStrategy = FullJitterBackoffStrategy.builder().baseDelay(Duration.ofMillis(100)).maxBackoffTime(Duration.ofMillis(1000)).build();
-        RetryPolicy retryPolicy = RetryPolicy.builder().numRetries(5).backoffStrategy(backoffStrategy).throttlingBackoffStrategy(backoffStrategy).build();
-        ClientOverrideConfiguration clientOverrideConfiguration = ClientOverrideConfiguration.builder().retryPolicy(retryPolicy).build();
         return DynamoDbClient.builder()
                 .credentialsProvider(awsCredentialsProvider)
                 .region(region)
-                .overrideConfiguration(clientOverrideConfiguration)
+                .overrideConfiguration(clientConfiguration)
                 .build();
-    }
-
-    public DynamoDbEnhancedClient createDynamoDBEnhancedClient(DynamoDbClient dynamoDbClient) {
-        return DynamoDbEnhancedClient.builder().dynamoDbClient(dynamoDbClient).build();
     }
 
     public StsClient createSecurityTokenServiceClient() {

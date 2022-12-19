@@ -50,7 +50,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
 import software.amazon.awssdk.services.kms.KmsClient;
@@ -191,11 +190,23 @@ public class CredentialsService {
         AWSEnvironment awsEnvironment = new AWSEnvironment(account, region);
         List<Credential> results = new ArrayList<>();
         DynamoDbClient dynamoDbClient = awsSessionService.getDynamoDBClient(awsEnvironment);
-        DynamoDbEnhancedClient dynamoDbEnhancedClient = awsSessionService.getDynamoDBEnhancedClient(dynamoDbClient);
 
         setFideliusEnvironment(account, region);
 
-        List<Map<String, AttributeValue>> queryResults = dynamoDBService.scanDynamoDB(dynamoDbEnhancedClient, tableName, application);
+        Map<String, String> ean = new HashMap<>();
+        ean.put("#tempname", NAME);
+
+        Map<String, AttributeValue> eav = new HashMap<>();
+        eav.put(":key", AttributeValue.builder().s(application + ".").build());
+
+        ScanRequest scanRequest = ScanRequest.builder()
+                .tableName(tableName)
+                .filterExpression("begins_with (#tempname, :key)")
+                .expressionAttributeNames(ean)
+                .expressionAttributeValues(eav)
+                .build();
+
+        List<Map<String, AttributeValue>> queryResults = dynamoDBService.scanDynamoDB(scanRequest, dynamoDbClient);
 
         // Gets only latest version of each credential
         Map<String, Map<String, AttributeValue>> credentials = getLatestCredentialVersion(queryResults);
@@ -252,7 +263,7 @@ public class CredentialsService {
 
         try {
             Map<String, AttributeValue> dbCredential = credentials.values().stream().findFirst().get();
-            if(dbCredential.get(SDLC) == null) {
+            if(dbCredential.get(SDLC) == null || dbCredential.get(SDLC).s() == null) {
                 dbCredential = migrateService.migrateCredential(dbCredential, fideliusService);
             }
 

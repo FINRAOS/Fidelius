@@ -25,10 +25,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughputExceededException;
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest;
+import software.amazon.awssdk.services.dynamodb.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.dynamodb.model.ScanRequest;
 
 import static org.mockito.Matchers.any;
@@ -46,13 +46,16 @@ public class DynamoDBServiceTest {
     @Mock
     private DynamoDbClient dynamoDbClient;
 
-    @Mock
-    private DynamoDbEnhancedClient dynamoDbEnhancedClient;
-
 
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
+    }
+
+    @Test(expected = FideliusException.class)
+    public void scanDynamoDBCannotFindTableException() {
+        when(dynamoDbClient.scan(any(ScanRequest.class))).thenThrow(ResourceNotFoundException.builder().message("test").build());
+        dynamoDBService.scanDynamoDB(ScanRequest.builder().build(), dynamoDbClient);
     }
 
     @Test(expected = FideliusException.class)
