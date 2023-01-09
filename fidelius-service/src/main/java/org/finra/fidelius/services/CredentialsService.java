@@ -114,6 +114,9 @@ public class CredentialsService {
     @Value("${fidelius.rotate.oauth.clientSecret:}")
     private Optional<String> clientSecret;
 
+    @Value("${fidelius.rotate.serviceAccountPattern:}")
+    private Optional<String> serviceAccountPattern;
+
     private final static String RDS = "rds";
     private final static String AURORA = "aurora";
 
@@ -647,12 +650,8 @@ public class CredentialsService {
                 }
                 break;
             case "Service Account":
-                if(!metadata.getSource().startsWith("svc_"+metadata.getApplication().toLowerCase())){
-                    return "Service Account sources must start with \"svc_" + metadata.getApplication().toLowerCase() + "\"";
-                }
-                String accountSuffix = accountsService.getAccountByAlias(metadata.getAccount()).getSdlc().toLowerCase().substring(0,1);
-                if(!metadata.getSource().endsWith("_"+accountSuffix)){
-                    return "Service Account sources must end with \"_" + accountSuffix + "\" in " + metadata.getAccount();
+                if(serviceAccountPattern.isPresent() && !serviceAccountPattern.get().isEmpty() && !metadata.getSource().matches(serviceAccountPattern.get())) {
+                    return "Please update your service account name and try again. Provided source name: " + metadata.getSource();
                 }
                 break;
             default:
