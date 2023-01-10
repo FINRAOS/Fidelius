@@ -44,6 +44,7 @@ Currently Fidelius only supports authorization through LDAP, the application exp
 | fidelius.dynamoTable                           	| Name of DynamoDB table to be used to store secrets.                                	                                | string 	|
 | fidelius.javax.contentSecurityPolicy 	            | (Optional) Content-Security-Policy header to be appended to "default-src 'self' 'unsafe-inline' 'unsafe-eval'; "      | string 	|
 | fidelius.kmsKey                                	| KMS key used to encrypt/decrypt secrets.                                           	                                | string 	|
+| fidelius.rotate.serviceAccountPattern         	| When rotating a service account, the regex for valid service account names. No validation if omitted. 	            | string 	|
 | fidelius.rotate.url         	                    | Secret rotation endpoint URL. 	                                                                                    | string 	|
 | fidelius.rotate.uri         	                    | Secret rotation endpoint URI. 	                                                                                    | string 	|
 | fidelius.validActiveDirectoryRegularExpression 	| Regular Expression used to validate secrets marked labeled Active Directory.       	                                | string 	|
