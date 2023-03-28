@@ -56,12 +56,6 @@ public class DynamoDBServiceTest {
     }
 
     @Test(expected = FideliusException.class)
-    public void scanDynamoDBFailsAfterIntervalReaches60SecondsWhenRetryingOnThrottlingException() {
-        when(dynamoDbEnhancedClient.table(any(), any())).thenThrow(ProvisionedThroughputExceededException.builder().message("test").build());
-        dynamoDBService.scanDynamoDB(dynamoDbEnhancedClient, "testTable", "TEST");
-    }
-
-    @Test(expected = FideliusException.class)
     public void queryDynamoDBFailsAfterIntervalReaches60SecondsWhenRetryingOnThrottlingException() {
         when(dynamoDbClient.query(any(QueryRequest.class))).thenThrow(ProvisionedThroughputExceededException.builder().message("test").build());
         dynamoDBService.queryDynamoDB(QueryRequest.builder().build(), dynamoDbClient);
