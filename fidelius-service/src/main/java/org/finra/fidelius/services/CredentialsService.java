@@ -97,6 +97,9 @@ public class CredentialsService {
     @Value(("${fidelius.sourceTypes}"))
     private String sourceTypes;
 
+    @Value("${fidelius.rotationUserManual:}")
+    private String rotationUserManual;
+
     @Value("${fidelius.rotate.url:}")
     private Optional<String> rotateUrl;
 
@@ -631,6 +634,7 @@ public class CredentialsService {
         switch (sourceType){
             case "RDS":
             case "Aurora":
+            case "DocumentDB":
                 if(!metadata.getSource().startsWith(metadata.getApplication().toLowerCase())){
                     return metadata.getSourceType() + " sources must start with \"" + metadata.getApplication().toLowerCase() + "\"";
                 }
@@ -755,6 +759,10 @@ public class CredentialsService {
     }
     public List<String> getSourceTypes(){
         return Arrays.asList(sourceTypes.split(","));
+    }
+
+    public String getRotationUserManual(){
+        return "\"" + rotationUserManual + "\"";
     }
 
     public static String getShortKey(Map<String, AttributeValue> secret) {

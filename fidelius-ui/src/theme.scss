@@ -290,6 +290,10 @@ textarea.secret-box{
   color: rgba(0, 0, 0, 0.54);
 }
 
+.link-color{
+  color : mat-color($accent) !important
+}
+
 // End light theme
 
 
@@ -336,7 +340,6 @@ $dark-red: #DD505A;
   .secret-type-radio-label {
     color: #888f98;
   }
-
 
   // Buttons
   // Flat buttons

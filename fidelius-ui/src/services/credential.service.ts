@@ -74,6 +74,10 @@ export class CredentialService {
     return this._http.get<any>( this.URL + '/sourceTypes')
   }
 
+  getRotationUserManual(){
+    return this._http.get<any>( this.URL + '/rotationUserManual')
+  }
+
   createMetadata(metadata: Metadata): Observable<any> {
     return this._http.post<any>(this.URL + '/credentials/metadata', metadata);
   }

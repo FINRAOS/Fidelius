@@ -44,6 +44,7 @@ export class RotateComponent implements OnInit{
   activeDirectory: IActiveDirectory;
   secretTypes: string[] = ['Password', 'Active Directory', 'Other'];
   secretType: string;
+  rotationUserManual: string = '';
   isIEOrEdge: boolean;
   isLoading: boolean = true;
   hasError: boolean = false;
@@ -74,6 +75,7 @@ export class RotateComponent implements OnInit{
     this.credential.application = this._parentComponent.selected.application;
     this.credential.region = this._parentComponent.selected.region;
     this.isIEOrEdge = this._browserService.checkIfIEOrEdge();
+    this.getRotationUserManual();
     this.getSourceTypes();
     this.loadCredential();
     this.getMetadata();
@@ -131,7 +133,33 @@ export class RotateComponent implements OnInit{
       this.sourceTypes = types;
     });
   }
+
+  getRotationUserManual(): void{
+    this._credentialService.getRotationUserManual().subscribe((rotationUserManual: string)=> {
+      this.rotationUserManual = rotationUserManual;
+    });
+  }
+
+  getDisplayedSourceName(){
+    if(!this.metadata.sourceType){
+      return "Source Name"
+    }
+
+    if(this.metadata.sourceType.toLowerCase().includes("service account")){
+      return "Service Account Name"
+    }
+
+    if(this.metadata.sourceType.toLowerCase().includes("rds")){
+      return "Instance Identifier"
+    }
   
+    const instanceTypes = ["documentdb", "aurora", "redshift"]
+    if(instanceTypes.some(type => this.metadata.sourceType.toLowerCase().includes(type))){
+      return "Primary Cluster Identifier"
+    }
+
+    return "Source Name"   
+  }
 
   closeSideNav(refresh: boolean): void {
     this._parentComponent.closeSideNavAndRefresh(refresh);
