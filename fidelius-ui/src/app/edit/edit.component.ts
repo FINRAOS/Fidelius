@@ -44,6 +44,7 @@ export class EditComponent implements OnInit{
   activeDirectory: IActiveDirectory;
   secretTypes: string[] = ['Password', 'Active Directory', 'Other'];
   sourceNames: string[] = [];
+  rotationUserManual: string = '';
   filteredSourceNames: string[] = [];
   secretType: string;
   isIEOrEdge: boolean;
@@ -77,6 +78,7 @@ export class EditComponent implements OnInit{
     this.credential.application = this._parentComponent.selected.application;
     this.credential.region = this._parentComponent.selected.region;
     this.isIEOrEdge = this._browserService.checkIfIEOrEdge();
+    this.getRotationUserManual();
     this.getSourceTypes();
     this.loadCredential();
     this.getMetadata();
@@ -99,6 +101,9 @@ export class EditComponent implements OnInit{
       this._changeDetectorRef.detectChanges();
     });
   }
+
+  
+
   getMetadata():void {
     this._credentialService.getMetadata(this.credential).subscribe( (metadata: IMetadata) => {
       this.metadata = metadata;
@@ -121,6 +126,34 @@ export class EditComponent implements OnInit{
       this.sourceTypes = types;
     });
   }
+
+  getRotationUserManual(): void{
+    this._credentialService.getRotationUserManual().subscribe((rotationUserManual: string)=> {
+      this.rotationUserManual = rotationUserManual;
+    });
+  }
+
+  getDisplayedSourceName(){
+    if(!this.metadata.sourceType){
+      return "Source Name"
+    }
+
+    if(this.metadata.sourceType.toLowerCase().includes("service account")){
+      return "Service Account Name"
+    }
+
+    if(this.metadata.sourceType.toLowerCase().includes("rds")){
+      return "Instance Identifier"
+    }
+  
+    const instanceTypes = ["documentdb", "aurora", "redshift"]
+    if(instanceTypes.some(type => this.metadata.sourceType.toLowerCase().includes(type))){
+      return "Primary Cluster Identifier"
+    }
+
+    return "Source Name"   
+  }
+
   getActiveDirectoryPasswordPattern(): void {
     this._credentialService.getActiveDirectoryPasswordValidation().subscribe( (activeDirectory: IActiveDirectory) => {
       this.activeDirectory = activeDirectory;
