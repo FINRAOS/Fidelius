@@ -55,7 +55,7 @@ public class DynamoDBService {
             try {
                 DynamoDbTable<CredentialSchema> credentialTable = dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(CredentialSchema.class));
                 for (CredentialSchema rec : credentialTable.scan().items()) {
-                    if(rec.getName().startsWith(application)) {
+                    if(rec.getName().startsWith(application + ".")) {
                         queryResults.add(rec.getMapOfAttributeValues());
                     }
                 }
