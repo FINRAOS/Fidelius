@@ -120,6 +120,7 @@ public class CredentialsService {
 
     private final static String RDS = "rds";
     private final static String AURORA = "aurora";
+    private final static String DOCUMENTDB = "documentdb";
 
     public final static String NAME = "name";
     public final static String VERSION = "version";
@@ -713,7 +714,7 @@ public class CredentialsService {
         return results;
     }
 
-    private List<String> getAllAuroraRegionalCluster(String account, String region, String application) throws FideliusException {
+    private List<String> getAllRegionalCluster(String account, String region, String application, String engine) throws FideliusException {
 
         logger.info(String.format("Getting all Aurora clusters for account %s and region %s.", account, region));
         List<String> results = new ArrayList<>();
@@ -724,7 +725,7 @@ public class CredentialsService {
         List<DBCluster> dbClusterList = response.dbClusters();
 
         for(DBCluster cluster: dbClusterList) {
-            if(cluster.dbClusterIdentifier().startsWith(application.toLowerCase())){
+            if(cluster.dbClusterIdentifier().startsWith(application.toLowerCase()) && cluster.engine().toLowerCase().contains(engine)){
                 results.add(cluster.dbClusterIdentifier());
             }
         }
@@ -733,7 +734,7 @@ public class CredentialsService {
             response = amazonRDSClient.describeDBClusters(DescribeDbClustersRequest.builder().marker(response.marker()).build());
             dbClusterList = response.dbClusters();
             for(DBCluster cluster: dbClusterList) {
-                if(cluster.dbClusterIdentifier().startsWith(application.toLowerCase())){
+                if(cluster.dbClusterIdentifier().startsWith(application.toLowerCase()) && cluster.engine().toLowerCase().contains(engine)){
                     results.add(cluster.dbClusterIdentifier());
                 }
             }
@@ -748,7 +749,9 @@ public class CredentialsService {
             case RDS:
                 return getAllRDS(account, region, application);
             case AURORA:
-                return getAllAuroraRegionalCluster(account, region, application);
+                return getAllRegionalCluster(account, region, application, "aurora");
+            case DOCUMENTDB:
+                return getAllRegionalCluster(account, region, application, "docdb");
             default:
                 logger.info("No source names to return for source type: " + sourceType);
                 return new ArrayList<>();
