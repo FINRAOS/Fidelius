@@ -204,7 +204,7 @@ public class CredentialsService {
         Map<String, Map<String, AttributeValue>> credentials = getLatestCredentialVersion(queryResults);
 
         for (Map<String, AttributeValue> dbCredential : credentials.values()) {
-            if(dbCredential.get(SDLC) == null){
+            if(dbCredential.get(SDLC) == null || dbCredential.get(SDLC).s() == null){
                 logger.info(String.format("Credential %s missing attributes.  Attempting to add missing attributes: ", dbCredential.get(NAME)));
                 dbCredential = migrateService.guessCredentialProperties(dbCredential);
             }
@@ -255,7 +255,7 @@ public class CredentialsService {
 
         try {
             Map<String, AttributeValue> dbCredential = credentials.values().stream().findFirst().get();
-            if(dbCredential.get(SDLC) == null) {
+            if(dbCredential.get(SDLC) == null || dbCredential.get(SDLC).s() == null) {
                 dbCredential = migrateService.migrateCredential(dbCredential, fideliusService);
             }
 
@@ -635,10 +635,7 @@ public class CredentialsService {
             case "RDS":
             case "Aurora":
             case "DocumentDB":
-                if(!metadata.getSource().startsWith(metadata.getApplication().toLowerCase())){
-                    return metadata.getSourceType() + " sources must start with \"" + metadata.getApplication().toLowerCase() + "\"";
-                }
-                break;
+                return "";
             case "Service Account":
                 if(!metadata.getSource().startsWith("svc_"+metadata.getApplication().toLowerCase())){
                     return "Service Account sources must start with \"svc_" + metadata.getApplication().toLowerCase() + "\"";
