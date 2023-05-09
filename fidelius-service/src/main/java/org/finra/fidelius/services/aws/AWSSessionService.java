@@ -38,6 +38,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.KmsClientBuilder;
 import software.amazon.awssdk.services.rds.RdsClient;
+import software.amazon.awssdk.services.redshift.RedshiftClient;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
 import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
@@ -156,6 +157,15 @@ public class AWSSessionService {
     public RdsClient getRdsClient(AWSEnvironment env){
         StsAssumeRoleCredentialsProvider stsAssumeRoleCredentialsProvider = getStsAssumeRoleCredentialsProvider(env);
         return RdsClient
+                .builder()
+                .credentialsProvider(stsAssumeRoleCredentialsProvider)
+                .region(env.getRegion())
+                .build();
+    }
+
+    public RedshiftClient getRedshiftClient(AWSEnvironment env){
+        StsAssumeRoleCredentialsProvider stsAssumeRoleCredentialsProvider = getStsAssumeRoleCredentialsProvider(env);
+        return RedshiftClient
                 .builder()
                 .credentialsProvider(stsAssumeRoleCredentialsProvider)
                 .region(env.getRegion())
