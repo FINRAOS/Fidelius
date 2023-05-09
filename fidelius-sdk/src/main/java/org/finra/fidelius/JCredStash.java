@@ -42,7 +42,7 @@ public class JCredStash {
     protected KmsClient kmsClient;
     protected CredStashCrypto cryptoImpl;
     protected StsClient stsClient;
-
+    private static int MAX_BULK_WRITE_REQUEST_ITEMS = 25;
     protected JCredStash() {
         this.dynamoDbClient = DynamoDbClient.builder().build();
         this.kmsClient = KmsClient.builder().build();
@@ -365,33 +365,58 @@ public class JCredStash {
     protected void deleteSecret(String tableName, String secretName) throws InterruptedException {
 
         QueryResponse queryResponse = getCredentials(tableName, secretName);
-        Map<String, List<WriteRequest>> writeRequestMap = new HashMap<>();
+        List<Map<String, List<WriteRequest>>> writeRequestMapList = new ArrayList<>();
         List<WriteRequest> writeRequests = new ArrayList<>();
+        int item_count = 0;
         for (Map<String, AttributeValue> item : queryResponse.items()) {
             Map<String, AttributeValue> preppedItemMap = filterItemMapForDeletion(item);
             WriteRequest writeRequest = WriteRequest.builder()
                     .deleteRequest(DeleteRequest.builder().key(preppedItemMap).build()
             ).build();
             writeRequests.add(writeRequest);
-        }
-        writeRequestMap.put(tableName, writeRequests);
-        BatchWriteItemRequest batchWriteItemRequest = BatchWriteItemRequest.builder().requestItems(writeRequestMap).build();
-
-        Map<String, List<WriteRequest>> unprocessed = null ;
-        int attempts = 0;
-        do {
-            if (attempts > 0) {
-                // exponential backoff per DynamoDB recommendation
-                Thread.sleep((1 << attempts) * 1000);
+            item_count++;
+            //Break into max amount of items for a bulk write request
+            if(item_count % MAX_BULK_WRITE_REQUEST_ITEMS == 0){
+                Map<String, List<WriteRequest>> writeRequestMap = new HashMap<>();
+                writeRequestMap.put(tableName, writeRequests);
+                writeRequestMapList.add(writeRequestMap);
+                writeRequests = new ArrayList<>();
             }
-            attempts++;
-            BatchWriteItemResponse batchWriteItemResponse = dynamoDbClient.batchWriteItem(batchWriteItemRequest);
-            unprocessed = batchWriteItemResponse.unprocessedItems();
-            batchWriteItemRequest = BatchWriteItemRequest.builder().requestItems(unprocessed).build();
-        } while (unprocessed.size() > 0 && attempts < 6);
+        }
+        //Include left over items
+        if(item_count % MAX_BULK_WRITE_REQUEST_ITEMS != 0){
+            Map<String, List<WriteRequest>> writeRequestMap = new HashMap<>();
+            writeRequestMap.put(tableName, writeRequests);
+            writeRequestMapList.add(writeRequestMap);
+        }
 
-        if(unprocessed.size() > 0)
-            throw new RuntimeException("Error deleting secret " + secretName + " with " + unprocessed.size() + " versions not deleted");
+        for(Map<String, List<WriteRequest>> writeRequestMap : writeRequestMapList){
+            BatchWriteItemRequest batchWriteItemRequest = BatchWriteItemRequest.builder().requestItems(writeRequestMap).build();
+
+            Map<String, List<WriteRequest>> unprocessed = null ;
+            int unprocessedSize = batchWriteItemRequest.requestItems().size();
+            int attempts = 0;
+            do {
+                if (attempts > 0) {
+                    // exponential backoff per DynamoDB recommendation
+                    Thread.sleep((1 << attempts) * 1000);
+                }
+                attempts++;
+                try {
+                    BatchWriteItemResponse batchWriteItemResponse = dynamoDbClient.batchWriteItem(batchWriteItemRequest);
+                    unprocessed = batchWriteItemResponse.unprocessedItems();
+                    unprocessedSize = unprocessed.size();
+                    batchWriteItemRequest = BatchWriteItemRequest.builder().requestItems(unprocessed).build();
+                }catch (ProvisionedThroughputExceededException e){
+                    // exponential backoff per DynamoDB recommendation
+                    Thread.sleep((1 << attempts) * 1000);
+                }
+
+            } while (unprocessedSize > 0 && attempts < 6);
+
+            if(unprocessedSize > 0)
+                throw new RuntimeException("Error deleting secret " + secretName + " with " + unprocessed.size() + " versions not deleted");
+        }
     }
 
     private Map<String, AttributeValue> filterItemMapForDeletion(Map<String, AttributeValue> items) {
