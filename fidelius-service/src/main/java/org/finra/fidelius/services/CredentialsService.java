@@ -712,7 +712,7 @@ public class CredentialsService {
         List<String> results = new ArrayList<>();
 
         RdsClient rdsClient = setRDSClient(account, region);
-        Filter rdsEngineFilter = Filter.builder().name("engine").values("postgres", "mysql", "oracle-se2", "oracle-ee", "custom-oracle-ee","oracle-ee-cdb", "oracle-se2-cdb").build();
+        Filter rdsEngineFilter = Filter.builder().name("engine").values("postgres", "mysql", "oracle-se2", "oracle-ee", "custom-oracle-ee","oracle-ee-cdb", "oracle-se2-cdb", "sqlserver-ee", "sqlserver-se", "sqlserver-ex", "sqlserver-web").build();
         DescribeDbInstancesResponse response = rdsClient.describeDBInstances(DescribeDbInstancesRequest.builder().filters(rdsEngineFilter).build());
         List<DBInstance> dbList = response.dbInstances();
 
