@@ -56,6 +56,10 @@ import software.amazon.awssdk.services.dynamodb.model.*;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.rds.RdsClient;
 import software.amazon.awssdk.services.rds.model.*;
+import software.amazon.awssdk.services.redshift.RedshiftClient;
+import software.amazon.awssdk.services.redshift.model.Cluster;
+import software.amazon.awssdk.services.redshift.model.DescribeClustersRequest;
+import software.amazon.awssdk.services.redshift.model.DescribeClustersResponse;
 import software.amazon.awssdk.services.sts.model.StsException;
 
 import javax.inject.Inject;
@@ -120,6 +124,8 @@ public class CredentialsService {
 
     private final static String RDS = "rds";
     private final static String AURORA = "aurora";
+    private final static String DOCUMENTDB = "documentdb";
+    private final static String REDSHIFT = "redshift";
 
     public final static String NAME = "name";
     public final static String VERSION = "version";
@@ -188,6 +194,29 @@ public class CredentialsService {
         return rdsClient;
     }
 
+    /**
+     * Sets Redshift Client for given AWS Account and AWS Region
+     *
+     * @param account AWS account
+     * @param region  AWS Region
+     */
+    protected RedshiftClient setRedshiftClient(String account, String region) {
+        AWSEnvironment awsEnvironment = new AWSEnvironment(account, region);
+        RedshiftClient redshiftClient;
+        try {
+            redshiftClient = awsSessionService.getRedshiftClient(awsEnvironment);
+        } catch (StsException ex) {
+            String message = String.format("Not authorized to access rds on account: %s in region: %s", account, region);
+            logger.error(message, ex);
+            throw new FideliusException(message, HttpStatus.FORBIDDEN);
+        } catch (RuntimeException re) {
+            String message = re.getMessage();
+            logger.error(message, re);
+            throw new FideliusException(message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return redshiftClient;
+    }
+
     @PreAuthorize("@fideliusRoleService.isAuthorized(#application, #account, \"LIST_CREDENTIALS\")")
     public List<Credential> getAllCredentials(String tableName, String account, String region, String application) throws FideliusException{
         logger.info(String.format("Getting all credentials for app %s using account %s and region %s.", application, account, region));
@@ -204,7 +233,7 @@ public class CredentialsService {
         Map<String, Map<String, AttributeValue>> credentials = getLatestCredentialVersion(queryResults);
 
         for (Map<String, AttributeValue> dbCredential : credentials.values()) {
-            if(dbCredential.get(SDLC) == null){
+            if(dbCredential.get(SDLC) == null || dbCredential.get(SDLC).s() == null){
                 logger.info(String.format("Credential %s missing attributes.  Attempting to add missing attributes: ", dbCredential.get(NAME)));
                 dbCredential = migrateService.guessCredentialProperties(dbCredential);
             }
@@ -255,7 +284,7 @@ public class CredentialsService {
 
         try {
             Map<String, AttributeValue> dbCredential = credentials.values().stream().findFirst().get();
-            if(dbCredential.get(SDLC) == null) {
+            if(dbCredential.get(SDLC) == null || dbCredential.get(SDLC).s() == null) {
                 dbCredential = migrateService.migrateCredential(dbCredential, fideliusService);
             }
 
@@ -635,10 +664,8 @@ public class CredentialsService {
             case "RDS":
             case "Aurora":
             case "DocumentDB":
-                if(!metadata.getSource().startsWith(metadata.getApplication().toLowerCase())){
-                    return metadata.getSourceType() + " sources must start with \"" + metadata.getApplication().toLowerCase() + "\"";
-                }
-                break;
+            case "Redshift":
+                return "";
             case "Service Account":
                 if(!metadata.getSource().startsWith("svc_"+metadata.getApplication().toLowerCase())){
                     return "Service Account sources must start with \"svc_" + metadata.getApplication().toLowerCase() + "\"";
@@ -685,7 +712,7 @@ public class CredentialsService {
         List<String> results = new ArrayList<>();
 
         RdsClient rdsClient = setRDSClient(account, region);
-        Filter rdsEngineFilter = Filter.builder().name("engine").values("postgres", "mysql", "oracle-se2", "oracle-ee", "custom-oracle-ee","oracle-ee-cdb", "oracle-se2-cdb").build();
+        Filter rdsEngineFilter = Filter.builder().name("engine").values("postgres", "mysql", "oracle-se2", "oracle-ee", "custom-oracle-ee","oracle-ee-cdb", "oracle-se2-cdb", "sqlserver-ee", "sqlserver-se", "sqlserver-ex", "sqlserver-web").build();
         DescribeDbInstancesResponse response = rdsClient.describeDBInstances(DescribeDbInstancesRequest.builder().filters(rdsEngineFilter).build());
         List<DBInstance> dbList = response.dbInstances();
 
@@ -716,7 +743,37 @@ public class CredentialsService {
         return results;
     }
 
-    private List<String> getAllAuroraRegionalCluster(String account, String region, String application) throws FideliusException {
+    private List<String> getAllRedshiftCluster(String account, String region, String application) throws FideliusException {
+
+        logger.info(String.format("Getting all Redshift clusters for account %s and region %s.", account, region));
+        List<String> results = new ArrayList<>();
+
+        RedshiftClient amazonRedshiftClient = setRedshiftClient(account, region);
+
+        DescribeClustersResponse response = amazonRedshiftClient.describeClusters();
+
+        List<Cluster> clusterList = response.clusters();
+
+        for(Cluster cluster: clusterList) {
+            if(cluster.clusterIdentifier().startsWith(application.toLowerCase())){
+                results.add(cluster.clusterIdentifier());
+            }
+        }
+
+        while(response.marker() != null){
+            response = amazonRedshiftClient.describeClusters(DescribeClustersRequest.builder().marker(response.marker()).build());
+            clusterList = response.clusters();
+            for(Cluster cluster: clusterList) {
+                if(cluster.clusterIdentifier().startsWith(application.toLowerCase())){
+                    results.add(cluster.clusterIdentifier());
+                }
+            }
+        }
+
+        return results;
+    }
+
+    private List<String> getAllRegionalCluster(String account, String region, String application, String engine) throws FideliusException {
 
         logger.info(String.format("Getting all Aurora clusters for account %s and region %s.", account, region));
         List<String> results = new ArrayList<>();
@@ -727,7 +784,7 @@ public class CredentialsService {
         List<DBCluster> dbClusterList = response.dbClusters();
 
         for(DBCluster cluster: dbClusterList) {
-            if(cluster.dbClusterIdentifier().startsWith(application.toLowerCase())){
+            if(cluster.dbClusterIdentifier().startsWith(application.toLowerCase()) && cluster.engine().toLowerCase().contains(engine)){
                 results.add(cluster.dbClusterIdentifier());
             }
         }
@@ -736,7 +793,7 @@ public class CredentialsService {
             response = amazonRDSClient.describeDBClusters(DescribeDbClustersRequest.builder().marker(response.marker()).build());
             dbClusterList = response.dbClusters();
             for(DBCluster cluster: dbClusterList) {
-                if(cluster.dbClusterIdentifier().startsWith(application.toLowerCase())){
+                if(cluster.dbClusterIdentifier().startsWith(application.toLowerCase()) && cluster.engine().toLowerCase().contains(engine)){
                     results.add(cluster.dbClusterIdentifier());
                 }
             }
@@ -751,7 +808,11 @@ public class CredentialsService {
             case RDS:
                 return getAllRDS(account, region, application);
             case AURORA:
-                return getAllAuroraRegionalCluster(account, region, application);
+                return getAllRegionalCluster(account, region, application, "aurora");
+            case DOCUMENTDB:
+                return getAllRegionalCluster(account, region, application, "docdb");
+            case REDSHIFT:
+                return getAllRedshiftCluster(account, region, application);
             default:
                 logger.info("No source names to return for source type: " + sourceType);
                 return new ArrayList<>();
