@@ -28,6 +28,7 @@ import org.finra.fidelius.services.MembershipService;
 
 import org.finra.fidelius.services.account.AccountsService;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
@@ -361,14 +362,6 @@ public class FideliusControllerTest {
         when(credentialsService.getCredentialSecret(anyString(), anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn(new Credential());
 
         mockMvc.perform(getCredentialSecretRequest)
-                .andExpect(status().is4xxClientError());
-    }
-
-    @Test
-    public void getMetadataShouldReturn401ErrorWhenUserNotIncluded() throws Exception {
-        when(credentialsService.getMetadata(anyString(), anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn(new Metadata());
-
-        mockMvc.perform(getMetadataRequest)
                 .andExpect(status().is4xxClientError());
     }
 

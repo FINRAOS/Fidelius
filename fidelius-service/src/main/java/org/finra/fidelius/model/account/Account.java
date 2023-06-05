@@ -18,6 +18,7 @@
 package org.finra.fidelius.model.account;
 
 import java.util.List;
+import java.util.Objects;
 
 public class Account {
 
@@ -74,5 +75,33 @@ public class Account {
 
     public void setRegions(List<Region> regions) {
         this.regions = regions;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Account account = (Account) o;
+        return Objects.equals(accountId, account.accountId) &&
+                Objects.equals(name, account.name) &&
+                Objects.equals(sdlc, account.sdlc) &&
+                Objects.equals(alias, account.alias) &&
+                Objects.equals(regions, account.regions);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(accountId, name, sdlc, alias, regions);
+    }
+
+    @Override
+    public String toString() {
+        return "Account{" +
+                "accountId='" + accountId + '\'' +
+                ", name='" + name + '\'' +
+                ", sdlc='" + sdlc + '\'' +
+                ", alias='" + alias + '\'' +
+                ", regions=" + regions +
+                '}';
     }
 }

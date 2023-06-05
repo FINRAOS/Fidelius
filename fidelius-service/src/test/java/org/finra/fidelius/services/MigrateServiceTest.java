@@ -36,8 +36,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MigrateServiceTest {
@@ -63,8 +62,8 @@ public class MigrateServiceTest {
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        when(awsSessionService.getDynamoDBClient(any())).thenReturn(DynamoDbClient.builder().build());
-        when(awsSessionService.getKmsClient(any())).thenReturn(KmsClient.builder().build());
+        lenient().when(awsSessionService.getDynamoDBClient(any())).thenReturn(DynamoDbClient.builder().build());
+        lenient().when(awsSessionService.getKmsClient(any())).thenReturn(KmsClient.builder().build());
     }
 
     @Test

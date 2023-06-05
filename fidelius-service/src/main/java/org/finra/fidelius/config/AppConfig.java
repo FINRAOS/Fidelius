@@ -49,7 +49,6 @@ import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
-import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import java.security.Principal;
 import java.util.Optional;
@@ -154,7 +153,7 @@ public class AppConfig {
     }
 
     @Bean
-    @ConfigurationProperties(prefix = "spring.ldap.contextSource")
+    @ConfigurationProperties(prefix = "spring.ldap.context-source")
     public LdapContextSource contextSource() {
         LdapContextSource contextSource = new LdapContextSource();
         contextSource.setBase(userBase);

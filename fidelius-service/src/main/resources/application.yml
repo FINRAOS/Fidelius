@@ -4,7 +4,8 @@ fidelius:
   sessionTimeoutPad: 10000
 
 server:
-  contextPath: /api/fidelius
+  servlet:
+    context-path: /api/fidelius
 
 spring:
   jackson:
@@ -12,6 +13,13 @@ spring:
       WRITE_DATES_AS_TIMESTAMPS: false
   profiles:
     active: container
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: heapdump
 
 ---
 #Local Profile
