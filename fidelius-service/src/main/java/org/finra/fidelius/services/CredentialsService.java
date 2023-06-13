@@ -286,6 +286,8 @@ public class CredentialsService {
             Map<String, AttributeValue> dbCredential = credentials.values().stream().findFirst().get();
             if(dbCredential.get(SDLC) == null || dbCredential.get(SDLC).s() == null) {
                 dbCredential = migrateService.migrateCredential(dbCredential, fideliusService);
+                logger.info(String.format("Credential %s missing attributes.  Attempting to add missing attributes: ", dbCredential.get(NAME)));
+                dbCredential = migrateService.guessCredentialProperties(dbCredential);
             }
 
             try {

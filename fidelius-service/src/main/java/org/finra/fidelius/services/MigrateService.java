@@ -131,14 +131,17 @@ public class MigrateService {
     public Map<String, AttributeValue> guessCredentialProperties(Map<String, AttributeValue> dbCredential) {
         Matcher threeFieldsMatcher = threeFieldsPattern.matcher(dbCredential.get("name").s());
         Map<String, AttributeValue> updatedDbCredential = new HashMap<>(dbCredential);
+        String[] nameSplit = dbCredential.get("name").s().split("\\.");
 
-        if (threeFieldsMatcher.matches()) {
+        if (nameSplit.length == 3) {
             logger.info("Parsing " + dbCredential.get("name").s());
-            String sdlc = threeFieldsMatcher.group(2);
+            String sdlc = nameSplit[1];
             updatedDbCredential.put("sdlc", AttributeValue.builder().s(sdlc).build());
         } else{
             try {
-                String sdlc = dbCredential.get("name").s().split("\\.")[1];
+                String component = nameSplit[1];
+                String sdlc = nameSplit[2];
+                updatedDbCredential.put("component", AttributeValue.builder().s(component).build());
                 updatedDbCredential.put("sdlc", AttributeValue.builder().s(sdlc).build());
             } catch (Exception e) {
                 logger.error("Error parsing key " + dbCredential.get("name").s());
