@@ -347,6 +347,7 @@ public class CredentialsServiceTest {
 
         when(dynamoDBService.queryDynamoDB(any(), any())).thenReturn(fakeData);
         when(migrateService.migrateCredential(any(), any())).thenReturn(fakeCred4);
+        when(migrateService.guessCredentialProperties(any())).thenReturn(fakeCred4);
 
         Credential expectedCreds = new Credential("testKey", "APP.TestComponent.dev.testKey",  "some-account", "region", "APP", "dev",
                 "TestComponent", "Ned Stark", "2018-04-04T12:51:37.803Z");
