@@ -157,7 +157,7 @@
                 #sourceNameControl="ngModel"
                 name="sourceName"
                 [(ngModel)]="metadata.source"
-                placeholder="Source Name"
+                placeholder={{getDisplayedSourceName()}}
                 disabled
                 readonly>
         </mat-form-field>

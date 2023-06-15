@@ -175,6 +175,28 @@ constructor( private _credentialService: CredentialService,
       }
     });
   }
+
+  getDisplayedSourceName(){
+    if(!this.metadata.sourceType){
+      return "Source Name"
+    }
+
+    if(this.metadata.sourceType.toLowerCase().includes("service account")){
+      return "Service Account Name"
+    }
+
+    if(this.metadata.sourceType.toLowerCase().includes("rds")){
+      return "Instance Identifier"
+    }
+  
+    const instanceTypes = ["documentdb", "aurora", "redshift"]
+    if(instanceTypes.some(type => this.metadata.sourceType.toLowerCase().includes(type))){
+      return "Primary Cluster Identifier"
+    }
+
+    return "Source Name"   
+  }
+
   rotateSecret():void{
     if(this.metadata.source && this.metadata.sourceType ){
       this.confirmRotateSecret();

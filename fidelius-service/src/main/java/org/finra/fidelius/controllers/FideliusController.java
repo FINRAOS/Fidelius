@@ -203,6 +203,12 @@ class FideliusController {
     }
 
     @ResponseBody
+    @GetMapping(value="/rotationUserManual")
+    public ResponseEntity getRotationUserManual() throws Exception {
+        return new ResponseEntity<>(credentialsService.getRotationUserManual(), HttpStatus.OK);
+    }
+
+    @ResponseBody
     @GetMapping(value="/credentials/metadata")
     public ResponseEntity getMetadata(@RequestParam("account") String account,
                                     @RequestParam("region") String region,

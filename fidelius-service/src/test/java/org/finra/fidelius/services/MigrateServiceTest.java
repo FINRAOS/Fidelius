@@ -172,22 +172,20 @@ public class MigrateServiceTest {
 
         Map<String, AttributeValue> result = migrateService.guessCredentialProperties(dbCredential);
 
-        Assert.assertEquals("component", result.get("sdlc").s());
-        Assert.assertNull(result.get("component"));
-        Assert.assertEquals("dev.key", CredentialsService.getShortKey(result));
+        Assert.assertEquals("dev", result.get("sdlc").s());
+        Assert.assertEquals("key", CredentialsService.getShortKey(result));
 
     }
 
     @Test
     public void guessCredentialWith4FieldsAndSpecialCharacters() throws Exception {
         Map<String, AttributeValue> dbCredential = new HashMap<>();
-        dbCredential.put("name", AttributeValue.builder().s("APP.dev-int.component.<key>").build());
+        dbCredential.put("name", AttributeValue.builder().s("APP.component.dev-int.<key>").build());
 
         Map<String, AttributeValue> result = migrateService.guessCredentialProperties(dbCredential);
 
         Assert.assertEquals("dev-int", result.get("sdlc").s());
-        Assert.assertNull(result.get("component"));
-        Assert.assertEquals("component.<key>", CredentialsService.getShortKey(result));
+        Assert.assertEquals("<key>", CredentialsService.getShortKey(result));
     }
 
     @Test
@@ -246,26 +244,24 @@ public class MigrateServiceTest {
     @Test
     public void guessCredentialWithMoreThan4Fields() throws Exception {
         Map<String, AttributeValue> dbCredential = new HashMap<>();
-        dbCredential.put("name", AttributeValue.builder().s("APP.dev.secret.long.key").build());
+        dbCredential.put("name", AttributeValue.builder().s("APP.secret.dev.long.key").build());
 
         Map<String, AttributeValue> result = migrateService.guessCredentialProperties(dbCredential);
 
         Assert.assertEquals("dev", result.get("sdlc").s());
-        Assert.assertNull(result.get("component"));
-        Assert.assertEquals("secret.long.key", CredentialsService.getShortKey(result));
+        Assert.assertEquals("long.key", CredentialsService.getShortKey(result));
 
     }
 
     @Test
     public void guessCredentialWithMoreThan4FieldsAndCharacters() throws Exception {
         Map<String, AttributeValue> dbCredential = new HashMap<>();
-        dbCredential.put("name", AttributeValue.builder().s("APP.dev-int.secret.long.<key*").build());
+        dbCredential.put("name", AttributeValue.builder().s("APP.secret.dev-int.long.<key*").build());
 
         Map<String, AttributeValue> result = migrateService.guessCredentialProperties(dbCredential);
 
         Assert.assertEquals("dev-int", result.get("sdlc").s());
-        Assert.assertNull(result.get("component"));
-        Assert.assertEquals("secret.long.<key*", CredentialsService.getShortKey(result));
+        Assert.assertEquals("long.<key*", CredentialsService.getShortKey(result));
 
     }
 
