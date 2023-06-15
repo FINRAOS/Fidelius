@@ -38,24 +38,40 @@ public class AWSSessionFactory {
     @Inject
     private ClientOverrideConfiguration clientConfiguration;
 
+    private static DynamoDbClient dynamoDbClient;
+    private static DynamoDbEnhancedClient dynamoDbEnhancedClient;
+    private static StsClient stsClient;
+
     public DynamoDbClient createDynamoDBClient(AwsCredentialsProvider awsCredentialsProvider, Region region) {
+        if(dynamoDbClient != null) {
+            return dynamoDbClient;
+        }
         FullJitterBackoffStrategy backoffStrategy = FullJitterBackoffStrategy.builder().baseDelay(Duration.ofMillis(100)).maxBackoffTime(Duration.ofMillis(1000)).build();
         RetryPolicy retryPolicy = RetryPolicy.builder().numRetries(5).backoffStrategy(backoffStrategy).throttlingBackoffStrategy(backoffStrategy).build();
         ClientOverrideConfiguration clientOverrideConfiguration = ClientOverrideConfiguration.builder().retryPolicy(retryPolicy).build();
-        return DynamoDbClient.builder()
+        dynamoDbClient = DynamoDbClient.builder()
                 .credentialsProvider(awsCredentialsProvider)
                 .region(region)
                 .overrideConfiguration(clientOverrideConfiguration)
                 .build();
+        return dynamoDbClient;
     }
 
     public DynamoDbEnhancedClient createDynamoDBEnhancedClient(DynamoDbClient dynamoDbClient) {
-        return DynamoDbEnhancedClient.builder().dynamoDbClient(dynamoDbClient).build();
+        if(dynamoDbEnhancedClient != null) {
+            return dynamoDbEnhancedClient;
+        }
+        dynamoDbEnhancedClient = DynamoDbEnhancedClient.builder().dynamoDbClient(dynamoDbClient).build();
+        return dynamoDbEnhancedClient;
     }
 
     public StsClient createSecurityTokenServiceClient() {
-        return StsClient.builder()
+        if(stsClient != null) {
+            return stsClient;
+        }
+        stsClient = StsClient.builder()
                 .overrideConfiguration(clientConfiguration)
                 .build();
+        return stsClient;
     }
 }
