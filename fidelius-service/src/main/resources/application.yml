@@ -19,16 +19,5 @@ management:
     web:
       base-path: /actuator
       exposure:
-        include: heapdump
-
----
-#Local Profile
-spring:
-  profiles: local
-
----
-
-#Container Profile
-spring:
-  profiles: container
+        include: heapdump, info, health
 
