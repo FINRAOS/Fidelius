@@ -85,7 +85,7 @@ public class CredentialsServiceTest {
         MockitoAnnotations.initMocks(this);
         when(fideliusService.getCredential(anyString(), anyString(), anyString(), anyString(), any(), anyString())).thenReturn("Secret");
         when(awsSessionService.getDynamoDBClient(any())).thenReturn(DynamoDbClient.builder().build());
-        when(awsSessionService.getKmsClient(any())).thenReturn(KmsClient.builder().build());
+        when(awsSessionService.getCachedKmsClient(any())).thenReturn(KmsClient.builder().build());
         FideliusUserEntry profile = new FideliusUserEntry("name", "test", "email@email.com", "John Johnson");
         when(fideliusRoleService.getUserProfile()).thenReturn(profile);
 

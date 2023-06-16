@@ -63,7 +63,7 @@ public class MigrateServiceTest {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         lenient().when(awsSessionService.getDynamoDBClient(any())).thenReturn(DynamoDbClient.builder().build());
-        lenient().when(awsSessionService.getKmsClient(any())).thenReturn(KmsClient.builder().build());
+        lenient().when(awsSessionService.getCachedKmsClient(any())).thenReturn(KmsClient.builder().build());
     }
 
     @Test

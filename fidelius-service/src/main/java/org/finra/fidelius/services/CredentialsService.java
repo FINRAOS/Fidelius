@@ -167,7 +167,7 @@ public class CredentialsService {
             logger.error(message, re);
             throw new FideliusException(message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        KmsClient kmsClient = awsSessionService.getKmsClient(awsEnvironment);
+        KmsClient kmsClient = awsSessionService.getCachedKmsClient(awsEnvironment);
         fideliusService.setFideliusClient(dynamoDBClient, kmsClient);
     }
 
@@ -181,7 +181,7 @@ public class CredentialsService {
         AWSEnvironment awsEnvironment = new AWSEnvironment(account, region);
         RdsClient rdsClient;
         try {
-            rdsClient = awsSessionService.getRdsClient(awsEnvironment);
+            rdsClient = awsSessionService.getCachedRdsClient(awsEnvironment);
         } catch (StsException ex) {
             String message = String.format("Not authorized to access rds on account: %s in region: %s", account, region);
             logger.error(message, ex);
@@ -204,7 +204,7 @@ public class CredentialsService {
         AWSEnvironment awsEnvironment = new AWSEnvironment(account, region);
         RedshiftClient redshiftClient;
         try {
-            redshiftClient = awsSessionService.getRedshiftClient(awsEnvironment);
+            redshiftClient = awsSessionService.getCachedRedshiftClient(awsEnvironment);
         } catch (StsException ex) {
             String message = String.format("Not authorized to access rds on account: %s in region: %s", account, region);
             logger.error(message, ex);
@@ -222,8 +222,7 @@ public class CredentialsService {
         logger.info(String.format("Getting all credentials for app %s using account %s and region %s.", application, account, region));
         AWSEnvironment awsEnvironment = new AWSEnvironment(account, region);
         List<Credential> results = new ArrayList<>();
-        DynamoDbClient dynamoDbClient = awsSessionService.getDynamoDBClient(awsEnvironment);
-        DynamoDbEnhancedClient dynamoDbEnhancedClient = awsSessionService.getDynamoDBEnhancedClient(dynamoDbClient);
+        DynamoDbEnhancedClient dynamoDbEnhancedClient = awsSessionService.getDynamoDBEnhancedClient(awsEnvironment);
 
         setFideliusEnvironment(account, region);
 
