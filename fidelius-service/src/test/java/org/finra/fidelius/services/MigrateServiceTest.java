@@ -72,7 +72,7 @@ public class MigrateServiceTest {
         Map<String, AttributeValue> dbCredential = new HashMap<>();
         dbCredential.put("name", AttributeValue.builder().s("APP.dev.key").build());
 
-        doReturn("correct").when(fideliusService).getCredential("key", "APP", "dev", null, tableName, "FideliusMigrateTask");
+        doReturn("correct").when(fideliusService).getCredential("key", "APP", "dev", null, null, tableName, "FideliusMigrateTask");
 
         Map<String, AttributeValue> result = migrateService.migrateCredential(dbCredential, fideliusService);
 
@@ -85,7 +85,7 @@ public class MigrateServiceTest {
         Map<String, AttributeValue> dbCredential = new HashMap<>();
         dbCredential.put("name", AttributeValue.builder().s("APP.dev.<user-id>").build());
 
-        doReturn("correct").when(fideliusService).getCredential("<user-id>", "APP", "dev", null, tableName, "FideliusMigrateTask");
+        doReturn("correct").when(fideliusService).getCredential("<user-id>", "APP", "dev", null, null, tableName, "FideliusMigrateTask");
 
         Map<String, AttributeValue> result = migrateService.migrateCredential(dbCredential, fideliusService);
 
@@ -134,7 +134,7 @@ public class MigrateServiceTest {
         Map<String, AttributeValue> dbCredential = new HashMap<>();
         dbCredential.put("name", AttributeValue.builder().s("APP.dev.secret.key").build());
 
-        doReturn("correct").when(fideliusService).getCredential("secret.key", "APP", "dev", null, tableName, "FideliusMigrateTask");
+        doReturn("correct").when(fideliusService).getCredential("secret.key", "APP", "dev", null, null, tableName, "FideliusMigrateTask");
 
         Map<String, AttributeValue> result = migrateService.migrateCredential(dbCredential, fideliusService);
 
@@ -147,7 +147,7 @@ public class MigrateServiceTest {
         Map<String, AttributeValue> dbCredential = new HashMap<>();
         dbCredential.put("name", AttributeValue.builder().s("APP.component.dev.key").build());
 
-        doReturn("correct").when(fideliusService).getCredential("key", "APP", "dev", "component", tableName, "FideliusMigrateTask");
+        doReturn("correct").when(fideliusService).getCredential("key", "APP", "dev", "component", null, tableName, "FideliusMigrateTask");
 
         Map<String, AttributeValue> result = migrateService.migrateCredential(dbCredential, fideliusService);
 
@@ -194,7 +194,7 @@ public class MigrateServiceTest {
         Map<String, AttributeValue> dbCredential = new HashMap<>();
         dbCredential.put("name", AttributeValue.builder().s("APP.dev.secret.long.key").build());
 
-        doReturn("correct").when(fideliusService).getCredential("secret.long.key", "APP", "dev", null, tableName, "FideliusMigrateTask");
+        doReturn("correct").when(fideliusService).getCredential("secret.long.key", "APP", "dev", null, null, tableName, "FideliusMigrateTask");
 
         Map<String, AttributeValue> result = migrateService.migrateCredential(dbCredential, fideliusService);
 
@@ -207,7 +207,7 @@ public class MigrateServiceTest {
         Map<String, AttributeValue> dbCredential = new HashMap<>();
         dbCredential.put("name", AttributeValue.builder().s("APP.dev-int.secret.'long.<key*").build());
 
-        doReturn("correct").when(fideliusService).getCredential("secret.'long.<key*", "APP", "dev-int", null, tableName, "FideliusMigrateTask");
+        doReturn("correct").when(fideliusService).getCredential("secret.'long.<key*", "APP", "dev-int", null, null, tableName, "FideliusMigrateTask");
 
         Map<String, AttributeValue> result = migrateService.migrateCredential(dbCredential, fideliusService);
 
@@ -221,7 +221,7 @@ public class MigrateServiceTest {
         Map<String, AttributeValue> dbCredential = new HashMap<>();
         dbCredential.put("name", AttributeValue.builder().s("APP.component.dev.secret.long.key").build());
 
-        doReturn("correct").when(fideliusService).getCredential("secret.long.key", "APP", "dev", "component", tableName, "FideliusMigrateTask");
+        doReturn("correct").when(fideliusService).getCredential("secret.long.key", "APP", "dev", "component", null, tableName, "FideliusMigrateTask");
 
         Map<String, AttributeValue> result = migrateService.migrateCredential(dbCredential, fideliusService);
 
@@ -234,7 +234,7 @@ public class MigrateServiceTest {
         Map<String, AttributeValue> dbCredential = new HashMap<>();
         dbCredential.put("name", AttributeValue.builder().s("APP.component.dev-int.secret.long.<key>").build());
 
-        doReturn("correct").when(fideliusService).getCredential("secret.long.<key>", "APP", "dev-int", "component", tableName, "FideliusMigrateTask");
+        doReturn("correct").when(fideliusService).getCredential("secret.long.<key>", "APP", "dev-int", "component", null, tableName, "FideliusMigrateTask");
 
         Map<String, AttributeValue> result = migrateService.migrateCredential(dbCredential, fideliusService);
 

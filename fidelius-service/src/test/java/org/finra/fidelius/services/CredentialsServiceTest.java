@@ -83,7 +83,7 @@ public class CredentialsServiceTest {
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        when(fideliusService.getCredential(anyString(), anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn("Secret");
+        when(fideliusService.getCredential(anyString(), anyString(), anyString(), anyString(), isNull(Integer.class), anyString(), anyString())).thenReturn("Secret");
         when(awsSessionService.getDynamoDBClient(any())).thenReturn(DynamoDbClient.builder().build());
         when(awsSessionService.getKmsClient(any())).thenReturn(KmsClient.builder().build());
         FideliusUserEntry profile = new FideliusUserEntry("name", "test", "email@email.com", "John Johnson");
@@ -484,7 +484,7 @@ public class CredentialsServiceTest {
         String shortKey = "shortKey";
 
         Credential expected = new Credential(shortKey,null,account, region, application, environment, component, null, null,"Secret");
-        Credential actual = credentialsService.getCredentialSecret(account, region, application, environment, component, shortKey);
+        Credential actual = credentialsService.getCredentialSecret(account, region, application, environment, component, shortKey, null);
 
         assertEquals(expected.getSecret(), actual.getSecret());
     }
@@ -499,9 +499,9 @@ public class CredentialsServiceTest {
         String component = "testComponent";
         String shortKey = "shortKey";
 
-        doThrow(new Exception("Not found.")).when(fideliusService).getCredential(anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+        doThrow(new Exception("Not found.")).when(fideliusService).getCredential(anyString(), anyString(), anyString(), anyString(), isNull(Integer.class), anyString(), anyString());
 
-        Credential actual = credentialsService.getCredentialSecret(account, region, application, environment, component, shortKey);
+        Credential actual = credentialsService.getCredentialSecret(account, region, application, environment, component, shortKey, null);
 
         assertNull(actual);
     }

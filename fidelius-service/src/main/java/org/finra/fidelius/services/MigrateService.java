@@ -96,7 +96,7 @@ public class MigrateService {
     private void migrate(String ags, String sdlc, String component, String key, Map<String, AttributeValue> dbCredential) throws Exception{
         String user = "FideliusMigrateTask";
 
-        String credentialSecret = fideliusService.getCredential(key,ags,sdlc,component, tableName, user);
+        String credentialSecret = fideliusService.getCredential(key, ags, sdlc, component, null, tableName, user);
 
         if(credentialSecret == null)
             throw new Exception("Error retrieving key");

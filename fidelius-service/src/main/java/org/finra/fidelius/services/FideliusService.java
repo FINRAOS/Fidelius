@@ -43,9 +43,9 @@ public class FideliusService extends FideliusClient {
         super.setFideliusClient(dynamoDBClient, awskmsClient);
     }
 
-    public String getCredential(String name, String ags,  String sdlc,  String component,
+    public String getCredential(String name, String ags,  String sdlc,  String component, Integer version, // null version -> get latest
                                 String table, String user) throws Exception {
-        return super.getCredential(name, ags, sdlc, component, table, user, false);
+        return super.getCredential(name, ags, sdlc, component, version, table, user, false);
     }
 
     public String putCredential(String name, String contents, String ags, String sdlc, String component,

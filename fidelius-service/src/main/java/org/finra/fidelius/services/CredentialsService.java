@@ -365,7 +365,7 @@ public class CredentialsService {
      */
     @PreAuthorize("@fideliusRoleService.isAuthorized(#application, #account)")
     public Credential getCredentialSecret(String account, String region, String application, String environment,
-                                      String component, String shortKey) {
+                                      String component, String shortKey, Integer version) {
         setFideliusEnvironment(account, region);
         String user = fideliusRoleService.getUserProfile().getUserId();
 
@@ -374,7 +374,7 @@ public class CredentialsService {
                 component = null;
             }
             String credentialSecret = fideliusService.getCredential(shortKey, application, environment, component,
-                    tableName, user);
+                    version, tableName, user);
 
             return new Credential(shortKey,null, account, region, application, environment, component,null,null, credentialSecret);
         } catch (Exception e) {
