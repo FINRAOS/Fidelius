@@ -19,5 +19,5 @@ management:
     web:
       base-path: ''
       exposure:
-        include: heapdump, info, health
+        include: info, health
 
