@@ -42,7 +42,6 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.core.retry.RetryPolicy;
-import software.amazon.awssdk.services.sts.StsClient;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.spi.DocumentationType;
@@ -85,9 +84,6 @@ public class AppConfig {
     @Autowired
     private final FideliusAuthProperties fideliusAuthProperties;
 
-    @Autowired
-    private ClientOverrideConfiguration clientConfiguration;
-
     public AppConfig(FideliusAuthProperties fideliusAuthProperties){
         //LDAP
         this.fideliusAuthProperties = fideliusAuthProperties;
@@ -107,13 +103,6 @@ public class AppConfig {
                 .build();
 
         return clientConfiguration;
-    }
-
-    @Bean
-    public StsClient awsSecurityTokenServiceClient() {
-        return StsClient.builder()
-                .overrideConfiguration(this.clientConfiguration)
-                .build();
     }
 
     @Configuration
