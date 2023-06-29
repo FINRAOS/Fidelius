@@ -34,7 +34,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.*;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -51,9 +51,9 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -83,9 +83,9 @@ public class CredentialsServiceTest {
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        when(fideliusService.getCredential(anyString(), anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn("Secret");
+        when(fideliusService.getCredential(anyString(), anyString(), anyString(), anyString(), any(), anyString())).thenReturn("Secret");
         when(awsSessionService.getDynamoDBClient(any())).thenReturn(DynamoDbClient.builder().build());
-        when(awsSessionService.getKmsClient(any())).thenReturn(KmsClient.builder().build());
+        when(awsSessionService.getCachedKmsClient(any())).thenReturn(KmsClient.builder().build());
         FideliusUserEntry profile = new FideliusUserEntry("name", "test", "email@email.com", "John Johnson");
         when(fideliusRoleService.getUserProfile()).thenReturn(profile);
 
@@ -116,7 +116,7 @@ public class CredentialsServiceTest {
         fakeData.add(fakeCred2);
 
         when(dynamoDBService.scanDynamoDB(any(), any(), any())).thenReturn(fakeData);
-        when(migrateService.migrateCredential(any(), any())).thenReturn(fakeCred3);
+        lenient().when(migrateService.migrateCredential(any(), any())).thenReturn(fakeCred3);
 
         List<Credential> expectedCreds = new ArrayList<>();
         expectedCreds.add(new Credential("testKey2", "APP.dev.testKey2", "some-account","region", "APP", "dev",
@@ -155,7 +155,7 @@ public class CredentialsServiceTest {
 
         fakeData.add(fakeCred1);
 
-        when(dynamoDBService.scanDynamoDB(any(), any(), any())).thenReturn(fakeData);
+        lenient().when(dynamoDBService.scanDynamoDB(any(), any(), any())).thenReturn(fakeData);
         credentialsService.getCredentialHistory("table", "dev", "us-east-1", "APP",
                 "dev", "TestComponent", "testKey", false);
     }
@@ -214,8 +214,6 @@ public class CredentialsServiceTest {
         fakeData.add(fakeCred3);
 
         when(dynamoDBService.scanDynamoDB(any(), any(), any())).thenReturn(fakeData);
-        when(migrateService.guessCredentialProperties(fakeCred1)).thenReturn(fakeCred4);
-        when(migrateService.guessCredentialProperties(fakeCred2)).thenReturn(fakeCred5);
         when(migrateService.guessCredentialProperties(fakeCred3)).thenReturn(fakeCred6);
 
         List<Credential> expectedCreds = new ArrayList<>();
@@ -405,8 +403,8 @@ public class CredentialsServiceTest {
 
         fakeData.add(fakeCred1);
 
-        when(dynamoDBService.scanDynamoDB(any(), any(), any())).thenReturn(fakeData);
-        when(migrateService.migrateCredential(any(), any())).thenThrow(NoSuchElementException.class);
+        lenient().when(dynamoDBService.scanDynamoDB(any(), any(), any())).thenReturn(fakeData);
+        lenient().when(migrateService.migrateCredential(any(), any())).thenThrow(NoSuchElementException.class);
 
         Credential expectedCreds = new Credential("testKey", "APP.TestComponent.dev.testKey",  "some-account", "region", "APP", "dev",
                 "TestComponent", "Ned Stark", "2018-04-04T12:51:37.803Z");
@@ -499,7 +497,7 @@ public class CredentialsServiceTest {
         String component = "testComponent";
         String shortKey = "shortKey";
 
-        doThrow(new Exception("Not found.")).when(fideliusService).getCredential(anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+        doThrow(new Exception("Not found.")).when(fideliusService).getCredential(anyString(), anyString(), anyString(), anyString(), any(), anyString());
 
         Credential actual = credentialsService.getCredentialSecret(account, region, application, environment, component, shortKey);
 
@@ -518,7 +516,7 @@ public class CredentialsServiceTest {
         credential.setShortKey("shortKey");
         credential.setSecret("secretPassword");
 
-        doThrow(new Exception("Error Created Credential.")).when(fideliusService).putCredential(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+        doThrow(new Exception("Error Created Credential.")).when(fideliusService).putCredential(anyString(), anyString(), anyString(), anyString(), anyString(), any(), anyString(), any());
         Credential actual = credentialsService.putCredential(credential);
 
         assertNull(actual);
@@ -536,7 +534,7 @@ public class CredentialsServiceTest {
         metadata.setSourceType("RDS");
         metadata.setSource("membership");
 
-        doThrow(new Exception("Error Created Credential.")).when(fideliusService).putMetadata(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+        doThrow(new Exception("Error Created Credential.")).when(fideliusService).putMetadata(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), any(), anyString(), any());
 
         Metadata actual = credentialsService.putMetadata(metadata);
 
@@ -554,7 +552,7 @@ public class CredentialsServiceTest {
         credential.setShortKey("shortKey");
         credential.setSecret("secretPassword");
 
-        Mockito.doReturn("000000000000000001").when(fideliusService).putCredential(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+        Mockito.doReturn("000000000000000001").when(fideliusService).putCredential(anyString(), anyString(), anyString(), anyString(), anyString(), any(), anyString(), any());
         Credential actual = credentialsService.putCredential(credential);
 
         assertEquals(credential, actual);
@@ -572,7 +570,7 @@ public class CredentialsServiceTest {
         metadata.setSourceType("RDS");
         metadata.setSource("membership");
 
-        Mockito.doReturn("000000000000000001").when(fideliusService).putMetadata(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+        Mockito.lenient().doReturn("000000000000000001").when(fideliusService).putMetadata(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
 
         Metadata actual = credentialsService.putMetadata(metadata);
 
@@ -614,7 +612,7 @@ public class CredentialsServiceTest {
         credential.setComponent("testComponent");
         credential.setShortKey("shortKey");
 
-        doThrow(new Exception("Credential not found")).when(fideliusService).deleteCredential(anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+        doThrow(new Exception("Credential not found")).when(fideliusService).deleteCredential(anyString(), anyString(), anyString(), anyString(), any(), anyString());
 
         Credential actual = credentialsService.deleteCredential(credential);
 
@@ -631,7 +629,7 @@ public class CredentialsServiceTest {
         credential.setComponent("testComponent");
         credential.setShortKey("shortKey");
 
-        doNothing().when(fideliusService).deleteCredential(anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+        doNothing().when(fideliusService).deleteCredential(anyString(), anyString(), anyString(), anyString(), any(), anyString());
         Credential actual = credentialsService.deleteCredential(credential);
 
         assertEquals(credential, actual);
@@ -647,7 +645,7 @@ public class CredentialsServiceTest {
         metadata.setComponent("testComponent");
         metadata.setShortKey("shortKey");
 
-        doThrow(new Exception("Metadata not found")).when(fideliusService).deleteMetadata(anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+        doThrow(new Exception("Metadata not found")).when(fideliusService).deleteMetadata(anyString(), anyString(), anyString(), anyString(), any(), anyString());
 
         Metadata actual = credentialsService.deleteMetadata(metadata);
 
@@ -664,7 +662,7 @@ public class CredentialsServiceTest {
         metadata.setComponent("testComponent");
         metadata.setShortKey("shortKey");
 
-        doNothing().when(fideliusService).deleteMetadata(anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+        doNothing().when(fideliusService).deleteMetadata(anyString(), anyString(), anyString(), anyString(), any(), anyString());
 
         Metadata actual = credentialsService.deleteMetadata(metadata);
 

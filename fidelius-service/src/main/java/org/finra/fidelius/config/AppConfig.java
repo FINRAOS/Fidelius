@@ -42,14 +42,12 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.core.retry.RetryPolicy;
-import software.amazon.awssdk.services.sts.StsClient;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
-import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import java.security.Principal;
 import java.util.Optional;
@@ -86,9 +84,6 @@ public class AppConfig {
     @Autowired
     private final FideliusAuthProperties fideliusAuthProperties;
 
-    @Autowired
-    private ClientOverrideConfiguration clientConfiguration;
-
     public AppConfig(FideliusAuthProperties fideliusAuthProperties){
         //LDAP
         this.fideliusAuthProperties = fideliusAuthProperties;
@@ -108,13 +103,6 @@ public class AppConfig {
                 .build();
 
         return clientConfiguration;
-    }
-
-    @Bean
-    public StsClient awsSecurityTokenServiceClient() {
-        return StsClient.builder()
-                .overrideConfiguration(this.clientConfiguration)
-                .build();
     }
 
     @Configuration
@@ -154,7 +142,7 @@ public class AppConfig {
     }
 
     @Bean
-    @ConfigurationProperties(prefix = "spring.ldap.contextSource")
+    @ConfigurationProperties(prefix = "spring.ldap.context-source")
     public LdapContextSource contextSource() {
         LdapContextSource contextSource = new LdapContextSource();
         contextSource.setBase(userBase);

@@ -4,7 +4,8 @@ fidelius:
   sessionTimeoutPad: 10000
 
 server:
-  contextPath: /api/fidelius
+  servlet:
+    context-path: /api/fidelius
 
 spring:
   jackson:
@@ -13,14 +14,10 @@ spring:
   profiles:
     active: container
 
----
-#Local Profile
-spring:
-  profiles: local
-
----
-
-#Container Profile
-spring:
-  profiles: container
+management:
+  endpoints:
+    web:
+      base-path: ''
+      exposure:
+        include: info, health
 
