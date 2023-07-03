@@ -391,7 +391,10 @@ public class CredentialsService {
     public Credential putCredential(Credential credential) {
         setFideliusEnvironment(credential.getAccount(), credential.getRegion());
         String user = fideliusRoleService.getUserProfile().getUserId();
-
+        if(credential.getLastUpdatedBy() != null && !credential.getLastUpdatedBy().isEmpty() && user.toLowerCase().equals(clientId.get().toLowerCase())) {
+            logger.info("Detected Service Account as updating user. Using last updated as user: " + credential.getLastUpdatedBy());
+            user = credential.getLastUpdatedBy();
+        }
         try {
             if(credential.getSource() != null && credential.getSourceType() != null) {
                 fideliusService.putCredentialWithMetadata(credential.getShortKey(), credential.getSecret(),
@@ -472,7 +475,8 @@ public class CredentialsService {
                         shortKey,
                         application,
                         environment,
-                        component
+                        component,
+                        user
                 );
                 JSONObject requestBody = rotateRequest.getJsonObject();
                 String rotateFullURL;
