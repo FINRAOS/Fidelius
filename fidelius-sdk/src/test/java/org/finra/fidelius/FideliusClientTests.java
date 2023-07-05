@@ -664,6 +664,60 @@ public class FideliusClientTests {
 
     @Test()
     @PrepareForTest({LoggerFactory.class, FideliusClient.class})
+    public void getCredentialDefaultGetsLatestVersion() throws Exception {
+        Logger loggerMock = mock(Logger.class);
+        mockStatic(LoggerFactory.class);
+        when(LoggerFactory.getLogger(any(Class.class))).
+                thenReturn(loggerMock);
+
+        JCredStash jCredStashMock = spy(JCredStash.class);
+        FideliusClient fideliusClient = spy(FideliusClient.class);
+        HashMap<String, String> context = new HashMap<>();
+        context.put("Application", "APP");
+        context.put("SDLC", "dev");
+        context.put("Component", "component");
+
+        HashMap<String, String> APPContext = context;
+        APPContext.remove("Component");
+
+        doReturn("decryptedPassword").when(jCredStashMock).getSecret("table", "APP.dev.secret", APPContext, null);
+
+        fideliusClient.jCredStash = jCredStashMock;
+
+        String result = fideliusClient.getCredential("secret", "app", "dev", "component", "table", "TestUser", true);
+        Assert.assertEquals("decryptedPassword", result);
+        verify(jCredStashMock, times(1)).getSecret("table", "APP.component.dev.secret", context, null);
+    }
+
+    @Test()
+    @PrepareForTest({LoggerFactory.class, FideliusClient.class})
+    public void getCredentialGetsSpecificVersion() throws Exception {
+        Logger loggerMock = mock(Logger.class);
+        mockStatic(LoggerFactory.class);
+        when(LoggerFactory.getLogger(any(Class.class))).
+                thenReturn(loggerMock);
+
+        JCredStash jCredStashMock = spy(JCredStash.class);
+        FideliusClient fideliusClient = spy(FideliusClient.class);
+        HashMap<String, String> context = new HashMap<>();
+        context.put("Application", "APP");
+        context.put("SDLC", "dev");
+        context.put("Component", "component");
+
+        HashMap<String, String> APPContext = context;
+        APPContext.remove("Component");
+
+        doReturn("decryptedPassword").when(jCredStashMock).getSecret("table", "APP.dev.secret", APPContext, 3);
+
+        fideliusClient.jCredStash = jCredStashMock;
+
+        String result = fideliusClient.getCredential("secret", "app", "dev", "component", 3, "table", "TestUser", true);
+        Assert.assertEquals("decryptedPassword", result);
+        verify(jCredStashMock, times(1)).getSecret("table", "APP.component.dev.secret", context, 3);
+    }
+
+    @Test()
+    @PrepareForTest({LoggerFactory.class, FideliusClient.class})
     public void getUserCorrectlyParsesUserStringsInARNForm() throws Exception {
         Logger loggerMock = mock(Logger.class);
         mockStatic(LoggerFactory.class);
