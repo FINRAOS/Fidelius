@@ -75,7 +75,7 @@ public class JCredStash {
         this.stsClient = stsClient;
     }
 
-    protected Map<String, AttributeValue> readDynamoItem(String tableName, String secret) {
+    protected Map<String, AttributeValue> readDynamoItem(String tableName, String secret, Integer version) {
         // TODO: allow multiple secrets to be fetched by pattern or list
         // TODO: allow specific version to be fetched
         Map<String, Condition> keyConditions = new HashMap<>();
@@ -85,12 +85,25 @@ public class JCredStash {
                 )
                 .comparisonOperator(ComparisonOperator.EQ)
                 .build());
-        keyConditions.put("version", Condition.builder()
-                .attributeValueList(
-                        AttributeValue.builder().s("0").build()
-                )
-                .comparisonOperator(ComparisonOperator.BEGINS_WITH)
-                .build());
+
+        Condition versionCondition;
+        if (version == null) {
+            versionCondition = Condition.builder()
+                    .attributeValueList(
+                            AttributeValue.builder().s("0").build()
+                    )
+                    .comparisonOperator(ComparisonOperator.BEGINS_WITH)
+                    .build();
+        } else {
+            versionCondition = Condition.builder()
+                    .attributeValueList(
+                            AttributeValue.builder().s(String.format("%019d", version)).build()
+                    )
+                    .comparisonOperator(ComparisonOperator.EQ)
+                    .build();
+        }
+        keyConditions.put("version", versionCondition);
+
         QueryResponse queryResponse = dynamoDbClient.query(QueryRequest.builder()
                 .tableName(tableName)
                 .limit(1)
@@ -181,13 +194,13 @@ public class JCredStash {
     }
 
     // default table name: "credential-store"
-    protected String getSecret(String tableName, String secret, Map<String, String> context)  {
+    protected String getSecret(String tableName, String secret, Map<String, String> context, Integer version)  {
 
         // The secret was encrypted using AES, then the key for that encryption was encrypted with AWS KMS
         // Then both the encrypted secret and the encrypted key are stored in dynamo
 
         // First find the relevant rows from the credstash table
-        Map<String, AttributeValue> dynamoCredential = readDynamoItem(tableName, secret);
+        Map<String, AttributeValue> dynamoCredential = readDynamoItem(tableName, secret, version);
         EncryptedCredential encryptedCredential = CredModelMapper.fromDynamo(dynamoCredential);
         return decrypt(encryptedCredential,context);
 
@@ -196,7 +209,7 @@ public class JCredStash {
     protected MetadataParameters getMetadata(String tableName, String metadataKey, Map<String, String> context)  {
 
         // First find the relevant rows from the credstash table
-        Map<String, AttributeValue> dynamoMetadata = readDynamoItem(tableName, metadataKey);
+        Map<String, AttributeValue> dynamoMetadata = readDynamoItem(tableName, metadataKey, null);
         MetadataParameters metadataParameters = MetadataModelMapper.fromDynamo(dynamoMetadata);
         return metadataParameters;
 

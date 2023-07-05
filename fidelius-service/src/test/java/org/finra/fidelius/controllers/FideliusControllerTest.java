@@ -52,6 +52,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -318,7 +319,7 @@ public class FideliusControllerTest {
     public void getSecretShouldReturnCredentialWithSecret() throws Exception {
         Credential response = new Credential("shortKey",null,"Dev", "us-east-1", "application","dev","component", null, null, "password");
 
-        when(credentialsService.getCredentialSecret(anyString(), anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn(response);
+        when(credentialsService.getCredentialSecret(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), isNull(Integer.class))).thenReturn(response);
 
         mockMvc.perform(getCredentialSecretRequest)
                 .andExpect(status().isOk())
@@ -344,7 +345,7 @@ public class FideliusControllerTest {
     @Test
     @WithMockUser
     public void getSecretShouldReturn400ErrorWhenCredentialNotFound() throws Exception {
-        when(credentialsService.getCredentialSecret(anyString(), anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn(new Credential());
+        when(credentialsService.getCredentialSecret(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), isNull(Integer.class))).thenReturn(new Credential());
 
         mockMvc.perform(getCredentialSecretRequest)
                 .andExpect(status().is4xxClientError());
@@ -361,7 +362,7 @@ public class FideliusControllerTest {
 
     @Test
     public void getSecretShouldReturn401ErrorWhenUserNotIncluded() throws Exception {
-        when(credentialsService.getCredentialSecret(anyString(), anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn(new Credential());
+        when(credentialsService.getCredentialSecret(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), isNull(Integer.class))).thenReturn(new Credential());
 
         mockMvc.perform(getCredentialSecretRequest)
                 .andExpect(status().is4xxClientError());

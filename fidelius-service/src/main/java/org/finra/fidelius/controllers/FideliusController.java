@@ -111,8 +111,9 @@ class FideliusController {
                                       @RequestParam("application") String application,
                                       @RequestParam("environment") String environment,
                                       @RequestParam(value = "component", required = false) String component,
+                                      @RequestParam(value = "version", required = false) Integer version,
                                       @RequestParam("shortKey") String shortKey) {
-        final Credential credentialSecret = credentialsService.getCredentialSecret(account, region, application, environment, component, shortKey);
+        final Credential credentialSecret = credentialsService.getCredentialSecret(account, region, application, environment, component, shortKey, version);
 
         if (credentialSecret.getSecret() != null)
             return new ResponseEntity<>(credentialSecret, HttpStatus.OK);
