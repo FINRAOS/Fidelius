@@ -2,6 +2,8 @@ package org.finra.fidelius.model.rotate;
 
 import org.json.simple.JSONObject;
 
+import java.util.Objects;
+
 public class RotateRequest {
 
     private String accountId;
@@ -88,5 +90,24 @@ public class RotateRequest {
         jsonObject.put("env", env);
         jsonObject.put("component", component);
         return jsonObject;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RotateRequest that = (RotateRequest) o;
+        return Objects.equals(accountId, that.accountId) &&
+                Objects.equals(sourceType, that.sourceType) &&
+                Objects.equals(sourceName, that.sourceName) &&
+                Objects.equals(secret, that.secret) &&
+                Objects.equals(ags, that.ags) &&
+                Objects.equals(env, that.env) &&
+                Objects.equals(component, that.component);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(accountId, sourceType, sourceName, secret, ags, env, component);
     }
 }

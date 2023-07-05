@@ -8,6 +8,7 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @DynamoDbBean
 public class CredentialSchema {
@@ -126,6 +127,29 @@ public class CredentialSchema {
         map.put("updatedBy", AttributeValue.builder().s(this.updatedBy).build());
         map.put("updatedOn", AttributeValue.builder().s(this.updatedOn).build());
         return map;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CredentialSchema that = (CredentialSchema) o;
+        return Objects.equals(name, that.name) &&
+                Objects.equals(version, that.version) &&
+                Objects.equals(component, that.component) &&
+                Objects.equals(contents, that.contents) &&
+                Objects.equals(hmac, that.hmac) &&
+                Objects.equals(key, that.key) &&
+                Objects.equals(sdlc, that.sdlc) &&
+                Objects.equals(source, that.source) &&
+                Objects.equals(sourceType, that.sourceType) &&
+                Objects.equals(updatedBy, that.updatedBy) &&
+                Objects.equals(updatedOn, that.updatedOn);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, version, component, contents, hmac, key, sdlc, source, sourceType, updatedBy, updatedOn);
     }
 
     @Override
