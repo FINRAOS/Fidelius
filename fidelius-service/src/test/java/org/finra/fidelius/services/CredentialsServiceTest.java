@@ -42,6 +42,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.MockBeans;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.kms.KmsClient;
@@ -88,7 +89,7 @@ public class CredentialsServiceTest {
         when(awsSessionService.getCachedKmsClient(any())).thenReturn(KmsClient.builder().build());
         FideliusUserEntry profile = new FideliusUserEntry("name", "test", "email@email.com", "John Johnson");
         when(fideliusRoleService.getUserProfile()).thenReturn(profile);
-
+        ReflectionTestUtils.setField(credentialsService, "clientId", Optional.of("service_account"));
     }
 
     @Test

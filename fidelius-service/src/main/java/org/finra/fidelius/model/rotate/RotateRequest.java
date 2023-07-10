@@ -13,8 +13,9 @@ public class RotateRequest {
     private String ags;
     private String env;
     private String component;
+    private String user;
 
-    public RotateRequest(String accountId, String sourceType, String sourceName, String secret, String ags, String env, String component) {
+    public RotateRequest(String accountId, String sourceType, String sourceName, String secret, String ags, String env, String component, String user) {
         this.accountId = accountId;
         this.sourceType = sourceType;
         this.sourceName = sourceName;
@@ -22,6 +23,7 @@ public class RotateRequest {
         this.ags = ags;
         this.env = env;
         this.component = component;
+        this.user = user;
     }
 
     public String getAccountId() {
@@ -80,6 +82,14 @@ public class RotateRequest {
         this.component = component;
     }
 
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
+
     public JSONObject getJsonObject() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("accountId", accountId);
@@ -89,6 +99,7 @@ public class RotateRequest {
         jsonObject.put("ags", ags);
         jsonObject.put("env", env);
         jsonObject.put("component", component);
+        jsonObject.put("user", user);
         return jsonObject;
     }
 
