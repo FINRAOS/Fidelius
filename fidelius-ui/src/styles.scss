@@ -128,7 +128,7 @@ mat-row.mat-row {
 
 // Increase space allowed for field label
 .mat-form-field-label-wrapper {
-  top: -2.8em;
+  top: -1.4em;
   padding-top: 2.8em;
 }
 
@@ -167,14 +167,14 @@ mat-row.mat-row {
 }
 
 // Display rectangular border instead of underline
-.mat-input-wrapper .mat-form-field-underline {
+.mat-form-field-wrapper .mat-form-field-underline {
   border-style: solid;
   border-width: 1px;
   border-radius: 3px;
-  height: 2em;
+  height: 2em !important;
 
   .mat-form-field-disabled & {
-    background-image: none;
+    background-image: none !important;
     border-color: transparent;
   }
 
@@ -208,7 +208,7 @@ mat-form-field.mat-form-field-invalid:not(.mat-focused) .mat-form-field-underlin
 
 mat-form-field.cred-secret-textarea {
   top: 10px;
-  .mat-input-wrapper{
+  .mat-form-field-wrapper{
     padding-bottom: 0;
     .mat-form-field-underline{
       height: 100%;

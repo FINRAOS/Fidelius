@@ -19,16 +19,13 @@ import {
   Component, Input, OnChanges, OnInit, AfterViewInit, OnDestroy, ChangeDetectorRef, ViewChildren, QueryList
 } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { Observable } from 'rxjs/Observable';
-import { startWith } from 'rxjs/operators/startWith';
-import { map } from 'rxjs/operators/map';
+import { Observable, Subscription } from 'rxjs';
+import { startWith, map } from 'rxjs/operators';
 import { Selected } from '../../services/credential.service';
 import { Account } from '../../services/account.service';
 import { APPLICATION_LIST_LABEL_NAME } from  '../../config/permissions';
 import {  MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material';
-import { Subscription } from 'rxjs/Subscription';
 import { MainComponent } from '../main/main.component';
-import 'rxjs/add/observable/of';
 
 @Component({
   selector: 'fidelius-search',

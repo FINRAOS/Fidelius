@@ -34,10 +34,8 @@ import { APPLICATION_LIST_LABEL_NAME } from '../../config/permissions';
 import { AlertService } from '../../services/alert.service';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { HeartbeatService } from '../../services/heartbeat.service';
-import { Observable } from 'rxjs/Observable';
+import { Observable, Subscription, timer } from 'rxjs';
 import { HEARTBEAT_IN_MS } from '../../config/application';
-import { TimerObservable } from 'rxjs/observable/TimerObservable';
-import { Subscription } from 'rxjs/Subscription';
 import { ChildActivationEnd, GuardsCheckEnd, NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { BrowserService } from '../../services/browser.service';
 import { DeleteDialogComponent, IDialogResponse } from './delete-dialog/delete-dialog.component';
@@ -123,8 +121,8 @@ export class MainComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadAccounts();
     this.loadUser();
-    let timer: Observable<number> = TimerObservable.create(HEARTBEAT_IN_MS, HEARTBEAT_IN_MS);
-    this.heartbeatSub = timer.subscribe(() => {
+    let heartbeatTimer: Observable<number> = timer(HEARTBEAT_IN_MS, HEARTBEAT_IN_MS);
+    this.heartbeatSub = heartbeatTimer.subscribe(() => {
       this._heartbeat.heartbeat_poll().subscribe( (response: any) => { /* Do nothing */ }, (error: any) => {
         console.error('ERROR: Heartbeat poll received an error!\n ' + JSON.stringify(error));
       });
@@ -239,7 +237,7 @@ export class MainComponent implements OnInit, OnDestroy {
         this._changeDetectorRef.detectChanges();
     }
   }
-  
+
   confirmDelete(credential: Credential): void {
     let config: MatDialogConfig = {
       data: {

@@ -27,7 +27,7 @@ import {
 import { MainComponent } from '../main/main.component';
 import { BrowserService } from '../../services/browser.service';
 import { APPLICATION_LIST_LABEL_NAME } from '../../config/permissions';
-import { concat } from 'rxjs/observable/concat';
+import { concat } from 'rxjs';
 
 @Component({
   selector: 'fidelius-edit',
@@ -102,7 +102,7 @@ export class EditComponent implements OnInit{
     });
   }
 
-  
+
 
   getMetadata():void {
     this._credentialService.getMetadata(this.credential).subscribe( (metadata: IMetadata) => {
@@ -113,7 +113,7 @@ export class EditComponent implements OnInit{
       else{
         this.existingMetadata = true;
         this.sourceNameAuto();
-      }  
+      }
       this._changeDetectorRef.detectChanges();
     }, (error: any) => {
         this._alertService.openAlert(error);
@@ -145,13 +145,13 @@ export class EditComponent implements OnInit{
     if(this.metadata.sourceType.toLowerCase().includes("rds")){
       return "Instance Identifier"
     }
-  
+
     const instanceTypes = ["documentdb", "aurora", "redshift"]
     if(instanceTypes.some(type => this.metadata.sourceType.toLowerCase().includes(type))){
       return "Primary Cluster Identifier"
     }
 
-    return "Source Name"   
+    return "Source Name"
   }
 
   getActiveDirectoryPasswordPattern(): void {
@@ -292,7 +292,7 @@ export class EditComponent implements OnInit{
 
   filterSourceName(event: any):void{
     const input = event.target.value;
-    this.filteredSourceNames = this.sourceNames.filter(source => source.includes(input));    
+    this.filteredSourceNames = this.sourceNames.filter(source => source.includes(input));
     this._changeDetectorRef.detectChanges();
   }
   sourceChange():void{
