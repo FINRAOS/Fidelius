@@ -34,7 +34,7 @@ export class CredentialService {
       '&environment=' + selected.sdlc);
   }
 
-  getCredential(selected: any, credential: Credential): Observable<ICredential> {
+  getCredential(selected: any, credential: Credential, version?: number): Observable<ICredential> {
     let params: HttpParams = new HttpParams();
     params = params.append('account', selected.account.alias);
     params = params.append('region', selected.region);
@@ -95,13 +95,17 @@ export class CredentialService {
       '&shortKey=' + credential.shortKey);
   }
 
-  getSecret(credential: Credential): Observable<any> {
-    return this._http.get<Credential>(this.URL + '/credentials/secret?application=' + credential.application.toUpperCase() +
+  getSecret(credential: Credential, version?: number): Observable<any> {
+    let url: string = this.URL + '/credentials/secret?application=' + credential.application.toUpperCase() +
       '&region=' + credential.region +
       '&environment=' + credential.environment +
       '&account=' + credential.account +
       '&component=' + credential.component +
-      '&shortKey=' + credential.shortKey);
+      '&shortKey=' + credential.shortKey;
+    if (version) {
+      url = url + '&version=' + version;
+    }
+    return this._http.get<Credential>(url);
   }
 
   getMetadata(credential: Credential): Observable<any>{
