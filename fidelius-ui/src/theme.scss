@@ -132,6 +132,8 @@ button.mat-raised-button {
   // "OK" button in dialog should look like primary button
   .mat-accent {
 
+    background-color: mat-color($accent);
+    color: #ffffff;
     // Add ripple effect with contrast color to buttons that don't have a focus overlay.
     @include _mat-button-ripple-color($theme, default-contrast);
   }
@@ -404,6 +406,7 @@ $dark-red: #DD505A;
     // Primary button with accent color applied
     .mat-accent:not(.btn-secondary) {
       color: mat-color($foreground, text);
+      background-color: mat-color($accent);
     }
   }
   .td-dialog-message {
