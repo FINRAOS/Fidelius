@@ -15,14 +15,40 @@
  *
  */
 
-.mat-header-row, .mat-row {
-  padding: 0 0 0 24px;
+.mat-header-row {
+  width: 100%
 }
 
-.updateDate {
-  margin-left:8px;
+
+.actions {
+  margin-right: 12px;
 }
 
+textarea.secret-box {
+  margin-top: 8px;
+  height: 120px;
+}
+
+fidelius-loading.version-loading {
+  height: 10px;
+}
+
+table {
+  width: 100%;
+}
+
+tr.expansion-row {
+  height: 0;
+}
+
+.version-row td {
+  border-bottom-width: 0;
+}
+
+.expansion-contents {
+  overflow: hidden;
+  display: flex;
+}
 
 ::ng-deep .mat-sort-header-arrow.ng-trigger.ng-trigger-arrowPosition {
   opacity: 0;
@@ -38,3 +64,4 @@
 ::ng-deep .mat-sort-header-pointer-right.ng-trigger.ng-trigger-rightPointer{
   transform: rotate(45deg);
 }
+

@@ -55,6 +55,7 @@ import {CookieService} from 'ngx-cookie-service';
 import {FlexLayoutModule} from '@angular/flex-layout';
 import {BrowserService} from '../services/browser.service';
 import { GroupByPipe } from './pipes/group-by.pipe';
+import { MAT_LABEL_GLOBAL_OPTIONS } from '@angular/material/core';
 
 @NgModule({
   imports:      [
@@ -111,9 +112,14 @@ import { GroupByPipe } from './pipes/group-by.pipe';
     CredentialsTableComponent,
     LoadingComponent,
     DeleteDialogComponent,
-    GroupByPipe
-     ],
-  providers: [CredentialService,
+    GroupByPipe,
+  ],
+  providers: [
+    {
+      provide: MAT_LABEL_GLOBAL_OPTIONS,
+      useValue: { float: 'always' },
+    },
+    CredentialService,
     AccountService,
     PermissionService, BowserService, WindowService, CookieService, BrowserService],
   entryComponents: [ DeleteDialogComponent, ],
