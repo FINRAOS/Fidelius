@@ -128,10 +128,10 @@
       <mat-sidenav #sideNav
                    class="sideNav"
                    mode="over"
-                   align="end"
+                   position="end"
                    opened="false"
                    [disableClose]="isSideNavCloseDisabled"
-                   (close)="closeSideNav()">
+                   (closedStart)="closeSideNav()">
         <router-outlet ></router-outlet>
       </mat-sidenav>
     </mat-sidenav-container>

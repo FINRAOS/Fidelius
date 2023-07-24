@@ -19,22 +19,61 @@
   <div class="push-top-lg">
     <fidelius-loading [condition]="loading"></fidelius-loading>
     <div>
-      <mat-table #table [dataSource]="dataSource" matSort >
+      <table mat-table #table [dataSource]="dataSource" matSort multiTemplateDataRows>
         <ng-container matColumnDef="revision">
-          <mat-header-cell *matHeaderCellDef mat-sort-header fxFlex="20"> REVISION </mat-header-cell>
-          <mat-cell *matCellDef="let element" fxFlexOffset="20px" fxFlex="20">{{element.revision}}</mat-cell>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header fxFlex="20" fxLayoutAlign="start center"> REVISION </th>
+          <td mat-cell *matCellDef="let element" fxFlexOffset="20px" fxFlex="20" fxLayoutAlign="start center">{{element.revision}}</td>
         </ng-container>
+
         <ng-container matColumnDef="updatedBy">
-          <mat-header-cell *matHeaderCellDef mat-sort-header fxFlex="50"> UPDATED BY </mat-header-cell>
-          <mat-cell *matCellDef="let element" fxFlexOffset="-20px" fxFlex="50" >{{element.updatedBy ? element.updatedBy : 'N/A' }}</mat-cell>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header fxFlex="50" fxLayoutAlign="start center"> UPDATED BY </th>
+          <td mat-cell *matCellDef="let element" fxFlexOffset="-20px" fxFlex="50" fxLayoutAlign="start center">
+
+            <p>{{element.updatedBy ? element.updatedBy : 'N/A' }}</p>
+            <ng-container *ngIf="enableView">
+              <span fxFlex></span>
+              <div class="actions">
+                <button mat-icon-button [disableRipple]="true" (click)="copySecret(element)">
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+                <button mat-icon-button [disableRipple]="true" (click)="toggleView(element)">
+                  <mat-icon>{{element.expanded ? 'visibility_off' : 'visibility'}}</mat-icon>
+                </button>
+              </div>
+            </ng-container>
+          </td>
         </ng-container>
+
         <ng-container matColumnDef="updatedDate">
-          <mat-header-cell *matHeaderCellDef mat-sort-header class="updateDate"> UPDATED DATE </mat-header-cell>
-          <mat-cell *matCellDef="let element" class="updateDate">{{element.updatedDate ? (element.updatedDate | date:'short') : 'N/A'}}</mat-cell>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="updateDate" fxFlex fxLayoutAlign="start center"> UPDATED DATE </th>
+          <td mat-cell *matCellDef="let element" class="updateDate" fxFlex fxLayoutAlign="start center">{{element.updatedDate ? (element.updatedDate | date:'short') : 'N/A'}}</td>
         </ng-container>
-        <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-        <mat-row *matRowDef="let row; columns: displayedColumns;" ></mat-row>
-      </mat-table>
+
+        <!-- expansion content -->
+        <ng-container matColumnDef="expandedDetail">
+          <td mat-cell *matCellDef="let element" [attr.colspan]="displayedColumns.length">
+            <div class="expansion-contents"
+                 fxLayout="column"
+                 [@detailExpand]="element.expanded ? (element.showSecret ? 'expanded' : 'copying') : 'collapsed'">
+
+              <fidelius-loading [condition]="element.loading" [message]=undefined class="version-loading"></fidelius-loading>
+              <textarea *ngIf="element.showSecret"
+                        class="secret-box"
+                        matInput
+                        name="secret"
+                        [(ngModel)]="element.secret"
+                        disabled>
+              </textarea>
+            </div>
+          </td>
+        </ng-container>
+
+
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let element; columns: displayedColumns;" class="version-row"></tr>
+        <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="expansion-row"></tr>
+      </table>
       <mat-paginator #paginator
                      [pageSize]="10"
                      [pageSizeOptions]="[5, 10, 20]"
