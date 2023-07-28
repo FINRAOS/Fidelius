@@ -40,9 +40,7 @@ import { ClipboardService } from 'ngx-clipboard';
       state('collapsed, void', style({height: '0px', minHeight: '0', display: 'none'})),
       state('expanded', style({height: '150px'})),
       state('copying', style({height: '20px'})),
-      transition('expanded <=> collapsed', animate('225ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
-      transition('expanded <=> void', animate('225ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
-      transition('copying <=> collapsed', animate('225ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
+      transition('* <=> *', animate('225ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
     ]),
   ],
 })
@@ -85,6 +83,15 @@ export class HistoryComponent implements OnInit {
       this.dataSource.data = history;
       this.dataSource.paginator = this.paginator;
       this.dataSource.sort = this.sort;
+      this.sort.sortChange.subscribe(() => {
+        if (this.dataSource && this.dataSource.data) {
+          this.dataSource.data.forEach(element => {
+            element.expanded = false;
+            element.showSecret = false;
+          });
+        }
+        this._changeDetector.detectChanges();
+      });
     }, (error: any) => {
       this._alertService.openAlert(error);
     });
