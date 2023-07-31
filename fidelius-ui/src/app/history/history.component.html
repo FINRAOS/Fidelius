@@ -34,10 +34,16 @@
               <span fxFlex></span>
               <div class="actions">
                 <button mat-icon-button [disableRipple]="true" (click)="copySecret(element)">
-                  <mat-icon>content_copy</mat-icon>
+                  <mat-icon matTooltip="Copy secret"
+                            matTooltipPosition="above">
+                    content_copy
+                  </mat-icon>
                 </button>
                 <button mat-icon-button [disableRipple]="true" (click)="toggleView(element)">
-                  <mat-icon>{{element.expanded ? 'visibility_off' : 'visibility'}}</mat-icon>
+                  <mat-icon matTooltip="Show/Hide secret"
+                            matTooltipPosition="above">
+                    {{element.expanded ? 'visibility_off' : 'visibility'}}
+                  </mat-icon>
                 </button>
               </div>
             </ng-container>
