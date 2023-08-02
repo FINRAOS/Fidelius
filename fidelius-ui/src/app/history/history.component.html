@@ -29,10 +29,10 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header fxFlex="50" fxLayoutAlign="start center"> UPDATED BY </th>
           <td mat-cell *matCellDef="let element" fxFlexOffset="-20px" fxFlex="50" fxLayoutAlign="start center">
 
-            <p>{{element.updatedBy ? element.updatedBy : 'N/A' }}</p>
+            <p class="updated-text">{{element.updatedBy ? element.updatedBy : 'N/A' }}</p>
             <ng-container *ngIf="enableView">
               <span fxFlex></span>
-              <div class="actions">
+              <div class="actions" fxFlex="25">
                 <button mat-icon-button [disableRipple]="true" (click)="copySecret(element)">
                   <mat-icon matTooltip="Copy secret"
                             matTooltipPosition="above">
