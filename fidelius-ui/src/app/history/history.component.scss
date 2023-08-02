@@ -19,6 +19,9 @@
   width: 100%
 }
 
+.updated-text {
+  word-break: break-all;
+}
 
 .actions {
   margin-right: 12px;
@@ -43,6 +46,10 @@ tr.expansion-row {
 
 .version-row td {
   border-bottom-width: 0;
+}
+
+tr.version-row {
+  height: auto;
 }
 
 .expansion-contents {
