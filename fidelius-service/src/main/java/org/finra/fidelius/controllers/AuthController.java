@@ -47,6 +47,7 @@ public class AuthController {
         result.put("name", user.getName());
         result.put("email", user.getEmail());
         result.put("role", role);
+        result.put("accessInstructions", fideliusRoleService.getAccessInstructions());
 
         switch (role) {
             case MASTER:

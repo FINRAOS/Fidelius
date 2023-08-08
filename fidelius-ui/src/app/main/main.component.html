@@ -121,7 +121,16 @@
             <span fxLayoutAlign="center" >
               <mat-icon matListAvatar class="fidelius-key push-bottom">vpn_key</mat-icon>
             </span>
-            <h2 fxLayoutAlign="center">Select Account, Region, and {{APPLICATION_LIST_LABEL_NAME}} to get started</h2>
+            <ng-container *ngIf="user?.role === 'UNAUTHORIZED'; else instructions">
+              <h2 fxLayoutAlign="center">You do not have membership to any {{APPLICATION_LIST_LABEL_NAME}}s</h2>
+              <h3 *ngIf="user?.accessInstructions" fxLayoutAlign="center">{{user.accessInstructions}}</h3>
+            </ng-container>
+            <ng-template #instructions>
+              <h2 fxLayoutAlign="center">Select Account, Region, and {{APPLICATION_LIST_LABEL_NAME}} to get started</h2>
+            </ng-template>
+
+
+
           </div>
         </div>
       </div>

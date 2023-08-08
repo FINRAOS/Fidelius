@@ -44,4 +44,5 @@ export interface IUser {
   name: string;
   role: string;
   memberships: string[];
+  accessInstructions: string;
 }
