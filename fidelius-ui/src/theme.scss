@@ -83,8 +83,6 @@ button.mat-button {
 
   // Secondary buttons
   &.btn-secondary {
-    @include _mat-button-theme-color($theme, 'border-color');
-
     border-style: solid;
     border-width: 1px;
   }
@@ -92,9 +90,6 @@ button.mat-button {
 
 // Primary buttons
 button.mat-raised-button {
-  @include _mat-button-theme-color($theme, 'border-color');
-  @include _mat-button-theme-color($theme, 'background-color');
-
   border-style: solid;
   border-width: 1px;
 
@@ -122,8 +117,6 @@ button.mat-raised-button {
 
   // "Cancel" button in dialog should look like secondary button
   .mat-button {
-    @include _mat-button-theme-color($theme, 'border-color');
-
     border-style: solid;
     border-width: 1px;
     color: mat-color($accent);
@@ -138,9 +131,9 @@ button.mat-raised-button {
 
   // "OK" button in dialog should look like primary button
   .mat-accent {
-    @include _mat-button-theme-color($theme, 'color', default-contrast);
-    @include _mat-button-theme-color($theme, 'background-color');
 
+    background-color: mat-color($accent);
+    color: #ffffff;
     // Add ripple effect with contrast color to buttons that don't have a focus overlay.
     @include _mat-button-ripple-color($theme, default-contrast);
   }
@@ -180,7 +173,7 @@ mat-nav-list, mat-list {
       border-bottom: 1px #ccc solid;
     }
   }
- 
+
 }
 
 // Data table
@@ -189,7 +182,7 @@ mat-nav-list, mat-list {
 }
 
 // Input fields
-.mat-input-wrapper {
+.mat-form-field-wrapper {
   .mat-form-field-underline {
     &,
     & .mat-form-field-ripple {
@@ -198,12 +191,12 @@ mat-nav-list, mat-list {
     }
   }
 }
-.mat-input-container {
+.mat-form-field {
   &.mat-focused:not(.mat-form-field-invalid) {
     .mat-form-field-label {
       color: mat-color($accent);
     }
-    .mat-input-wrapper .mat-form-field-underline .mat-form-field-ripple {
+    .mat-form-field-wrapper .mat-form-field-underline .mat-form-field-ripple {
       border-color: mat-color($accent);
     }
   }
@@ -342,17 +335,8 @@ $dark-red: #DD505A;
   }
 
   // Buttons
-  // Flat buttons
-  button.mat-button {
 
-    // Secondary buttons
-    &.btn-secondary {
-      @include _mat-button-theme-color($dark-theme, 'border-color');
-    }
-  }
   button.mat-raised-button {
-    @include _mat-button-theme-color($dark-theme, 'border-color');
-    @include _mat-button-theme-color($dark-theme, 'background-color');
 
     &[disabled][disabled],
     &.mat-accent[disabled] {
@@ -396,7 +380,7 @@ $dark-red: #DD505A;
       background-color: transparent;
     }
   }
-  
+
   // Data table
   .mat-cell {
     font-weight: 100;
@@ -422,6 +406,7 @@ $dark-red: #DD505A;
     // Primary button with accent color applied
     .mat-accent:not(.btn-secondary) {
       color: mat-color($foreground, text);
+      background-color: mat-color($accent);
     }
   }
   .td-dialog-message {
@@ -433,8 +418,8 @@ $dark-red: #DD505A;
   .mat-form-field-label {
     color: $dark-secondary-text;
   }
-  .mat-input-container:not(.mat-form-field-disabled) {
-    .mat-input-wrapper .mat-form-field-underline {
+  .mat-form-field:not(.mat-form-field-disabled) {
+    .mat-form-field-wrapper .mat-form-field-underline {
       background-color: $dark-input-background-color;
       border-color: $dark-input-border-color;
       box-shadow: inset 2px 2px 2px rgba(0,0,0,0.1);
@@ -458,7 +443,7 @@ $dark-red: #DD505A;
     .mat-form-field-label {
       color: mat-color($accent2);
     }
-    .mat-input-wrapper .mat-form-field-underline .mat-form-field-ripple {
+    .mat-form-field-wrapper .mat-form-field-underline .mat-form-field-ripple {
       border-color: mat-color($accent2);
     }
   }
@@ -532,13 +517,13 @@ $dark-red: #DD505A;
   .mat-progress-spinner circle{
     stroke: mat-color($accent)
   }
-  
+
   .snackbar-success{
     color: white;
     background-color: green;
-    
+
   }
-  
+
   .snackbar-error{
     color: white;
     background-color: red;
@@ -546,11 +531,11 @@ $dark-red: #DD505A;
       color: white;
     }
   }
-  
+
   .label-color{
     color: rgba(255, 255, 255, 0.5);
   }
-  
+
   .second-background{
     background-color: mat-color($background, hover);
   }

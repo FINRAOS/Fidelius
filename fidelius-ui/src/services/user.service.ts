@@ -17,9 +17,7 @@
 
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpEvent, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/do';
+import { Observable } from 'rxjs';
 import { API_URL } from '../config/application';
 
 @Injectable()
@@ -46,4 +44,5 @@ export interface IUser {
   name: string;
   role: string;
   memberships: string[];
+  accessInstructions: string;
 }

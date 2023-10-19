@@ -81,6 +81,11 @@ public class FideliusAuthProperties {
      */
     private String devGroupsPattern;
 
+    /**
+     * A message explaining how to request access if the user lacks any memberships
+     */
+    private String accessInstructions;
+
     public String getUserIdHeader() {
         return userIdHeader;
     }
@@ -159,6 +164,15 @@ public class FideliusAuthProperties {
 
     public FideliusAuthProperties setDevGroupsPattern(String devGroupsPattern) {
         this.devGroupsPattern = devGroupsPattern;
+        return this;
+    }
+
+    public String getAccessInstructions() {
+        return accessInstructions;
+    }
+
+    public FideliusAuthProperties setAccessInstructions(String accessInstructions) {
+        this.accessInstructions = accessInstructions;
         return this;
     }
 

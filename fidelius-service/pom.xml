@@ -25,25 +25,25 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.5.12.RELEASE</version>
+		<version>2.5.15</version>
 		<relativePath/>
 	</parent>
 
 	<name>Fidelius</name>
 
 	<properties>
-		<compiler.version>3.3</compiler.version>
+		<compiler.version>3.8.0</compiler.version>
 		<failsafe.version>2.19.1</failsafe.version>
 		<h2.version>1.4.185</h2.version>
-		<java.version>1.8</java.version>
+		<java.version>1.11</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<slf4j.version>1.7.12</slf4j.version>
-		<spring.boot.version>2.0.1</spring.boot.version>
-		<spring.cloud.version>1.0.6.RELEASE</spring.cloud.version>
+		<spring.boot.version>2.5.15</spring.boot.version>
+		<spring.cloud.version>2.5.15</spring.cloud.version>
 		<aws.sdk.version>2.16.60</aws.sdk.version>
 		<spring.security.version>4.0.3.RELEASE</spring.security.version>
 		<jasypt.version>1.9.2</jasypt.version>
-		<snakeyaml.version>1.15</snakeyaml.version>
+		<snakeyaml.version>1.33</snakeyaml.version>
 	</properties>
 
 	<dependencyManagement>
@@ -57,6 +57,14 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
+
+	<repositories>
+		<repository>
+			<id>spring-repo</id>
+			<name>spring repository</name>
+			<url>https://repo.spring.io/snapshot</url>
+		</repository>
+	</repositories>
 
 	<dependencies>
 
@@ -107,13 +115,13 @@
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
 			<artifactId>bcprov-jdk15on</artifactId>
-			<version>1.68</version>
+			<version>1.70</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.finra.fidelius</groupId>
 			<artifactId>fidelius-sdk</artifactId>
-			<version>3.0.1-SNAPSHOT</version>
+			<version>3.0.2-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
@@ -133,7 +141,22 @@
 
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>redshift</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>kms</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>ec2</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>lambda</artifactId>
 		</dependency>
 
 		<dependency>
@@ -160,7 +183,7 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
-            <version>4.1.1.RELEASE</version>
+            <version>5.6.10</version>
             <scope>test</scope>
         </dependency>
 
@@ -177,6 +200,12 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-core</artifactId>
+			<version>5.3.27</version>
 		</dependency>
 
 		<dependency>
@@ -228,17 +257,27 @@
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-web</artifactId>
-			<version>4.3.16.RELEASE</version>
+			<version>5.3.27</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webflux</artifactId>
-			<version>2.6.4</version>
 		</dependency>
 		<dependency>
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-core</artifactId>
 			<version>3.4.15</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.13.2</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 	<build>
@@ -264,8 +303,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>${compiler.version}</version>
 				<configuration>
-					<source>${java.version}</source>
-					<target>${java.version}</target>
+					<release>11</release>
 				</configuration>
 			</plugin>
 
@@ -281,6 +319,23 @@
 						</goals>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.1.0</version>
+				<dependencies>
+					<dependency>
+						<groupId>org.apache.maven.surefire</groupId>
+						<artifactId>surefire-junit4</artifactId>
+						<version>3.1.0</version>
+					</dependency>
+				</dependencies>
+				<configuration>
+					<includes>
+						<include>**/*.java</include>
+					</includes>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

@@ -2,6 +2,8 @@ package org.finra.fidelius.model.rotate;
 
 import org.json.simple.JSONObject;
 
+import java.util.Objects;
+
 public class RotateRequest {
 
     private String accountId;
@@ -11,8 +13,9 @@ public class RotateRequest {
     private String ags;
     private String env;
     private String component;
+    private String user;
 
-    public RotateRequest(String accountId, String sourceType, String sourceName, String secret, String ags, String env, String component) {
+    public RotateRequest(String accountId, String sourceType, String sourceName, String secret, String ags, String env, String component, String user) {
         this.accountId = accountId;
         this.sourceType = sourceType;
         this.sourceName = sourceName;
@@ -20,6 +23,7 @@ public class RotateRequest {
         this.ags = ags;
         this.env = env;
         this.component = component;
+        this.user = user;
     }
 
     public String getAccountId() {
@@ -78,6 +82,14 @@ public class RotateRequest {
         this.component = component;
     }
 
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
+
     public JSONObject getJsonObject() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("accountId", accountId);
@@ -87,6 +99,26 @@ public class RotateRequest {
         jsonObject.put("ags", ags);
         jsonObject.put("env", env);
         jsonObject.put("component", component);
+        jsonObject.put("user", user);
         return jsonObject;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RotateRequest that = (RotateRequest) o;
+        return Objects.equals(accountId, that.accountId) &&
+                Objects.equals(sourceType, that.sourceType) &&
+                Objects.equals(sourceName, that.sourceName) &&
+                Objects.equals(secret, that.secret) &&
+                Objects.equals(ags, that.ags) &&
+                Objects.equals(env, that.env) &&
+                Objects.equals(component, that.component);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(accountId, sourceType, sourceName, secret, ags, env, component);
     }
 }

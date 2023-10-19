@@ -17,7 +17,7 @@
 
 import { Injectable } from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {Observable} from 'rxjs/Observable';
+import {Observable} from 'rxjs';
 import {HEARTBEAT_URL} from '../config/application';
 
 @Injectable()

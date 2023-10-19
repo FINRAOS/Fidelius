@@ -17,8 +17,10 @@
 
 package org.finra.fidelius;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -135,6 +137,62 @@ public class JCredStashTest {
         doReturn(DeleteItemResponse.builder().build()).when(amazonDynamoDBClient).deleteItem(any(DeleteItemRequest.class));
 
         jCredStash.deleteSecret("test", "secret");
+    }
+
+    @Test
+    public void getCredentialShouldDefaultGetLatestVersion() {
+        DynamoDbClient dynamoDbClient = spy(DynamoDbClient.class);
+        JCredStash jCredStash = new JCredStash();
+        jCredStash.dynamoDbClient = dynamoDbClient;
+
+        HashMap<String, String> context = new HashMap<>();
+        context.put("Application", "APP");
+        context.put("SDLC", "dev");
+        context.put("Component", "component");
+        ArgumentCaptor<QueryRequest> requestCaptor = ArgumentCaptor.forClass(QueryRequest.class);
+        doReturn(getMockQueryResult(1)).when(dynamoDbClient).query(any(QueryRequest.class));
+        try {
+            jCredStash.getSecret("table", "APP.component.dev.secret", context, null);
+        } catch (RuntimeException ex) {
+            // ignore decryption error, we are just checking the dynamo request
+        }
+
+        verify(dynamoDbClient, times(1)).query(requestCaptor.capture());
+        QueryRequest capturedRequest = requestCaptor.getValue();
+        Condition nameCondition = capturedRequest.keyConditions().get("name");
+        Condition versionCondition = capturedRequest.keyConditions().get("version");
+        Assert.assertEquals(ComparisonOperator.EQ, nameCondition.comparisonOperator());
+        Assert.assertEquals("APP.component.dev.secret", nameCondition.attributeValueList().get(0).s());
+        Assert.assertEquals(ComparisonOperator.BEGINS_WITH, versionCondition.comparisonOperator());
+        Assert.assertEquals("0", versionCondition.attributeValueList().get(0).s());
+    }
+
+    @Test
+    public void getCredentialShouldGetSpecifiedVersion() {
+        DynamoDbClient dynamoDbClient = spy(DynamoDbClient.class);
+        JCredStash jCredStash = new JCredStash();
+        jCredStash.dynamoDbClient = dynamoDbClient;
+
+        HashMap<String, String> context = new HashMap<>();
+        context.put("Application", "APP");
+        context.put("SDLC", "dev");
+        context.put("Component", "component");
+        ArgumentCaptor<QueryRequest> requestCaptor = ArgumentCaptor.forClass(QueryRequest.class);
+        doReturn(getMockQueryResult(1)).when(dynamoDbClient).query(any(QueryRequest.class));
+        try {
+            jCredStash.getSecret("table", "APP.component.dev.secret", context, 17);
+        } catch (RuntimeException ex) {
+            // ignore decryption error, we are just checking the dynamo request
+        }
+
+        verify(dynamoDbClient, times(1)).query(requestCaptor.capture());
+        QueryRequest capturedRequest = requestCaptor.getValue();
+        Condition nameCondition = capturedRequest.keyConditions().get("name");
+        Condition versionCondition = capturedRequest.keyConditions().get("version");
+        Assert.assertEquals(ComparisonOperator.EQ, nameCondition.comparisonOperator());
+        Assert.assertEquals("APP.component.dev.secret", nameCondition.attributeValueList().get(0).s());
+        Assert.assertEquals(ComparisonOperator.EQ, versionCondition.comparisonOperator());
+        Assert.assertEquals("0000000000000000017", versionCondition.attributeValueList().get(0).s());
     }
 
     @Test

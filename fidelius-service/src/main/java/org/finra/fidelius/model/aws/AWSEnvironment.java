@@ -19,6 +19,8 @@ package org.finra.fidelius.model.aws;
 
 import software.amazon.awssdk.regions.Region;
 
+import java.util.Objects;
+
 public class AWSEnvironment {
 
     private String account;
@@ -35,5 +37,27 @@ public class AWSEnvironment {
 
     public Region getRegion() {
         return region;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AWSEnvironment that = (AWSEnvironment) o;
+        return Objects.equals(account, that.account) &&
+                Objects.equals(region, that.region);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(account, region);
+    }
+
+    @Override
+    public String toString() {
+        return "AWSEnvironment{" +
+                "account='" + account + '\'' +
+                ", region=" + region +
+                '}';
     }
 }

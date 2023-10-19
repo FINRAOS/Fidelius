@@ -139,6 +139,10 @@ public class FideliusRoleService {
         return checkFideliusRole();
     }
 
+    public String getAccessInstructions() {
+        return fideliusAuthProperties.getAccessInstructions();
+    }
+
     public boolean isAuthorized(String application, String account, String permission){
         if((getRole().equals(FideliusRole.OPS) || getRole().equals(FideliusRole.DEV) || getRole().equals(FideliusRole.MASTER)) && permission.equals("LIST_CREDENTIALS"))
             return true;

@@ -317,6 +317,26 @@ public class FideliusClient {
      *
      */
     protected String getCredential(String name, String application,  String sdlc,  String component,
+                                   String table, String user, Boolean retryForApplication) throws Exception {
+        return getCredential(name, application, sdlc, component, null, table, user, retryForApplication);
+    }
+
+    /**
+     *
+     * @param name                  Base name of the credential to retrieve
+     * @param application   Nullable    FID_CONTEXT_APPLICATION name (not case-sensitive)
+     * @param sdlc          Nullable    FID_CONTEXT_SDLC (dev/qa/prod) (not case-sensitive)
+     * @param component     Nullable    Name of the associated component (not case-sensitive)
+     * @param version       Nullable    Version of the credential to retrieve; defaults to latest
+     * @param table         Nullable    Table where credential is stored; defaults to "credential-store"
+     * @param user          Nullable    Name of user that requested to retrieve credential
+     * @param retryForApplication    Nullable  Boolean that enables search retry by removing component to find FID_CONTEXT_APPLICATION specific credential
+     *
+     * @return The plaintext contents of the credential (most recent version)
+     * @throws Exception - if the credential cannot be retrieved
+     *
+     */
+    protected String getCredential(String name, String application,  String sdlc,  String component, Integer version,
                                         String table, String user, Boolean retryForApplication) throws Exception {
 
         if (table == null || table.length() == 0)
@@ -330,7 +350,7 @@ public class FideliusClient {
 
         String credential = null;
         try {
-            credential = jCredStash.getSecret(table, prefixedName, context);
+            credential = jCredStash.getSecret(table, prefixedName, context, version);
             logger.info("User "+ user + " retrieved contents of " + prefixedName);
         } catch (RuntimeException e) { // Credential not found
             logger.info("Credential " + prefixedName + " not found. ["+e.toString()+"] ");
@@ -344,7 +364,7 @@ public class FideliusClient {
 
                     // Attempt to get FID_CONTEXT_APPLICATION-specific credential
                     try {
-                        credential = jCredStash.getSecret(table, prefixedName, context);
+                        credential = jCredStash.getSecret(table, prefixedName, context, version);
                         logger.info("User " + user + " retrieved contents of " + prefixedName);
                     } catch (RuntimeException ex) {
                         logger.error("Credential " + prefixedName + " not found. ");

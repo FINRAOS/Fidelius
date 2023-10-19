@@ -38,6 +38,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.KmsClientBuilder;
 import software.amazon.awssdk.services.rds.RdsClient;
+import software.amazon.awssdk.services.redshift.RedshiftClient;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
 import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
@@ -45,6 +46,7 @@ import software.amazon.awssdk.services.sts.model.AssumeRoleResponse;
 import software.amazon.awssdk.services.sts.model.Credentials;
 
 import javax.inject.Inject;
+import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -64,43 +66,61 @@ public class AWSSessionService {
     @Value("${fidelius.sessionTimeoutPad}")
     private Integer sessionTimeoutPad;
 
+    private static HashMap<AWSEnvironment, KmsClient> kmsClientsMap;
+    private static HashMap<AWSEnvironment, RdsClient> rdsClientsMap;
+    private static HashMap<AWSEnvironment, RedshiftClient> redshiftClientsMap;
+
     private Logger logger = LoggerFactory.getLogger(AWSSessionService.class);
 
-    private LoadingCache<AWSEnvironment, Credentials> credentialCache = CacheBuilder.newBuilder()
+    private LoadingCache<AWSEnvironment, StsAssumeRoleCredentialsProvider> stsAssumeRoleCredentialsProviderCache = CacheBuilder.newBuilder()
             .maximumSize(100)
             .concurrencyLevel(10)
             .refreshAfterWrite(360 * 1000, TimeUnit.MILLISECONDS)
-            .build(new CacheLoader<AWSEnvironment, Credentials>() {
+            .build(new CacheLoader<AWSEnvironment, StsAssumeRoleCredentialsProvider>() {
                 @Override
-                public Credentials load(AWSEnvironment environment) throws Exception {
-                    return getFreshCredentials(environment);
+                public StsAssumeRoleCredentialsProvider load(AWSEnvironment environment) throws Exception {
+                    return getStsAssumeRoleCredentialsProvider(environment);
                 }
             });
 
+    private LoadingCache<AWSEnvironment, KmsClient> kmsClientCache = CacheBuilder.newBuilder()
+            .maximumSize(100)
+            .concurrencyLevel(10)
+            .refreshAfterWrite(360 * 1000, TimeUnit.MILLISECONDS)
+            .build(new CacheLoader<AWSEnvironment, KmsClient>() {
+                @Override
+                public KmsClient load(AWSEnvironment environment) throws Exception {
+                    return getKmsClient(environment);
+                }
+            });
 
-    private Credentials getFreshCredentials(AWSEnvironment environment) throws Exception{
+    private LoadingCache<AWSEnvironment, RdsClient> rdsClientCache = CacheBuilder.newBuilder()
+            .maximumSize(100)
+            .concurrencyLevel(10)
+            .refreshAfterWrite(360 * 1000, TimeUnit.MILLISECONDS)
+            .build(new CacheLoader<AWSEnvironment, RdsClient>() {
+                @Override
+                public RdsClient load(AWSEnvironment environment) throws Exception {
+                    return getRdsClient(environment);
+                }
+            });
 
-        String roleArn = getRoleArn(environment.getAccount(), assumeRole);
-        logger.info("Assuming to role: " + roleArn + " for environment " + environment.getAccount() + " on region " + environment.getRegion()
-                + " with timeout of " + (sessionTimeout / 1000) + " seconds (with " + (sessionTimeoutPad / 1000) + " padding.)");
-
-        AssumeRoleRequest assumeRequest = AssumeRoleRequest.builder()
-                .roleArn(roleArn)
-                .durationSeconds((sessionTimeout + sessionTimeoutPad) / 1000)
-                .roleSessionName("CREDSTSH_APP")
-                .build();
-
-        AssumeRoleResponse assumeRoleResponse = awsSessionFactory.createSecurityTokenServiceClient().assumeRole(assumeRequest);
-
-        return assumeRoleResponse.credentials();
-
-    }
+    private LoadingCache<AWSEnvironment, RedshiftClient> redshiftClientCache = CacheBuilder.newBuilder()
+            .maximumSize(100)
+            .concurrencyLevel(10)
+            .refreshAfterWrite(360 * 1000, TimeUnit.MILLISECONDS)
+            .build(new CacheLoader<AWSEnvironment, RedshiftClient>() {
+                @Override
+                public RedshiftClient load(AWSEnvironment environment) throws Exception {
+                    return getRedshiftClient(environment);
+                }
+            });
 
     private StsAssumeRoleCredentialsProvider getStsAssumeRoleCredentialsProvider(AWSEnvironment environment){
         try {
-            String roleArn = getRoleArn(environment.getAccount(), assumeRole);
+            String roleArn = awsSessionFactory.getRoleArn(environment.getAccount(), assumeRole);
             StsClient stsClient = awsSessionFactory.createSecurityTokenServiceClient();
-            AssumeRoleRequest assumeRoleRequest = formAssumeRoleRequest(roleArn);
+            AssumeRoleRequest assumeRoleRequest = awsSessionFactory.formAssumeRoleRequest(roleArn);
             return StsAssumeRoleCredentialsProvider.builder()
                     .stsClient(stsClient)
                     .refreshRequest(assumeRoleRequest)
@@ -111,55 +131,98 @@ public class AWSSessionService {
         return null;
     }
 
-    private AssumeRoleRequest formAssumeRoleRequest(String roleArn) {
-        return AssumeRoleRequest.builder()
-                .roleArn(roleArn)
-                .durationSeconds((sessionTimeout + sessionTimeoutPad) / 1000)
-                .roleSessionName("CREDSTSH_APP")
-                .build();
-    }
-
-    private String getRoleArn(String alias, String role) throws Exception {
-        Account account = accountsService.getAccountByAlias(alias);
-
-        if (account == null) {
-            logger.error("No account found with alias: " + alias);
-            throw new Exception("No account found with alias: " + alias);
-        }
-
-        StringBuffer sb = new StringBuffer();
-        sb.append("arn:aws:iam::");
-        sb.append(account.getAccountId());
-        sb.append(":role/");
-        sb.append(role);
-        return sb.toString();
-    }
-
     public DynamoDbClient getDynamoDBClient(AWSEnvironment env) {
-        StsAssumeRoleCredentialsProvider stsAssumeRoleCredentialsProvider = getStsAssumeRoleCredentialsProvider(env);
-        return awsSessionFactory.createDynamoDBClient(stsAssumeRoleCredentialsProvider, env.getRegion());
+        return awsSessionFactory.getCachedDynamoDBClient(env);
     }
 
-    public DynamoDbEnhancedClient getDynamoDBEnhancedClient(DynamoDbClient dynamoDbClient) {
-        return awsSessionFactory.createDynamoDBEnhancedClient(dynamoDbClient);
+    public DynamoDbEnhancedClient getDynamoDBEnhancedClient(AWSEnvironment env) {
+        return awsSessionFactory.createDynamoDBEnhancedClient(env);
     }
 
-    public KmsClient getKmsClient(AWSEnvironment env) {
-        StsAssumeRoleCredentialsProvider stsAssumeRoleCredentialsProvider = getStsAssumeRoleCredentialsProvider(env);
-        return KmsClient
+    public KmsClient getCachedKmsClient(AWSEnvironment env) {
+        return kmsClientCache.getUnchecked(env);
+    }
+
+    private KmsClient getKmsClient(AWSEnvironment env) {
+        instantiateKmsClientsMapIfNew();
+        closeKmsClientIfExists(env);
+        StsAssumeRoleCredentialsProvider stsAssumeRoleCredentialsProvider = stsAssumeRoleCredentialsProviderCache.getUnchecked(env);
+        KmsClient kmsClient = KmsClient
                 .builder()
                 .credentialsProvider(stsAssumeRoleCredentialsProvider)
                 .region(env.getRegion())
                 .build();
+        kmsClientsMap.put(env, kmsClient);
+        return kmsClient;
     }
 
-    public RdsClient getRdsClient(AWSEnvironment env){
-        StsAssumeRoleCredentialsProvider stsAssumeRoleCredentialsProvider = getStsAssumeRoleCredentialsProvider(env);
+    private void instantiateKmsClientsMapIfNew() {
+        if(kmsClientsMap == null) {
+            kmsClientsMap = new HashMap<>();
+        }
+    }
+
+    private void closeKmsClientIfExists(AWSEnvironment env) {
+        if(kmsClientsMap.containsKey(env)) {
+            kmsClientsMap.get(env).close();
+            kmsClientsMap.remove(env);
+        }
+    }
+
+    public RdsClient getCachedRdsClient(AWSEnvironment env) {
+        return rdsClientCache.getUnchecked(env);
+    }
+
+    private RdsClient getRdsClient(AWSEnvironment env){
+        instantiateRdsClientsMapIfNew();
+        closeRdsClientIfExists(env);
+        StsAssumeRoleCredentialsProvider stsAssumeRoleCredentialsProvider = stsAssumeRoleCredentialsProviderCache.getUnchecked(env);
         return RdsClient
                 .builder()
                 .credentialsProvider(stsAssumeRoleCredentialsProvider)
                 .region(env.getRegion())
                 .build();
+    }
+
+    private void instantiateRdsClientsMapIfNew() {
+        if(rdsClientsMap == null) {
+            rdsClientsMap = new HashMap<>();
+        }
+    }
+
+    private void closeRdsClientIfExists(AWSEnvironment env) {
+        if(rdsClientsMap.containsKey(env)) {
+            rdsClientsMap.get(env).close();
+            rdsClientsMap.remove(env);
+        }
+    }
+
+    public RedshiftClient getCachedRedshiftClient(AWSEnvironment env) {
+        return redshiftClientCache.getUnchecked(env);
+    }
+
+    private RedshiftClient getRedshiftClient(AWSEnvironment env){
+        instantiateRedshiftClientsMapIfNew();
+        closeRedshiftClientIfExists(env);
+        StsAssumeRoleCredentialsProvider stsAssumeRoleCredentialsProvider = stsAssumeRoleCredentialsProviderCache.getUnchecked(env);
+        return RedshiftClient
+                .builder()
+                .credentialsProvider(stsAssumeRoleCredentialsProvider)
+                .region(env.getRegion())
+                .build();
+    }
+
+    private void instantiateRedshiftClientsMapIfNew() {
+        if(redshiftClientsMap == null) {
+            redshiftClientsMap = new HashMap<>();
+        }
+    }
+
+    private void closeRedshiftClientIfExists(AWSEnvironment env) {
+        if(redshiftClientsMap.containsKey(env)) {
+            redshiftClientsMap.get(env).close();
+            redshiftClientsMap.remove(env);
+        }
     }
 
 }

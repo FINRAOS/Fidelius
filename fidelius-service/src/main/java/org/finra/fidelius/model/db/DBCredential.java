@@ -17,6 +17,7 @@
 
 package org.finra.fidelius.model.db;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -86,6 +87,24 @@ public class DBCredential {
                 return m.group(3);
             return name;
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DBCredential that = (DBCredential) o;
+        return Objects.equals(name, that.name) &&
+                Objects.equals(version, that.version) &&
+                Objects.equals(updatedBy, that.updatedBy) &&
+                Objects.equals(updatedDate, that.updatedDate) &&
+                Objects.equals(sdlc, that.sdlc) &&
+                Objects.equals(component, that.component);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, version, updatedBy, updatedDate, sdlc, component);
     }
 
     @Override
